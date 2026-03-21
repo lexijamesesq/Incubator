@@ -17,7 +17,7 @@ Knowledge/
 CLAUDE.md
 claude/settings.local.json
 jira-config.md
-claude/skills/cross-domain/pm2025-structural-reference.md
+claude/skills/cross-domain/org-structural-reference.md
 
 # === Real files (samples ship instead) ===
 Examples/developing-card.md

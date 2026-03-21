@@ -134,7 +134,7 @@ Before using this system, you must customize:
 
 4. **`jira-config.md`** — Copy from `jira-config.sample.md` and fill in your Atlassian cloud ID, project key, field IDs, and option IDs if using JPD integration.
 
-5. **`claude/skills/cross-domain/pm2025-structural-reference.md`** — Copy from `claude/skills/cross-domain/org-taxonomy.sample.md` and fill in your organization's product brands, domains, and squads if using cross-domain discovery.
+5. **`claude/skills/cross-domain/org-structural-reference.md`** — Copy from `claude/skills/cross-domain/org-taxonomy.sample.md` and fill in your organization's product brands, domains, and squads if using cross-domain discovery.
 
 6. **Agent personas** — The edtech-sme, educator-sme, and tam-estimate agents carry domain knowledge specific to the education/assessment market. Adapt their domain knowledge sections if your product domain differs.
 
