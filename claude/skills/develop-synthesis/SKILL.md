@@ -33,6 +33,17 @@ If exact match fails, try fuzzy substring match against filenames in `Ideas/`. O
 
 ## Execution
 
+### Step 0: Parse Arguments
+
+1. Read `$ARGUMENTS`
+2. If empty: report "Error: idea name required." and exit.
+3. If provided: resolve to `Ideas/{argument}.md`
+   - Try exact match first (with and without `.md` extension)
+   - If not found, try fuzzy substring match against all filenames in `Ideas/`
+   - If exactly one fuzzy match, use it
+   - If multiple fuzzy matches, list and exit
+   - If zero matches, report available files and exit
+
 ### Step 1: Load Context
 
 Load in parallel:
