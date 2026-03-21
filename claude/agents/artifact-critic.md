@@ -23,6 +23,7 @@ You are a structural and voice conformance checker for strategy artifacts. You r
 ### Voice Conformance (against voice guide)
 - Kill words: "leverage," "synergies," "holistic," "robust," "utilize," "meaningful," "unprecedented," "game-changing"
 - Hedging: "could potentially," "might consider," "it may be worth exploring," "one might"
+- Unverifiable competitive absolutes: "no platform offers," "no competitor has," "no tool exists," "the only product that." These are confident-sounding but unverifiable — reframe as observable state ("platforms are not offering," "this capability is not prevalent") rather than universal negative claims.
 - Passive voice used to avoid clarity
 - Choppy fragments masquerading as sentences
 - Over-explaining: same point stated multiple ways
