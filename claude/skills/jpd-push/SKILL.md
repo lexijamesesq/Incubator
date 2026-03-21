@@ -135,7 +135,7 @@ Convergence: {Group description — which teams, what shared need, one sentence 
 
 Each issue key is a clickable link to the JPD item within the Atlassian environment. Content is transferred from the research artifact — no generative rewriting.
 
-**Executive Summary:** The Core insight sentence, plain text only (strip bold markers).
+**Executive Summary:** The Core insight sentence, plain text only (strip bold markers). Max 255 characters — if the core insight exceeds this, condense to fit without losing the key claim. Show the condensed version in the review gate.
 
 **AI Feature:** If `themes` array contains any value starting with `ai-`, set to `1` (numeric). Otherwise omit.
 
