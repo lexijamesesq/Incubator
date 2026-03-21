@@ -27,7 +27,7 @@ Iteratively refines a drafted output document through human-agent collaboration.
 
 - Required argument: the name of an idea file in `Ideas/` that has a linked output document
 - If no argument provided: list available drafting/refining-stage ideas and ask the user to pick
-- Examples: `/refine assessment-marketplace`, `/refine ai-cohort-peer-intelligence`
+- Examples: `/refine foraging-intelligence`, `/refine cache-optimization`
 
 ## Arguments
 

@@ -26,7 +26,7 @@ Runs AFTER the router creates a seed (Stage 0→1) and BEFORE /develop transform
 
 - Required argument: a seed-stage idea file in `Ideas/`
 - If no argument: list seed-stage ideas for selection
-- Examples: `/refine-seed authentic-assessment-authoring`, `/refine-seed marketplace-content`
+- Examples: `/refine-seed foraging-intelligence`, `/refine-seed cache-optimization`
 
 ## Arguments
 

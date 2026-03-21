@@ -28,7 +28,7 @@ Produces defensible TAM/SAM/SOM estimates for a strategic idea in the assessment
 - Required argument: the name of an idea file in `Ideas/`
 - Works on ideas at ANY stage (Stage 1 onward) — market sizing is useful throughout the pipeline
 - If no argument provided: list available ideas and ask the user to pick
-- Examples: `/tam-estimate assessment-marketplace`, `/tam-estimate authentic-assessment`
+- Examples: `/tam-estimate foraging-intelligence`, `/tam-estimate cache-optimization`
 
 ## Arguments
 

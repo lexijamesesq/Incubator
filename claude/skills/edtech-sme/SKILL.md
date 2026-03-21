@@ -28,7 +28,7 @@ Evaluates a strategic idea against edtech market dynamics, competitive landscape
 - Required argument: the name of an idea file in `Ideas/`
 - Works on ideas at any stage (seed, developing, drafting, refining)
 - If no argument provided: list available ideas and ask the user to pick
-- Examples: `/edtech-sme assessment-marketplace`, `/edtech-sme authentic-assessment`
+- Examples: `/edtech-sme foraging-intelligence`, `/edtech-sme cache-optimization`
 
 ## Arguments
 

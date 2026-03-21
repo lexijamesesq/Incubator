@@ -26,7 +26,7 @@ Queries the JPD project for ideas from other product domains that have functiona
 - Required argument: the name of an idea file in `Ideas/`
 - Works on ideas at any stage (seed, developing, drafting, refining, complete)
 - If no argument provided: list available ideas and ask the user to pick
-- Examples: `/cross-domain ai-cohort-peer-intelligence`, `/cross-domain authentic-assessment-rubric-design`
+- Examples: `/cross-domain foraging-intelligence`, `/cross-domain cache-optimization`
 
 ## Arguments
 
@@ -219,7 +219,7 @@ created: {YYYY-MM-DD}
 {If no convergence groups: "None detected."}
 
 ## Retrieval Stats
-Retrieved: {total} | After Mastery exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: {N}
+Retrieved: {total} | After brand exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: {N}
 ```
 
 Update the idea file frontmatter: append `Research/{idea-name}/cross-domain-signals.md` to the `research: []` array.
@@ -253,7 +253,7 @@ Update the idea file frontmatter: append `Research/{idea-name}/cross-domain-sign
 - **{Shared user need}:** {issue-key} ({Squad}), {issue-key-2} ({Squad})
   {One sentence — what these teams share and what it means for this idea}
 
-Retrieved: {total} | After Mastery exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: {N}
+Retrieved: {total} | After brand exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: {N}
 ```
 
 **When no signals are found:**
@@ -263,7 +263,7 @@ Retrieved: {total} | After Mastery exclusion: {count} | Evaluated: {Phase 1.5 su
 
 No ideas from other domains with functional overlap found.
 
-Retrieved: {total} | After Mastery exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: 0
+Retrieved: {total} | After brand exclusion: {count} | Evaluated: {Phase 1.5 survivors} | Relevant: 0
 ```
 
 **When retrieval failed:**

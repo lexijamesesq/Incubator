@@ -28,7 +28,7 @@ Pushes a developed idea to JPD for stakeholder visibility. One-directional — n
 
 - Required argument: the name of a developing-or-later idea file in `Ideas/`
 - If no argument provided: list eligible ideas and ask user to pick
-- Examples: `/jpd-push ai-cohort-peer-intelligence`, `/jpd-push assessment-marketplace`
+- Examples: `/jpd-push foraging-intelligence`, `/jpd-push cache-optimization`
 
 ## Arguments
 

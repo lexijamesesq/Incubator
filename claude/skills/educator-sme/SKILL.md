@@ -27,7 +27,7 @@ Evaluates a strategic idea through the lens of a veteran educator with 20+ years
 
 - Required argument: the name of an idea file in `Ideas/`
 - Works on ideas at any stage (seed, developing, drafting, refining)
-- Examples: `/educator-sme assessment-marketplace`, `/educator-sme authentic-assessment`
+- Examples: `/educator-sme foraging-intelligence`, `/educator-sme cache-optimization`
 
 ## Arguments
 
