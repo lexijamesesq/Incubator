@@ -224,19 +224,27 @@ Strategy documents and product briefs use templates in `Templates/`:
 
 Seeds arrive from `Claude/Inbox Processing/` with frontmatter and Original Capture. The router does not interpret the capture — /refine-seed handles that before /develop. See `Claude/Inbox Processing/router-spec.md` for classification and routing behavior.
 
+### Refining a Seed (Stage 1 prep)
+
+**Trigger:** Human says "refine-seed [idea name]" or equivalent. Run before /develop.
+
+**What it does:** Interprets the raw seed's intent — determines whether the idea is a capability gap or an experience improvement, drafts header fields (core insight, problem, who cares, strategic connection), surfaces related ideas for potential consolidation, and aligns with the human before /develop runs. This is where ambiguous seeds get clarified so the synthesis agent has clean inputs.
+
 ### Developing an Idea (Stage 1→2)
 
-**Trigger:** Human says "develop [idea name]" or equivalent.
+**Trigger:** Human says "develop [idea name]" or equivalent. Seed should be refined first via /refine-seed.
 
-**Agent behavior:**
-1. Read the seed file
-2. Surface any related seeds for potential consolidation
-3. Research autonomously:
-   - Search strategy docs for relevant priorities and themes
-   - Web search for market context, competitor landscape, trends
-   - Identify strategic connections to current organizational priorities
-4. Populate the TL;DR template
-5. Assess impact dimensions with rationale
+**Architecture:** Orchestrator + synthesis agent. The /develop skill is an orchestrator that handles research and procedure. The develop-synthesis agent (`.claude/agents/develop-synthesis.md`) handles strategic judgment in an isolated context.
+
+**Orchestrator flow:**
+1. Read the seed file and verify refinement (structured fields present)
+2. Research autonomously across three streams:
+   - **Stream A:** Strategy docs, NPS data, customer evidence
+   - **Stream B:** Market intelligence, competitive landscape, web research
+   - **Stream C:** Cross-domain discovery via /cross-domain (JPD query)
+3. Build a synthesis handoff document consolidating all research
+4. Dispatch to the develop-synthesis agent (Opus, isolated context) to produce the TL;DR card
+5. Post-synthesis: buildable surface check, theme governance, title revision, artifact critic, self-critique
 6. Present completed TL;DR for human review
 
 ### Drafting (Stage 2→3)
@@ -332,7 +340,7 @@ A finding qualifies for shared research when ALL four criteria are met:
 
 ### Integration with Idea Cards
 
-Shared research files are NOT linked in the idea frontmatter `research:` array (that stays for per-idea provenance). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it inline in the body with provenance: "(shared finding from [date] / [origin-idea])".
+Shared research files are NOT linked in the idea frontmatter `research:` array (that stays for per-idea provenance). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it inline in the body with the original source link AND provenance tag: "([Source Title](url); shared finding from [date] / [origin-idea])". The source link comes from the entry's `Source:` field; the provenance tag shows when it was captured and which idea originated it.
 
 ### Verification at /draft
 
