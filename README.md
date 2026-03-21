@@ -93,37 +93,37 @@ See `CLAUDE.sample.md` for the full configuration contract with placeholder valu
 The pipeline runs left to right: capture (external), then refine-seed, develop, draft, refine.
 
 ```
-/refine-seed authentic-assessment-grading
+/refine-seed foraging-intelligence
 ```
 Interprets the seed, drafts structured fields, surfaces related ideas, presents for your alignment.
 
 ```
-/develop authentic-assessment-grading
+/develop foraging-intelligence
 ```
 Researches and synthesizes into a TL;DR card with opportunity assessment and impact dimensions.
 
 ```
-/draft authentic-assessment-grading
+/draft foraging-intelligence
 ```
 Prompts for output format (strategy doc or product brief), creates a first draft in `Output/`.
 
 ```
-/refine authentic-assessment-grading
+/refine foraging-intelligence
 ```
 Iterates on the output document section-by-section until you approve it as complete.
 
 Enrichment agents run independently at any time:
 ```
-/edtech-sme authentic-assessment-grading
-/educator-sme authentic-assessment-grading
-/tam-estimate authentic-assessment-grading
-/cross-domain authentic-assessment-grading
-/divergent-thinking authentic-assessment-grading
+/edtech-sme foraging-intelligence
+/educator-sme foraging-intelligence
+/tam-estimate foraging-intelligence
+/cross-domain foraging-intelligence
+/divergent-thinking foraging-intelligence
 ```
 
 Push to Jira Product Discovery when the idea is mature:
 ```
-/jpd-push authentic-assessment-grading
+/jpd-push foraging-intelligence
 ```
 
 ## How It Works
