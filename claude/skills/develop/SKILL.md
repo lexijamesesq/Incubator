@@ -179,8 +179,8 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 - **Key finding:** {synthesis of NPS evidence or absence}
 
 ### Shared Research Baseline (within TTL)
-- {Finding} ({confidence level}) ([Source](url); shared finding from [date] / [origin-idea])
-- {Finding} ({confidence level}) ([Source](url); shared finding from [date] / [origin-idea])
+- {Finding} ({confidence level}) ([Source Title](url))
+- {Finding} ({confidence level}) ([Source Title](url))
 
 ---
 
