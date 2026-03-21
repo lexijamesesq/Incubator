@@ -36,19 +36,19 @@ cp CLAUDE.sample.md CLAUDE.md
 
 ### Core pipeline
 
+Stage transitions — the main path an idea takes from raw seed to finished document.
+
 | Artifact | Type | What it does |
 |----------|------|-------------|
 | `/refine-seed` | Skill | Interprets a raw seed's intent, drafts header fields, classifies capability-vs-experience framing, surfaces related ideas, and aligns with you before development |
-| `/develop` | Skill | Orchestrates research across strategy docs, market intelligence, and related ideas, then dispatches to the synthesis agent to produce a TL;DR card (Stage 1 to 2) |
-| `/develop-synthesis` | Skill + Agent | Strategic synthesis engine that transforms a seed + research handoff into a TL;DR card with opportunity assessment, research summary, and thought outline (runs on Opus) |
+| `/develop` | Skill | Orchestrates research across strategy docs, market intelligence, and cross-domain discovery, then dispatches to the synthesis agent to produce a TL;DR card (Stage 1 to 2) |
+| `/develop-synthesis` | Skill + Agent | Strategic synthesis engine dispatched by `/develop` — transforms a seed + research handoff into a TL;DR card with opportunity assessment, research summary, and thought outline (runs on Opus) |
 | `/draft` | Skill | Creates a first template-aligned output document (strategy doc or product brief) from a developed idea card (Stage 2 to 3) |
 | `/refine` | Skill | Iteratively refines an output document through section-by-section collaboration, voice alignment, and strategic realism checks (Stage 3 to 4 to 5) |
-| `/jpd-push` | Skill | Pushes a developed idea to Jira Product Discovery for stakeholder visibility, with re-push support |
-| `artifact-critic` | Agent | Checks TL;DR cards and output documents for structural conformance, voice conformance, and rating calibration (runs on Sonnet) |
 
-### Enrichment agents
+### Enrichment
 
-These add research artifacts to an idea without changing its stage. Invokable standalone or called by `/develop` during orchestration.
+Add research artifacts to an idea without changing its stage. Invokable standalone or called by `/develop` during orchestration.
 
 | Artifact | Type | What it does |
 |----------|------|-------------|
@@ -58,6 +58,18 @@ These add research artifacts to an idea without changing its stage. Invokable st
 | `/tam-estimate` | Skill + Agent | Produces defensible TAM/SAM/SOM estimates using top-down and bottom-up methodologies |
 | `/divergent-thinking` | Skill + Agent | Generates 3-5 unexpected, nonlinear connections by following structural pattern similarity across domains |
 | `/buildable-surface` | Skill + Agent | Detects principle-shaped ideas and generates distinct product approach candidates; no-ops on feature-shaped ideas |
+
+### Quality
+
+| Artifact | Type | What it does |
+|----------|------|-------------|
+| `artifact-critic` | Agent | Checks TL;DR cards and output documents for structural conformance, voice conformance, and rating calibration (runs on Sonnet) |
+
+### Publishing
+
+| Artifact | Type | What it does |
+|----------|------|-------------|
+| `/jpd-push` | Skill | Pushes a developed idea to Jira Product Discovery for stakeholder visibility, with re-push support |
 
 ### Reference documents
 
