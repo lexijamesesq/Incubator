@@ -340,7 +340,7 @@ A finding qualifies for shared research when ALL four criteria are met:
 
 ### Integration with Idea Cards
 
-Shared research files are NOT linked in the idea frontmatter `research:` array (that stays for per-idea provenance). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it inline in the body with the original source link AND provenance tag: "([Source Title](url); shared finding from [date] / [origin-idea])". The source link comes from the entry's `Source:` field; the provenance tag shows when it was captured and which idea originated it.
+Shared research files are NOT linked in the idea frontmatter `research:` array (that stays for per-idea provenance). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it with the original external source link from the entry's `Source:` field — the same format as any other Research Summary citation: `([Source Title](url))`. No internal file paths, no provenance tags. Provenance metadata (origin-idea, date-discovered) stays in the shared research entries and per-idea research artifacts.
 
 ### Verification at /draft
 
