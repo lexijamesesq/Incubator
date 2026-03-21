@@ -102,6 +102,8 @@ See `CLAUDE.sample.md` for the full configuration contract with placeholder valu
 
 ## Usage
 
+### Core pipeline
+
 The pipeline runs left to right: capture (external), then refine-seed, develop, draft, refine.
 
 ```
@@ -124,16 +126,23 @@ Prompts for output format (strategy doc or product brief), creates a first draft
 ```
 Iterates on the output document section-by-section until you approve it as complete.
 
-Enrichment agents run independently at any time:
+### Enrichment
+
+Run independently at any time to add research without changing stage:
+
 ```
 /edtech-sme foraging-intelligence
 /educator-sme foraging-intelligence
 /tam-estimate foraging-intelligence
 /cross-domain foraging-intelligence
 /divergent-thinking foraging-intelligence
+/buildable-surface foraging-intelligence
 ```
 
+### Publishing
+
 Push to Jira Product Discovery when the idea is mature:
+
 ```
 /jpd-push foraging-intelligence
 ```
