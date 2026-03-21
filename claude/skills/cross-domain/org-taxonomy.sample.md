@@ -2,7 +2,7 @@
 
 Reference file for cross-domain discovery. Describes your JPD project's organizational taxonomy so the LLM can evaluate functional overlap from summary + structural metadata.
 
-Copy this file to the filename referenced in your /cross-domain skill (default: `pm2025-structural-reference.md`) and fill in your organization's structure.
+Copy this file to `org-structural-reference.md` in the same directory and fill in your organization's structure.
 
 **Update cadence:** When org changes are noticed (team renames, new squads, domain restructuring).
 
