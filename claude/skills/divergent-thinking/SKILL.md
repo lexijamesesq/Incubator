@@ -27,7 +27,7 @@ This is an enrichment agent, not a stage transition workflow. It does not change
 
 - Required argument: the name of an idea file in `Ideas/`
 - Works on ideas at any stage (seed, developing, drafting, refining)
-- Examples: `/divergent-thinking assessment-marketplace`, `/divergent-thinking authentic-assessment`
+- Examples: `/divergent-thinking foraging-intelligence`, `/divergent-thinking cache-optimization`
 
 ## Arguments
 

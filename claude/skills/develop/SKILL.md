@@ -28,7 +28,7 @@ Transforms a seed-stage idea into a researched, assessed TL;DR nugget. Researche
 
 - Required argument: the name of a seed-stage idea file in `Ideas/`
 - If no argument provided: list available seed-stage ideas and ask the user to pick
-- Examples: `/develop assessment-marketplace`, `/develop authentic-assessment`
+- Examples: `/develop foraging-intelligence`, `/develop cache-optimization`
 
 ## Arguments
 
@@ -255,7 +255,7 @@ If the agent reports insufficient research or a stop condition, surface it to th
 After synthesis completes, invoke the buildable surface enrichment agent to check whether the Thought Outline is principle-shaped or feature-shaped.
 
 **Invoke via Skill tool:**
-Use the Skill tool with skill name `buildable-surface`, passing the idea name as the argument (e.g., `time-constraints-scalability`).
+Use the Skill tool with skill name `buildable-surface`, passing the idea name as the argument (e.g., `foraging-intelligence`).
 
 The buildable-surface skill runs in an isolated agent context. It reads the idea card and research artifacts, applies a three-signal detection heuristic, and either:
 - **No-ops** (feature-shaped) — no section added, proceed to Step 6
@@ -300,7 +300,7 @@ Assessment question: "If someone reads only this title and the Core insight sent
 After writing the card to file, invoke the artifact critic to check structural and voice conformance. This runs in a forked, isolated context to avoid same-pass confirmation bias.
 
 **Invoke via Skill tool:**
-Use the Skill tool with skill name `artifact-critic`, passing the completed idea card file path as the argument (e.g., `Ideas/authentic-assessment-rubric-design.md`).
+Use the Skill tool with skill name `artifact-critic`, passing the completed idea card file path as the argument (e.g., `Ideas/foraging-intelligence.md`).
 
 The artifact-critic skill runs in the artifact-critic agent's isolated context — separate from this session — using only Read, Glob, and Grep. It returns a deviation report.
 
