@@ -1,0 +1,37 @@
+# === Created Content ===
+Ideas/*
+!Ideas/sample-*.md
+Output/
+Research/
+Archive/
+
+# === Operational State ===
+backlog.json
+incubator-backlog-archive.json
+incubator-progress.md
+Context/
+Eval/
+Knowledge/
+
+# === Private Configuration ===
+CLAUDE.md
+claude/settings.local.json
+jira-config.md
+claude/skills/cross-domain/pm2025-structural-reference.md
+
+# === Real files (samples ship instead) ===
+Examples/developing-card.md
+persona.md
+Templates/strategy-document-template.md
+Templates/product-brief-template-v2.md
+Templates/review-templates.md
+
+# === Transient markers ===
+.github-prep-status.json
+
+# === Local symlink (consumers rename claude/ to .claude/) ===
+.claude
+
+# === System files ===
+.DS_Store
+**/.DS_Store
