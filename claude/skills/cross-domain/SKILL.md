@@ -72,7 +72,7 @@ Read `jira-config.md` from the Incubator project root (`Professional/Incubator/j
 Read in parallel:
 
 1. **Idea file** at the resolved path — full content including frontmatter and body
-2. **Organizational structural reference** — `.claude/skills/cross-domain/pm2025-structural-reference.md`
+2. **Organizational structural reference** — `.claude/skills/cross-domain/org-structural-reference.md`
 
 Extract from the idea file:
 - **Core insight** — the central idea

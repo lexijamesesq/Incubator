@@ -30,7 +30,7 @@ cp CLAUDE.sample.md CLAUDE.md
 |-------|----------|-------------|
 | `metrics.nps_product_a`, `metrics.nps_product_b` | CLAUDE.md > Configuration | Paths to NPS analysis directories for your products |
 | `jira-config.md` | Project root | Copy from `jira-config.sample.md`, fill in your Atlassian cloud ID, project key, field IDs, and option IDs for JPD integration |
-| `claude/skills/cross-domain/pm2025-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
+| `claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
 
 ## What's Included
 
