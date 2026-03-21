@@ -27,7 +27,7 @@ This is an enrichment agent, not a stage transition workflow. It does not change
 
 - Required argument: the name of a developing-or-later idea file in `Ideas/`
 - Works on ideas at developing, drafting, refining, or complete stages (must have a Thought Outline)
-- Examples: `/buildable-surface time-constraints-scalability`, `/buildable-surface educator-transition`
+- Examples: `/buildable-surface foraging-intelligence`, `/buildable-surface cache-optimization`
 
 ## Arguments
 

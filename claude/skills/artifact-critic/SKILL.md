@@ -20,7 +20,7 @@ Check the specified artifact against structural, voice, and rating calibration c
 /artifact-critic [idea-file-path]
 ```
 
-- Required argument: path to the idea card file to check (e.g., `Ideas/authentic-assessment-rubric-design.md`)
+- Required argument: path to the idea card file to check (e.g., `Ideas/foraging-intelligence.md`)
 - If no argument provided: report "No artifact path provided. Usage: /artifact-critic [idea-file-path]" and exit.
 
 ## Execution

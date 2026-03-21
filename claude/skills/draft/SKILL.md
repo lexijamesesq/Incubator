@@ -27,7 +27,7 @@ Transforms a developed idea (Stage 2, TL;DR complete) into a first template-alig
 
 - Required argument: the name of a developing-stage idea file in `Ideas/`
 - If no argument provided: list available developing-stage ideas and ask the user to pick
-- Examples: `/draft assessment-marketplace`, `/draft authentic-assessment`
+- Examples: `/draft foraging-intelligence`, `/draft cache-optimization`
 
 ## Arguments
 
