@@ -38,27 +38,60 @@ The agent runs self-critique before presenting. These templates evaluate what on
 
 ---
 
-## Stage 4 → 5: Refining → Complete
+## Stage 3 → 4: First Draft → Refining
 
-**Question to answer:** Is this document ready to share with stakeholders?
+**Question to answer:** Is this draft a viable foundation to refine, or does it need structural rework?
+
+### Gate Checklist
+
+- [ ] **All template sections populated.** No empty sections or placeholder-only content. (Agent self-critique should have caught this — if it didn't, flag the gap.)
+- [ ] **Thesis/framing holds.** The document's core argument is recognizable from the TL;DR card. (If not: has the idea evolved? Update the card if direction shifted, or re-draft if the frame was wrong.)
+- [ ] **Voice is in the neighborhood.** Reads more like me than a consultant. Doesn't need to be perfect — that's what refining is for — but the bones should feel right.
+- [ ] **No fabricated claims.** Nothing stated as fact that I know to be wrong or unverifiable. (Agent should flag AI limitations, but only the human can catch domain-specific fabrication.)
+- [ ] **Stakeholder-ready structure.** If someone read just the headings and first sentences, they'd get the gist. (If not: structural issues need fixing before line-level refinement.)
+
+### Quality Dimensions
+
+| Dimension | Weak | Adequate | Strong |
+|-----------|------|----------|--------|
+| **Narrative flow** | Sections feel disconnected, reads like a filled-in template | Logical progression, some rough transitions | Reads as a coherent argument from start to finish |
+| **Strategic depth** | Surface-level claims without mechanism | Claims supported with reasoning, some thin spots | Every claim grounded in evidence or clearly flagged as assumption |
+| **Specificity** | Abstract and generic, could apply to any company | Mix of specific and general | Named people, products, numbers, examples throughout |
+| **Actionability** | Reader wouldn't know what to do next | General direction clear | Reader could take concrete next steps after reading |
+| **Completeness** | Major gaps or thin sections | Most sections substantive, a few need work | Every section pulls its weight |
+
+### Decision
+
+- **Advance to refining** — Gate passes. Note which quality dimensions need most attention during refinement.
+- **Re-draft section(s)** — Structural issues in specific sections. List which ones and why.
+- **Re-draft entirely** — Frame is wrong or narrative doesn't hold. Revisit TL;DR card first.
+
+---
+
+## Stage 4 → 5: Refined → Complete
+
+**Question to answer:** Would I put my name on this and send it to stakeholders?
 
 ### Gate Checklist
 
 - [ ] **I'd send this to my VP.** Not hypothetically — literally, I would share this document with leadership as representative of my strategic thinking.
 - [ ] **No unresolved markers.** No [PLACEHOLDER], [NEEDS DATA], [ASSUMPTION] tags remain, or any that remain are explicitly acceptable.
 - [ ] **Open Questions are genuine next steps.** They read as "here's what we explore next" not "here's what we should have figured out before writing this."
+- [ ] **Voice is mine.** If someone read this without attribution, they'd guess it came from me. Not a corporate strategy document. Not an AI document.
+- [ ] **Claims I can defend.** If challenged on any assertion, I could explain my reasoning or point to the evidence.
 
 ### Quality Dimensions
 
 | Dimension | Weak | Adequate | Strong |
 |-----------|------|----------|--------|
-| **Strategic coherence** | Sections feel disconnected | Logical flow, arguments build | Single compelling narrative from diagnosis to action |
-| **Voice authenticity** | Generic strategy document | Recognizably mine in places | Consistently sounds like how I think and talk |
-| **Actionability** | "So what?" not answered | Clear direction for teams | Teams could start planning from this document |
-| **Honesty** | Oversells or avoids hard truths | Acknowledges limitations | Confronts the hardest strategic questions directly |
+| **Persuasiveness** | Informative but not compelling | Makes a reasonable case | Reader finishes thinking "we should do this" |
+| **Strategic realism** | Overpromises or ignores constraints | Balanced, acknowledges trade-offs | Anticipates objections and addresses them |
+| **Executive readability** | Requires context to understand | Self-contained, could stand alone | Scannable — busy executive gets the point in 2 minutes |
+| **Portfolio coherence** | Disconnected from other work | References related priorities | Clearly positioned within the strategic landscape |
+| **Longevity** | Would feel stale in a month | Useful for a quarter or two | Frames a direction that holds for 6-12+ months |
 
 ### Decision
 
 - **Mark complete** — Gate passes, quality is adequate+. Move to Stage 5.
-- **Continue refining** — Specify what needs work and the target quality level.
-- **Restructure** — The document's approach isn't working. Major revision needed.
+- **One more pass** — Almost there. Specify what needs polish.
+- **Not ready** — Significant issues surfaced. Back to refining with specific feedback.

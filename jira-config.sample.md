@@ -30,7 +30,7 @@ These are derived from the idea card content. Update field IDs to match your Jir
 |---|---|---|
 | Summary | summary | Idea title (from H2 heading) |
 | Description | description | TL;DR body restructured into JPD headings |
-| Executive Summary | customfield_XXXXX | Core insight sentence (plain text) |
+| Executive Summary | customfield_XXXXX | Core insight sentence (plain text, max 255 characters) |
 | AI Feature | customfield_XXXXX | Set to `1` if applicable, omit otherwise |
 | Domain Objective | customfield_XXXXX | Multi-checkbox, mapped from impact dimensions |
 | Labels | labels | Array of theme values from frontmatter `themes[]` |

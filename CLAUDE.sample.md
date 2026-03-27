@@ -63,6 +63,14 @@ Incubator/
 
 ---
 
+## Reference Material
+
+For stage model, architecture, frontmatter schema, templates, workflow, and research protocol, see `incubator-reference.md`. Load it when doing /develop, /draft, /refine, or any stage transitions.
+
+All outputs from Stage 2 onward follow `persona.md`.
+
+---
+
 ## Core Documents
 
 **For any incubator work:**
@@ -165,3 +173,10 @@ Before using this system, you must customize:
 **Location:** backlog.json
 **Schema:** Minimal (id, title, description, status, source, created, context_doc)
 **Context:** Context/
+
+### Notes
+**Seed intake (Stage 0→1):** Items classified as strategy seeds by the inbox router are delivered here as seed files in `Ideas/`. Seeds require the full frontmatter schema and seed template defined in `incubator-reference.md` (sections: Frontmatter Schema, Seed Template). The router reads this contract and conforms — it does not carry its own copy of the schema.
+
+**Signal-extracted seeds:** Ad-hoc captures with strategic signals also arrive as seeds via the same contract, with `source: slack`. Detection and extraction logic is the router's responsibility; the resulting file must conform to this project's seed contract.
+
+**What the Incubator does NOT define:** Classification taxonomy, signal detection criteria, Origin Handoff Contract provenance rules, and processing order. Those are router responsibilities defined in your inbox processing system's router spec.
