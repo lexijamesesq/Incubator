@@ -113,44 +113,76 @@ Check the seed file for refinement indicators:
 
 ### Step 4: Research
 
-Conduct three research streams sequentially. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
+Conduct five research streams. Streams B-E invoke specialized agents; Stream A is orchestrator-executed. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
 
-**Stream A: Internal Strategic Context**
+**Phase 1: Agent Research (sequential — platform constraint)**
+
+Invoke these five skills in order. Each runs in a forked context, produces a research artifact at `Research/{idea-name}/`, and may write qualifying findings to shared research files. No agent depends on another's output.
+
+1. **`/divergent-thinking {idea-name}`** (Stream E: Divergent Discovery)
+   Produces structural analogies and identifies "the disruptive one." Reads ONLY the idea file — deliberately context-starved. Fastest agent (no web searches). Produces `Research/{idea-name}/divergent-angles.md`.
+
+2. **`/educator-sme {idea-name}`** (Stream D: Educator Perspective)
+   Evaluates adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Reads `customer-evidence.md` as baseline. May write qualifying findings to `customer-evidence.md`. Produces `Research/{idea-name}/educator-evaluation.md`.
+
+3. **`/edtech-sme {idea-name}`** (Stream B: Market Intelligence — Competitive)
+   Competitive positioning, market fit, technology risk, go-to-market, strategic timing. Reads `competitive-landscape.md` as baseline. Writes qualifying findings to `competitive-landscape.md`. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+
+4. **`/tam-estimate {idea-name}`** (Stream B: Market Intelligence — Sizing)
+   TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Reads `market-sizing.md` as baseline. Writes qualifying findings to `market-sizing.md`. Produces `Research/{idea-name}/tam-estimate.md`.
+
+5. **`/cross-domain {idea-name}`** (Stream C: Cross-Domain Discovery)
+   Queries JPD for ideas from other product domains with functional overlap. Classifies signals as Direct overlap, Enabler/dependency, or Convergence. Writes `Research/{idea-name}/cross-domain-signals.md`.
+
+**Agent failure handling:** If any agent fails (timeout, stop rule, error), note the failure reason and continue to the next agent. No single agent blocks the pipeline. See error handling table for per-agent fallback behavior.
+
+**Phase 2: Refresh Shared Research Baseline**
+
+After all agents complete, re-read the shared research files:
+- `Research/shared/assessments/customer-evidence.md`
+- `Research/shared/assessments/competitive-landscape.md`
+- `Research/shared/assessments/market-sizing.md`
+
+Agents may have written new entries during Phase 1. This refresh ensures Phase 3 works from the latest state.
+
+**Phase 3: Stream A — Internal Strategic Context (orchestrator)**
+
+No agent covers this — strategy docs, NPS, and OKRs require internal file access.
 
 - Grep the product strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy`) for the seed's theme keywords and domain terms. Extract relevant passages. Never load the full file.
 - Scan the seed file's `### Original Capture` section for strategic signals, connections, or context that didn't make it into the seed's structured fields. Raw captures often contain intuitive connections and half-formed insights that inform research direction.
 - Grep the design strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.design_strategy`) for relevant design priorities.
 - Reference the OKRs loaded in Step 1 — identify which 2026 goals this idea would advance.
 - **NPS customer signal check:** For the relevant product(s), read the **Top Pain Points** and **The Signal** sections from the 2-3 most recent monthly analysis files in the NPS analysis directories (paths configured in CLAUDE.md under Configuration > External References > `metrics.nps_product_a` and `metrics.nps_product_b`). These sections contain the concise pain points and emerging patterns. If a pain point matches the seed's problem space and deeper evidence is needed, read the **3 Things That Matter** section from that same file for verbatim quotes and trend data. Do not read raw CSV data or full analysis files. NPS findings directly inform the Customer Sentiment dimension rating.
-- **Shared research check:** Review entries from `customer-evidence.md` loaded in Step 1 for findings relevant to this idea's problem space. Note which shared entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). Shared customer evidence findings supplement, not replace, the NPS and strategy doc checks above.
+- **Shared research check:** Review the refreshed shared research files for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any entries agents wrote during Phase 1.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 
-**Stream B: Market Intelligence**
+**Phase 4: Stream B Fallback (orchestrator — only if edtech-sme failed)**
 
-- **Shared research check:** Review entries from `competitive-landscape.md` and `market-sizing.md` loaded in Step 1. Use within-TTL entries as the starting baseline — focus web searches on verifying, extending, or filling gaps rather than rediscovering known landscape. Past-TTL entries are directional only — reverify before relying on them.
+If `/edtech-sme` failed in Phase 1, execute fallback market intelligence research:
 - Use `WebSearch` for competitor landscape, market trends, technology enablers, and customer signals.
 - Execute 3-5 targeted searches derived from the seed's themes and core insight.
 - Capture findings with source URLs.
-- Target: named competitors, specific capabilities, market sizing signals, technology shifts.
+- Target: named competitors, specific capabilities, technology shifts.
 
-**Stream C: Cross-Domain Discovery**
+This preserves current Stream B quality when the agent is unavailable. If edtech-sme succeeded, skip this phase entirely — the agent's output is the market intelligence.
 
-Invoke `/cross-domain {idea-name}` to query the JPD project for ideas from other product domains with functional overlap. This runs the standalone cross-domain skill, which:
-- Queries across all statuses and brands (excluding your own brand per jira-config.md)
-- Classifies signals as Direct overlap, Enabler/dependency, or Convergence
-- Detects convergence groups (multiple teams solving the same problem)
-- Writes a research artifact to `Research/{idea-name}/cross-domain-signals.md`
-- Updates the idea's `research:` frontmatter array
+**Phase 5: Read Agent Artifacts**
 
-Incorporate the 1-3 strongest signals into the synthesis handoff (Step 4.5). Include inline issue key links for traceability.
+Read all successfully produced agent artifacts to prepare for handoff creation:
+- `Research/{idea-name}/edtech-market-analysis.md` (if edtech-sme succeeded)
+- `Research/{idea-name}/tam-estimate.md` (if tam-estimate succeeded)
+- `Research/{idea-name}/educator-evaluation.md` (if educator-sme succeeded)
+- `Research/{idea-name}/divergent-angles.md` (if divergent-thinking succeeded)
+- `Research/{idea-name}/cross-domain-signals.md` (if cross-domain succeeded)
 
-If `/cross-domain` reports "could not check" (MCP auth/timeout), note "Cross-domain discovery unavailable — {reason}" in the handoff and continue. Do not block development on MCP availability.
+Extract key findings from each for the handoff. For agent artifacts, preserve specificity — copy key sections verbatim (competitor tables, TAM summary tables, adoption assessments) rather than summarizing. The synthesis agent depends on this specificity.
 
 ### Step 4.5: Create Synthesis Handoff
 
-After research completes, create the handoff artifact at `Research/{idea-name}/synthesis-handoff.md`. Create the directory if it does not exist.
+After all research phases complete, create the handoff artifact at `Research/{idea-name}/synthesis-handoff.md`. Create the directory if it does not exist.
 
-This artifact is the curated research input for the synthesis agent. Preserve specific data points, named capabilities, URLs, issue keys, and connection strengths — the synthesis agent depends on this specificity.
+This artifact is the curated research input for the synthesis agent. Preserve specific data points, named capabilities, URLs, issue keys, and connection strengths — the synthesis agent depends on this specificity. For agent-produced sections, extract key sections verbatim from the artifacts rather than summarizing.
 
 ```markdown
 # Research Handoff: {idea-name}
@@ -184,18 +216,72 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 
 ---
 
-## Market Intelligence (Stream B)
+## Market Intelligence (Stream B — EdTech SME)
 
-### {Topic Cluster}
-- {Finding with source URL}
-- {Finding with source URL}
+{If edtech-sme succeeded: extract verbatim from edtech-market-analysis.md}
+{If edtech-sme failed: populate from fallback web searches using the format below}
 
-### Named Competitors
-- **{Competitor} ({Parent}):** {capabilities and gaps} ([Source](url))
-- **{Competitor}:** {capabilities and gaps} ([Source](url))
+### Market Fit: {Strong/Moderate/Weak}
+{One-sentence verdict + 2-4 sentences of supporting analysis}
 
-### {Additional Topic Cluster}
-- {Findings}
+### Competitive Positioning
+| Competitor | Relevant Capability | Comparison |
+|------------|---------------------|------------|
+| {Name} | {What they do} | {Differentiation / Parity / Behind} |
+
+**Positioning narrative:** {2-3 sentences}
+
+### Technology Risk: {Low/Medium/High}
+{2-3 sentences on maturity, integration requirements, build/buy considerations}
+
+### Strategic Timing
+{2-3 sentences on market window, urgency signals}
+
+{If edtech-sme failed, note: "Market intelligence from fallback web searches — EdTech SME unavailable: {reason}"}
+
+---
+
+## Market Sizing (Stream B — TAM Estimate)
+
+{If tam-estimate succeeded: extract from tam-estimate.md}
+{If tam-estimate failed: note absence}
+
+### TAM / SAM / SOM
+| Level | Moderate Estimate | Confidence |
+|-------|-------------------|------------|
+| TAM | ${X} | {High/Med/Low} |
+| SAM | ${X} | {High/Med/Low} |
+| SOM | ${X} | {High/Med/Low} |
+
+### Key Assumptions
+- {Assumption 1 with sensitivity impact}
+- {Assumption 2 with sensitivity impact}
+
+### Revenue-Potential Signal: {Low/Med/High}
+{One sentence connecting TAM to the idea's revenue path}
+
+{If tam-estimate failed: "Market sizing unavailable — {reason}. Revenue-potential dimension lacks quantitative evidence."}
+
+---
+
+## Educator Perspective (Stream D)
+
+{If educator-sme succeeded: extract from educator-evaluation.md}
+{If educator-sme failed: note absence}
+
+### Adoption Assessment: {High/Medium/Low}
+{One-sentence verdict}
+
+### Pain Point Validity
+{2-3 sentences on problem reality from educator daily experience}
+
+### Adoption Barriers
+{Specific friction points — concrete workflow realities}
+
+### Champion Scenario
+{One concrete scenario: role, context, what happens, outcome}
+
+{If educator-sme failed: "Educator perspective unavailable — {reason}. Customer-sentiment and user-experience dimensions rely on NPS and shared research only."}
 
 ---
 
@@ -208,17 +294,34 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 ### Convergence Group
 {Description of convergence pattern if detected}
 
+{If cross-domain failed: "Cross-domain discovery unavailable — {reason}."}
+
+---
+
+## Divergent Reframing (Stream E)
+
+{If divergent-thinking succeeded: include the disruptive angle as a reframing candidate}
+{If divergent-thinking failed: omit this section}
+
+### The Disruptive Angle: {title}
+{The connection — 2-3 sentences from the divergent-angles.md artifact}
+{What it opens up — 1-2 sentences}
+
+*This is a reframing candidate, not evidence. The synthesis agent decides whether it strengthens the strategic compound.*
+
 ---
 
 ## Research Synthesis
 
 **Strategic connection:** {Strong/Medium/Weak}. {1-2 sentence summary of why.}
 
-**Market validation:** {Strong/Medium/Weak}. {1-2 sentence summary.}
+**Market validation:** {Strong/Medium/Weak}. {1-2 sentence summary. Reference edtech-sme market fit when available.}
 
-**Customer evidence:** {Strong/Medium/Weak}. {1-2 sentence summary. Note latent vs. articulated demand.}
+**Customer evidence:** {Strong/Medium/Weak}. {1-2 sentence summary. Note latent vs. articulated demand. Reference educator-sme adoption assessment when available.}
 
-**Competitive gap:** {Confirmed/Partial/Unconfirmed}. {1-2 sentence description of the gap.}
+**Competitive gap:** {Confirmed/Partial/Unconfirmed}. {1-2 sentence description. Reference edtech-sme competitive positioning when available.}
+
+**Revenue signal:** {Strong/Medium/Weak}. {1-2 sentence summary. Reference tam-estimate when available.}
 
 ---
 
@@ -235,7 +338,7 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 - Strategic connection: {from their card}
 ```
 
-Populate from Step 4 research findings. Sections with no findings should note the absence explicitly (e.g., "Zero mentions of {topic} in NPS data" or "Cross-domain discovery unavailable — MCP timeout").
+Populate from Step 4 research findings. Sections with no findings should note the absence explicitly (e.g., "Zero mentions of {topic} in NPS data" or "Cross-domain discovery unavailable — MCP timeout"). Agent sections that failed should include the failure note per the template above.
 
 ### Step 5: Strategic Synthesis
 
@@ -325,20 +428,26 @@ Fix all issues directly in the file before proceeding.
 
 **Human review awareness:** After presentation, the human evaluates using the Stage 2→3 review template (`Templates/review-templates.md`). That template focuses on: core framing accuracy, impact dimension credibility, strategic connection reality, output format readiness, and blocking unknowns. Anticipate these checks — if you know a dimension is shaky, say so in your confidence assessment rather than letting the human discover it.
 
-### Step 8: Create Research Artifact
+### Step 8: Create Research Artifact and Verify Frontmatter
 
-The synthesis handoff was created in Step 4.5. This step creates the full persistent research artifact that includes search queries and raw findings too detailed for the handoff.
+The synthesis handoff was created in Step 4.5. This step creates the full persistent research artifact and verifies all research paths are in frontmatter.
 
 1. Create directory `Research/{idea-name}/` if it does not exist
 2. Write `Research/{idea-name}/development-research.md` containing:
-   - Search queries executed (both Grep patterns and WebSearch queries)
+   - Search queries executed (both Grep patterns and WebSearch queries from Stream A and any fallback)
+   - Agent invocation results (which succeeded, which failed, failure reasons)
    - Raw findings with sources (URLs, file paths)
    - Synthesis notes connecting findings to the idea
    - Date of research
    Both files persist — `synthesis-handoff.md` is the curated input to the synthesis agent, `development-research.md` is the full research trail for downstream stages.
-3. Update the idea file frontmatter `research:` array with paths to both:
-   - `Research/{idea-name}/synthesis-handoff.md`
-   - `Research/{idea-name}/development-research.md`
+3. **Frontmatter verification:** Read the idea file's `research:` array. Each agent that succeeded should have already appended its artifact path during its run. Verify all expected paths are present and add any that are missing:
+   - `Research/{idea-name}/synthesis-handoff.md` (orchestrator — always)
+   - `Research/{idea-name}/development-research.md` (orchestrator — always)
+   - `Research/{idea-name}/edtech-market-analysis.md` (if edtech-sme succeeded)
+   - `Research/{idea-name}/tam-estimate.md` (if tam-estimate succeeded)
+   - `Research/{idea-name}/educator-evaluation.md` (if educator-sme succeeded)
+   - `Research/{idea-name}/divergent-angles.md` (if divergent-thinking succeeded)
+   - `Research/{idea-name}/cross-domain-signals.md` (if cross-domain succeeded)
 
 ### Step 9: Present for Review
 
@@ -348,9 +457,12 @@ Present the completed development to the user with:
 Development complete: {idea-name}
 
 **Research summary:**
-- Internal: {N} strategic connections found ({direct/adjacent/indirect breakdown})
-- Market: {N} findings across {N} searches
-- Atlassian: {skipped | manual lookup recommended for {reference}}
+- Stream A (Internal): {N} strategic connections found ({direct/adjacent/indirect breakdown})
+- Stream B (EdTech SME): {succeeded — market fit {verdict}, {N} competitors positioned | failed — fallback web searches used}
+- Stream B (TAM): {succeeded — TAM ${X} moderate, confidence {level} | failed — market sizing unavailable}
+- Stream C (Cross-domain): {N signals | unavailable — {reason}}
+- Stream D (Educator): {succeeded — adoption {verdict} | failed — {reason}}
+- Stream E (Divergent): {succeeded — disruptive angle: {title} | failed — {reason}}
 
 **Related seeds:** {list or "none found"}
 
@@ -422,8 +534,12 @@ When stopping, state explicitly: what was found, what is missing, and what would
 | Missing required frontmatter fields | Report specific missing fields, exit |
 | Missing required body sections (core insight, source, strategic connection) | Report specific missing sections, exit |
 | Strategy doc Grep returns no results | Note "No matches found in {doc}" as a finding, continue to next stream |
-| Web search returns no relevant results | Note "No relevant market intelligence found for {query}" as a finding, continue |
-| All research streams empty (zero findings across all three) | Fire stop rule — no strategic foundation. Report and exit. |
+| `/edtech-sme` fails (any reason) | Orchestrator falls back to 3-5 web searches for competitive landscape (current Stream B behavior). Note in handoff: "Market intelligence from fallback web searches — EdTech SME unavailable: {reason}." |
+| `/tam-estimate` fails (any reason) | Note in handoff: "Market sizing unavailable — {reason}. Revenue-potential dimension lacks quantitative evidence." Continue. |
+| `/educator-sme` fails (any reason) | Note in handoff: "Educator perspective unavailable — {reason}." Customer-sentiment and user-experience rely on NPS and shared research only. Continue. |
+| `/divergent-thinking` fails (any reason) | Omit Divergent Reframing section from handoff. Continue. |
+| `/cross-domain` fails (MCP auth/timeout) | Note "Cross-domain discovery unavailable — {reason}" in handoff. Continue. |
+| All research streams empty (zero findings across all streams) | Fire stop rule — no strategic foundation. Report and exit. |
 | Seed file has malformed frontmatter | Report parsing issue with specifics, exit |
 | Related seed has malformed frontmatter | Log under "Index Issues", continue matching other seeds |
 | Synthesis agent reports insufficient research | Surface the agent's assessment to the user, halt |
