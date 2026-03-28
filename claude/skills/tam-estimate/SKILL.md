@@ -190,9 +190,8 @@ Compare top-down and bottom-up results and produce a final estimate range.
 
 ### Step 6: Write Research Artifact
 
-1. Create directory `Research/{idea-name}/` if it does not exist (use `Bash` to check and `mkdir -p`)
-2. Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
-3. Write `Research/{idea-name}/tam-estimate.md` with the following structure:
+1. Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
+2. Write `Research/{idea-name}/tam-estimate.md` using the Write tool (which auto-creates intermediate directories). Use the following structure:
 
 ```markdown
 ---
