@@ -41,10 +41,16 @@ Stage transitions — the main path an idea takes from raw seed to finished docu
 | Artifact | Type | What it does |
 |----------|------|-------------|
 | `/refine-seed` | Skill | Interprets a raw seed's intent, drafts header fields, classifies capability-vs-experience framing, surfaces related ideas, and aligns with you before development |
-| `/develop` | Skill | Orchestrates research across strategy docs, market intelligence, and cross-domain discovery, then dispatches to the synthesis agent to produce a TL;DR card (Stage 1 to 2) |
+| `/develop` | Skill | Orchestrates research across five streams — internal strategy context (orchestrator), competitive positioning (edtech-sme), market sizing (tam-estimate), educator perspective (educator-sme), divergent reframing (divergent-thinking), and cross-domain discovery — then dispatches to the synthesis agent to produce a TL;DR card (Stage 1 to 2) |
 | `/develop-synthesis` | Skill + Agent | Strategic synthesis engine dispatched by `/develop` — transforms a seed + research handoff into a TL;DR card with opportunity assessment, research summary, and thought outline (runs on Opus) |
 | `/draft` | Skill | Creates a first template-aligned output document (strategy doc or product brief) from a developed idea card (Stage 2 to 3) |
 | `/refine` | Skill | Iteratively refines an output document through section-by-section collaboration, voice alignment, and strategic realism checks (Stage 3 to 4 to 5) |
+
+### Utilities
+
+| Artifact | Type | What it does |
+|----------|------|-------------|
+| `/revert-to-seed` | Skill | Reverts a developing-stage card to seed stage for re-development — preserves identity frontmatter and Original Capture, clears research artifacts, and runs `/refine-seed` with the developed header fields as autonomous direction confirmation |
 
 ### Enrichment
 
