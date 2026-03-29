@@ -82,31 +82,53 @@ Extract from the idea file:
 - **Problem it addresses / Who cares** — if present (developing+ stage)
 - **Strategic connection** — if present
 
-### Phase 1: Broad Retrieve
+### Phase 1: Status-Partitioned Retrieve
 
-Fetch all JPD ideas across all statuses with structural metadata only (no descriptions).
+Fetch all JPD ideas with structural metadata only (no descriptions). Use **status-partitioned queries** — one query per status — to avoid the 100-item-per-query ceiling that causes items to silently fall off the retrieval window.
+
+**Why partitioned:** The MCP tool caps responses at 100 items and does not return pagination tokens. A single `ORDER BY updated DESC` query loses older-but-relevant items when the project exceeds 100 items. Status partitioning ensures active statuses (Experimentation, GTM, Opportunity Identification) — where the highest-value signals live — get complete coverage even as the project grows.
+
+Run these 5 queries (sequentially — MCP calls cannot be parallelized):
 
 ```
+// Query 1: Active development (highest-value signals)
 mcp__atlassian__searchJiraIssuesUsingJql(
     cloudId={Cloud ID from jira-config.md > Connection},
-    jql={JQL template from jira-config.md > Cross-Domain Query},
+    jql='project = {project key} AND status = "2 - Experimentation" ORDER BY updated DESC',
     fields=["summary", "status",
-            {Product Brand field ID from jira-config.md > Static Field Values},
-            {Product Domain field ID from jira-config.md > Static Field Values},
-            {Squad field ID from jira-config.md > Static Field Values},
-            {Product Surface Area field ID from jira-config.md > Static Field Values},
-            {Quarter Active field ID from jira-config.md > Static Field Values}],
+            {Product Brand field ID}, {Product Domain field ID},
+            {Squad field ID}, {Product Surface Area field ID},
+            {Quarter Active field ID}],
     maxResults=100,
     responseContentFormat="markdown"
 )
+
+// Query 2: Shipping imminently
+jql='project = {project key} AND status = "3 - GTM" ORDER BY updated DESC'
+
+// Query 3: Planned/explored
+jql='project = {project key} AND status = "1 - Opportunity Identification" ORDER BY updated DESC'
+
+// Query 4: Already shipped (strongest signal weight — leverage or duplication)
+jql='project = {project key} AND status = "Done" ORDER BY updated DESC'
+
+// Query 5: Queued (weakest signal weight)
+jql='project = {project key} AND status = "Backlog" ORDER BY updated DESC'
 ```
 
-**Error handling at this phase:**
-- If MCP tools are unavailable or return auth error: Stop. Output: "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run."
-- If MCP call times out: Stop. Output: "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection."
-- If query returns 0 results: Stop. Output: "Warning: JPD query returned 0 results. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated."
+All queries use the same `fields` array and `maxResults=100`. Field IDs come from `jira-config.md > Static Field Values`.
 
-**Pagination:** If the query returns exactly 100 results, issue a second query using `nextPageToken` to retrieve the next page. Stop at 200 — diminishing returns beyond that. Record total retrieved count.
+**Merge results:** Combine all nodes into a single list. No deduplication needed — status partitions are mutually exclusive.
+
+**Overflow detection:** If any individual query returns exactly 100 results, note it in the retrieval stats footer (e.g., "Done partition truncated at 100"). This is informational — the skill proceeds with what was retrieved. Active statuses (Experimentation, GTM, Opportunity Identification) are unlikely to overflow; Done and Backlog may.
+
+**Error handling at this phase:**
+- If MCP tools are unavailable or return auth error on the first query: Stop. Output: "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run."
+- If MCP call times out on any query: Stop. Output: "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection."
+- If ALL queries return 0 results combined: Stop. Output: "Warning: JPD queries returned 0 results across all statuses. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated."
+- If some queries succeed and others fail: Continue with partial results. Note failed partitions in the retrieval stats footer.
+
+Record total retrieved count across all queries.
 
 ### Phase 1.5: Structural Filter + Lightweight Relevance Scan
 
@@ -131,7 +153,7 @@ This is a **recall-optimized** coarse filter — the bar is "plausible overlap,"
 
 **When in doubt, keep.** Phase 2 fetches full descriptions and handles precision.
 
-**Expected yield:** ~100-150 Phase 1 results -> ~60-100 after brand exclusion -> ~20-30 after relevance scan (keyword auto-pass + LLM scan combined).
+**Expected yield:** ~200-400 Phase 1 results (across all status partitions) -> ~120-250 after brand exclusion -> ~20-30 after relevance scan (keyword auto-pass + LLM scan combined).
 
 Record counts at each stage for the retrieval stats footer.
 
@@ -288,13 +310,14 @@ This is NOT a confident negative. Cross-domain signals were not evaluated.
 
 | Scenario | Detection | Behavior | Output |
 |---|---|---|---|
-| MCP not authenticated | MCP tools unavailable or auth error | Stop immediately | "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run." |
-| MCP timeout | MCP call returns timeout error | Stop. Do not retry. | "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection." |
-| MCP returns 0 results | Phase 1 query returns empty set | Warn — JPD should contain ideas | "Warning: JPD query returned 0 results. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated." |
+| MCP not authenticated | MCP tools unavailable or auth error on first query | Stop immediately | "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run." |
+| MCP timeout | MCP call returns timeout error on any query | Stop. Do not retry. | "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection." |
+| All partitions return 0 | All 5 status queries return empty | Warn — JPD should contain ideas | "Warning: JPD queries returned 0 results across all statuses. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated." |
+| Some partitions fail | Some status queries succeed, others error | Continue with partial results | Note failed partitions in retrieval stats: "Note: {status} partition failed — {reason}." |
+| Status partition truncated | A status query returns exactly 100 results | Continue, note informational | Note in retrieval stats: "{status} partition truncated at 100." |
 | All results are own brand | Phase 1.5 Step A removes all candidates | Confident negative | Standard output with retrieval stats showing the drop |
 | No results pass Phase 1.5 | Step B removes all remaining candidates | Confident negative | Standard output with retrieval stats |
 | No results pass Phase 2 | All classified "Not relevant" | Confident negative | Standard output with retrieval stats |
-| Phase 1 pagination fails | First page succeeds, second page errors | Report partial | Add "Note: Partial retrieval — first 100 results evaluated, pagination failed." |
 | Phase 2 description fetch fails | Key-based query errors/times out | Degrade to summary-only | Add "(summary-only — description unavailable)" to affected signals |
 
 **General principles:**
