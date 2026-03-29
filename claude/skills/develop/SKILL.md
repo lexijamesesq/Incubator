@@ -153,7 +153,17 @@ No agent covers this — strategy docs, NPS, and OKRs require internal file acce
 - Scan the seed file's `### Original Capture` section for strategic signals, connections, or context that didn't make it into the seed's structured fields. Raw captures often contain intuitive connections and half-formed insights that inform research direction.
 - Grep the design strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.design_strategy`) for relevant design priorities.
 - Reference the OKRs loaded in Step 1 — identify which 2026 goals this idea would advance.
-- **NPS customer signal check:** For the relevant product(s), read the **Top Pain Points** and **The Signal** sections from the 2-3 most recent monthly analysis files in the NPS analysis directories (paths configured in CLAUDE.md under Configuration > External References > `metrics.nps_product_a` and `metrics.nps_product_b`). These sections contain the concise pain points and emerging patterns. If a pain point matches the seed's problem space and deeper evidence is needed, read the **3 Things That Matter** section from that same file for verbatim quotes and trend data. Do not read raw CSV data or full analysis files. NPS findings directly inform the Customer Sentiment dimension rating.
+- **NPS customer signal check (two-phase):** For the relevant product(s), scan NPS analysis files in the directories configured under `metrics.nps_product_a` and `metrics.nps_product_b`. Cap the scan to files from the past 12 months.
+
+  **Phase 1 — Longitudinal keyword scan (all months within 12-month window):**
+  Derive 3-5 search terms from the seed's themes, core insight, and domain terms. Grep ALL `.md` files in each NPS directory for those terms. Record which files (months) contain matches and which do not. If zero files match across all months for a product, record: "Zero mentions of {topic} across {N} months of {product} NPS data ({date range})" — this distinguishes latent demand (observable in behavior, not voiced in feedback) from articulated demand, and directly informs the Customer Sentiment dimension.
+
+  **Phase 2 — Targeted section reads:**
+  - **Always:** Read the **Top Pain Points** and **The Signal** sections from the **3 most recent** files per product (6 files total). These sections are small (~10-16 lines each) — use the Read tool with offset/limit to target them directly rather than grepping then conditionally reading.
+  - **If Phase 1 matched older files:** Also read **Top Pain Points**, **The Signal**, and **3 Things That Matter** from each matched file for verbatim quotes and trend context.
+  - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
+
+  NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
 - **Shared research check:** Review the refreshed shared research files for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any entries agents wrote during Phase 1.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 
