@@ -51,9 +51,14 @@ These are derived from the idea card content. Update field IDs to match your Jir
 
 Brand exclusion filter for /cross-domain: exclude results where Product Brand matches your brand.
 
-JQL template:
+**Retrieval strategy:** Status-partitioned queries (one per status) to avoid the 100-item MCP ceiling. The MCP tool does not return pagination tokens, so partitioning is the only way to get full coverage.
+
+JQL templates (one per status — update status values to match your JPD workflow):
 ```
-project = YOUR_PROJECT_KEY AND status in ("Done", "Active", "Backlog") ORDER BY updated DESC
+project = YOUR_PROJECT_KEY AND status = "Status 1" ORDER BY updated DESC
+project = YOUR_PROJECT_KEY AND status = "Status 2" ORDER BY updated DESC
+project = YOUR_PROJECT_KEY AND status = "Status 3" ORDER BY updated DESC
+...
 ```
 
 ## Organizational Taxonomy
