@@ -116,15 +116,22 @@ Two-step in-memory filter on Phase 1 results.
 - Exclude all results where Product Brand matches your own brand (value and field ID from `jira-config.md > Static Field Values` and `jira-config.md > Cross-Domain Query`). These are your team's ideas, not cross-domain.
 - All other brands remain.
 
-**Step B — LLM lightweight relevance scan:**
+**Step B — Keyword auto-pass + LLM lightweight relevance scan:**
 
-Using the idea content (core insight, themes, domain, original capture, problem/who-cares/strategic-connection if available) and the organizational structural reference (squad descriptions, domain descriptions, surface area descriptions):
+**B.1 — Extract key terms from the idea:**
+From the idea's core insight, themes, domain, problem, who-cares, strategic connection, and original capture, extract a set of key terms — concept nouns, product names, capability words, and domain terms. Include both the specific terms (e.g., "Rubrics", "SpeedGrader", "grading") and their close variants. These are the terms that make a candidate worth looking at in Phase 2.
 
-For each surviving candidate, evaluate using **summary + structural metadata only** (brand, squad, domain, surface area, status): does this have plausible functional overlap with the idea?
+**B.2 — Keyword auto-pass:**
+Any candidate whose summary contains one or more key terms (case-insensitive) passes automatically to Phase 2 without LLM judgment. This prevents the LLM from applying precision-level reasoning to candidates with obvious lexical overlap.
 
-This is a coarse filter — the bar is "plausible overlap," not "confirmed relevance." False positives are acceptable here (Phase 2 handles precision). False negatives are the risk — when in doubt, keep.
+**B.3 — LLM scan on remaining candidates:**
+For candidates that did NOT auto-pass, evaluate using the idea content (core insight, themes, domain, original capture, problem/who-cares/strategic-connection if available) and the organizational structural reference (squad descriptions, domain descriptions, surface area descriptions). Evaluate using **summary + structural metadata only** (brand, squad, domain, surface area, status): does this have plausible functional overlap with the idea?
 
-**Expected yield:** ~100-150 Phase 1 results -> ~60-100 after brand exclusion -> ~10-20 after relevance scan.
+This is a **recall-optimized** coarse filter — the bar is "plausible overlap," not "confirmed relevance." False positives are acceptable here (Phase 2 handles precision). False negatives are the risk. Enabler connections (infrastructure this idea could use) are often invisible from summaries alone — when a candidate's summary suggests adjacent capability even without direct overlap, keep it.
+
+**When in doubt, keep.** Phase 2 fetches full descriptions and handles precision.
+
+**Expected yield:** ~100-150 Phase 1 results -> ~60-100 after brand exclusion -> ~20-30 after relevance scan (keyword auto-pass + LLM scan combined).
 
 Record counts at each stage for the retrieval stats footer.
 
