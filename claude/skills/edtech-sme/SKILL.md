@@ -236,7 +236,7 @@ EdTech market analysis complete: {idea-name}
 **Confidence:** {High/Medium/Low}
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/competitive-landscape.md` using the entry schema defined in the file header. If no findings qualify, skip this step. Note in the presentation which entries were added:
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/competitive-landscape.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, feature page, report), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
 
 > **Shared research updated:** `competitive-landscape.md`: +{N} entries ({brief descriptions})
 

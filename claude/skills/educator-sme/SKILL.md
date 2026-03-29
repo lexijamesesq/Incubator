@@ -198,7 +198,7 @@ Research artifact written to: Research/{idea-name}/educator-evaluation.md
 Idea frontmatter updated: research array now includes educator evaluation path.
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/customer-evidence.md` using the entry schema defined in the file header. If no findings qualify, skip this step. Note in the presentation which entries were added:
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/customer-evidence.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, research page, blog post), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
 
 > **Shared research updated:** `customer-evidence.md`: +{N} entries ({brief descriptions})
 
