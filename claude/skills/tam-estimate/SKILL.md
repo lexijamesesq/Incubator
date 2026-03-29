@@ -333,7 +333,7 @@ TAM estimation complete: {idea-name}
 **Idea frontmatter updated:** research array now includes tam-estimate path.
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to TAM figures, growth rates, buyer counts, and market benchmarks that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/market-sizing.md` using the entry schema defined in the file header. If no findings qualify, skip this step. Note in the presentation which entries were added:
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to TAM figures, growth rates, buyer counts, and market benchmarks that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/market-sizing.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (report page, press release, analyst summary), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
 
 > **Shared research updated:** `market-sizing.md`: +{N} entries ({brief descriptions})
 

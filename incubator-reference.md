@@ -309,7 +309,7 @@ Cross-idea research findings that compound across pipeline runs. Located at `Res
 ### Capture Heuristic
 
 A finding qualifies for shared research when ALL four criteria are met:
-1. **Sourced** — Named, verifiable source with specific data
+1. **Sourced** — Named, verifiable source with specific data and a URL (the most specific available page — press release, blog post, report page — not a homepage)
 2. **Durable** — Useful beyond 3 months (not ephemeral news or announcements)
 3. **Decision-relevant** — Tied to a named impact dimension with a specific directional effect
 4. **Shared** — Relevant beyond the current idea, or likely relevant to future ideas entering the pipeline
