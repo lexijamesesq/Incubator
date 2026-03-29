@@ -182,7 +182,7 @@ Extract key findings from each for the handoff. For agent artifacts, preserve sp
 
 After all research phases complete, create the handoff artifact at `Research/{idea-name}/synthesis-handoff.md`. Create the directory if it does not exist.
 
-This artifact is the curated research input for the synthesis agent. Preserve specific data points, named capabilities, URLs, issue keys, and connection strengths — the synthesis agent depends on this specificity. For agent-produced sections, extract key sections verbatim from the artifacts rather than summarizing.
+This artifact is the curated research input for the synthesis agent. Preserve specific data points, named capabilities, URLs, issue keys, and connection strengths — the synthesis agent depends on this specificity. For agent-produced sections, extract key sections verbatim from the artifacts rather than summarizing. For shared research entries, include the specific URL from each entry's `Source:` field — the synthesis agent uses these URLs for Research Summary citations and cannot guess them.
 
 ```markdown
 # Research Handoff: {idea-name}
@@ -211,8 +211,8 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 - **Key finding:** {synthesis of NPS evidence or absence}
 
 ### Shared Research Baseline (within TTL)
-- {Finding} ({confidence level}) ([Source Title](url))
-- {Finding} ({confidence level}) ([Source Title](url))
+- {Finding} ({confidence level}) ([Source Title](specific URL from entry's Source: field))
+- {Finding} ({confidence level}) ([Source Title](specific URL from entry's Source: field))
 
 ---
 

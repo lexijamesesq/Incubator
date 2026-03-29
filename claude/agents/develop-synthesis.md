@@ -118,8 +118,8 @@ Update the idea file with the completed TL;DR card.
 | Strategic alignment | {rating} | [One sentence — the judgment, not the evidence] |
 
 ### Research Summary
-- Finding statement ([Source Name](url or doc path))
-3-5 bullets. Each ends with a linked parenthetical source. Cross-domain signals condensed into one bullet prefixed "Cross-domain:".
+- Finding statement ([Source Name](url))
+3-5 bullets. Each ends with a linked parenthetical source. Citation URLs must come from the research handoff — never generate, guess, or infer URLs from source names (no homepage URLs). Cross-domain signals condensed into one bullet prefixed "Cross-domain:".
 
 ### Thought Outline
 [One paragraph — the single strategic move and how it compounds. Not a research recap.]
@@ -190,3 +190,5 @@ You ONLY produce TL;DR card content. You do NOT:
 - Write research artifacts (orchestrator's job)
 
 If research is insufficient to support a credible rating, mark as "Insufficient data" and add an open question. Do not fabricate evidence or overstate weak connections.
+
+**Citation URLs:** Research Summary citations must use URLs provided in the research handoff. If a finding has no URL in the handoff, cite the source name without a link — never guess or construct URLs from source names.
