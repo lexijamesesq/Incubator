@@ -47,7 +47,7 @@ No inline data points (N-values, market figures, survey sizes) in rationale cell
 ### Research Summary
 3-5 bullets
 Each bullet ends with a linked parenthetical source: ([Source Name](url or doc path))
-Cross-domain signals condensed into exactly one bullet prefixed "Cross-domain:"
+No cross-domain content in Research Summary (cross-domain has its own dedicated section)
 
 ### Thought Outline
 One paragraph — conceptual shape and strategic leverage, not a research recap
@@ -57,7 +57,7 @@ One paragraph — conceptual shape and strategic leverage, not a research recap
 If present, check:
 - 3-5 numbered items, each one sentence
 - No sub-labels (no "Feature candidates:", "Recommended surface:", or "Rationale:")
-- If borderline flag present, appears on line after heading
+- No process commentary (detection classification, borderline flags, internal monologue) — flag if present
 If absent, this is expected (feature-shaped idea) — do not flag.
 
 ### Open Questions
