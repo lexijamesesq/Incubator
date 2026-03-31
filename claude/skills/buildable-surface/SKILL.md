@@ -138,7 +138,7 @@ No sub-labels, no recommended surface, no rationale. The numbered list implies t
 
 **Write constraints:**
 - Insert between `### Thought Outline` and `### Open Questions` using Edit tool
-- If borderline flag is set, add `*(Borderline — ambiguous detection; review candidates for relevance)*` on the line after `### Buildable Surface`
+- Do not write detection classification (borderline, principle-shaped) into the card — report it in terminal output only
 - Do not modify any other section of the idea file
 - Do not change frontmatter (stage, impact dimensions, etc.)
 
