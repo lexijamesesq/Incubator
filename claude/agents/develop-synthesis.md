@@ -118,8 +118,10 @@ Update the idea file with the completed TL;DR card.
 | Strategic alignment | {rating} | [One sentence — the judgment, not the evidence] |
 
 ### Research Summary
-- Finding statement ([Source Name](url))
+- Finding statement. ([Source Name](url))
 3-5 bullets. Each ends with a linked parenthetical source. Citation URLs must come from the research handoff — never generate, guess, or infer URLs from source names (no homepage URLs).
+Majority of bullets must cite external sources (competitors, research, market data). Internal references (strategy docs, NPS, OKRs) provide strategic connection context but should not dominate the evidence base. To fix the ratio, add external evidence — do not drop internal findings.
+No cross-domain content — cross-domain signals have their own dedicated card section written by the orchestrator. Do not read cross-domain artifacts or produce cross-domain bullets here.
 
 ### Thought Outline
 [One paragraph — the single strategic move and how it compounds. Not a research recap.]
