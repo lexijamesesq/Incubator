@@ -119,7 +119,7 @@ Update the idea file with the completed TL;DR card.
 
 ### Research Summary
 - Finding statement ([Source Name](url))
-3-5 bullets. Each ends with a linked parenthetical source. Citation URLs must come from the research handoff — never generate, guess, or infer URLs from source names (no homepage URLs). Cross-domain signals condensed into one bullet prefixed "Cross-domain:".
+3-5 bullets. Each ends with a linked parenthetical source. Citation URLs must come from the research handoff — never generate, guess, or infer URLs from source names (no homepage URLs).
 
 ### Thought Outline
 [One paragraph — the single strategic move and how it compounds. Not a research recap.]
