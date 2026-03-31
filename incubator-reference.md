@@ -194,6 +194,9 @@ Output of autonomous development. Dual purpose: internal prioritization AND exte
 - [Key finding 2 with source]
 - [Key finding 3 with source]
 
+### Cross-Domain Signals
+[Organizational awareness section — other teams' work with functional overlap. Written by the /develop orchestrator from the /cross-domain artifact, not by the synthesis agent. Conditional — present only when /cross-domain succeeded and found signals. Format: linked issue keys with signal type and connection sentence. See /cross-domain skill Phase 3 for format spec.]
+
 ### Thought Outline
 [How this idea might develop — conceptual shape, not document structure]
 
@@ -290,7 +293,7 @@ When an idea needs more context than what's available:
 
 **Market intelligence:** Web search for competitors, TAM, technology trends. Synthesize with sources.
 
-**Cross-domain discovery:** /develop Stream C invokes `/cross-domain` to query the JPD project for ideas from other product domains with functional overlap. Signals are classified as Direct overlap, Enabler/dependency, or Convergence. Results persist as `Research/{idea-name}/cross-domain-signals.md` and feed into the TL;DR Research Summary (inline issue key links) and the JPD push (conditional Cross-Domain Signals section).
+**Cross-domain discovery:** /develop Stream C invokes `/cross-domain` to query the JPD project for ideas from other product domains with functional overlap. Signals are classified as Direct overlap, Enabler/dependency, or Convergence. Results persist as `Research/{idea-name}/cross-domain-signals.md`. The curated output (maximum 5 signals) is written to a dedicated `### Cross-Domain Signals` section on the TL;DR card by the /develop orchestrator (Step 5b) — it does not flow through the synthesis agent. The full artifact is read by /jpd-push for the JPD Cross-Domain Signals section.
 
 **When to pause and ask:** If research reveals the idea lacks strategic foundation, or if critical context can only come from the human (stakeholder conversations, internal politics, undocumented priorities), stop and surface the gap explicitly.
 

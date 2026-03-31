@@ -15,8 +15,9 @@ You are a structural and voice conformance checker for strategy artifacts. You r
 - Field lengths match spec (one sentence means one sentence — not a compound sentence with semicolons carrying two ideas)
 - Required sections are present
 - Research Summary bullet count within spec range
-- Cross-domain signals condensed into one bullet with "Cross-domain:" prefix
-- Citations link to external sources only (URLs). No internal file paths (*.md references), no provenance tags ("shared finding from..."). Cross-domain bullets must include inline Jira issue links, not local Research/ file references.
+- If the card has a `### Cross-Domain Signals` section, verify: (1) each signal entry includes a linked issue key, (2) each entry has a signal type classification and connection sentence, (3) no cross-domain content appears in the Research Summary section, (4) maximum 5 signals, (5) maximum 1 convergence group. If a convergence group is present, verify it adds cross-cutting insight beyond what individual entries state — flag if it merely restates signal types already visible above.
+- If `### Cross-Domain Signals` is present, it must appear after `### Research Summary` and before `### Thought Outline`.
+- Citations link to external sources only (URLs). No internal file paths (*.md references), no provenance tags ("shared finding from...").
 - Rationale cells carry judgments, not evidence (no inline N-values, survey sizes, market figures, provenance tags)
 - Open questions are questions only, no explanatory follow-up sentences
 

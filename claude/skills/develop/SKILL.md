@@ -188,6 +188,8 @@ Read all successfully produced agent artifacts to prepare for handoff creation:
 
 Extract key findings from each for the handoff. For agent artifacts, preserve specificity — copy key sections verbatim (competitor tables, TAM summary tables, adoption assessments) rather than summarizing. The synthesis agent depends on this specificity.
 
+**Exception: cross-domain.** The synthesis agent does not use cross-domain data — it goes directly to the card as a post-synthesis section (Step 5b). Include only the status line (succeeded/failed + signal count) in the handoff, not the full signal list.
+
 ### Step 4.5: Create Synthesis Handoff
 
 After all research phases complete, create the handoff artifact at `Research/{idea-name}/synthesis-handoff.md`. Create the directory if it does not exist.
@@ -296,15 +298,7 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 ---
 
 ## Cross-Domain Discovery (Stream C)
-
-### Key Signals
-- **{issue-key}: {Title}** ({Brand}, {Status}) — {description}. {Signal type}.
-- **{issue-key}: {Title}** ({Brand}, {Status}) — {description}. {Signal type}.
-
-### Convergence Group
-{Description of convergence pattern if detected}
-
-{If cross-domain failed: "Cross-domain discovery unavailable — {reason}."}
+{Succeeded — {N} signals | Failed — {reason}}
 
 ---
 
@@ -363,6 +357,22 @@ After the agent returns, read the updated idea file to confirm synthesis complet
 
 If the agent reports insufficient research or a stop condition, surface it to the user and halt.
 
+### Step 5b: Cross-Domain Signals Section
+
+If /cross-domain succeeded, write a `### Cross-Domain Signals` section to the card after the Research Summary section. The content comes from the /cross-domain skill's Phase 3 formatted output (already in the orchestrator's context from Phase 1 agent invocation) — transfer it directly, no reformatting needed (Phase 3 output uses the card section format).
+
+If the Phase 3 output is no longer in context, re-read the artifact at `Research/{idea-name}/cross-domain-signals.md` and apply the same curation the skill applies in Phase 3: include convergence group members, direct overlap items, and enablers that are specifically load-bearing for this idea's core capability. Maximum 5 signals. Write using the card section format:
+
+```markdown
+### Cross-Domain Signals
+{N} ideas from other domains with possible functional overlap:
+- [{issue-key}]({url}) {summary} ({Domain Label}) — {Signal type}: {Connection sentence}
+```
+
+Issue keys are linked using the Atlassian base URL from the artifact. Include convergence group descriptions after the signal list only when they add insight beyond what the individual entries state — a cross-cutting pattern or strategic implication that emerges from the combination.
+
+If /cross-domain failed, omit the section entirely.
+
 ### Step 5c: Buildable Surface Check
 
 After synthesis completes, invoke the buildable surface enrichment agent to check whether the Thought Outline is principle-shaped or feature-shaped.
@@ -392,7 +402,7 @@ Does AI make or break this idea?
 - **Enhanced by AI** → add the tag. Works without AI, but AI is a natural progressive enhancement — not forced.
 - **AI would be forced** → don't add. Solution looking for a problem.
 
-Check the research before deciding — cross-domain signals, buildable surface candidates, and competitive landscape show what the market assumes about the mechanism.
+Check the research before deciding — cross-domain signals, buildable surface candidates, and competitive landscape show what the market assumes about the mechanism. For cross-domain signals, re-read the artifact at `Research/{idea-name}/cross-domain-signals.md` if the Phase 1 output is no longer in context — the synthesis handoff does not carry cross-domain detail.
 
 **Record all changes** (additions/removals with one-sentence rationale each) for Step 9 presentation.
 
