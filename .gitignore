@@ -18,6 +18,7 @@ CLAUDE.md
 claude/settings.local.json
 jira-config.md
 claude/skills/cross-domain/org-structural-reference.md
+scripts/research-db-config.json
 
 # === Real files (samples ship instead) ===
 Examples/developing-card.md
@@ -31,6 +32,9 @@ Templates/review-templates.md
 
 # === Local symlink (consumers rename claude/ to .claude/) ===
 .claude
+
+# === Stray workspace artifacts ===
+snowflake permissions.csv
 
 # === System files ===
 .DS_Store
