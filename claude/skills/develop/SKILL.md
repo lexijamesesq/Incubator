@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
   - Skill
 ---
 
@@ -84,6 +85,16 @@ Load these files in parallel:
    - `market-sizing.md` (for Revenue Potential rating)
    Check TTL on each entry: entries within TTL are usable as baseline; entries past TTL are directional only and require reverification during Stream A/B research.
 
+   **Database augmentation:** Additionally, query the strategy research database for structured competitive intelligence relevant to this idea's capabilities:
+   ```bash
+   python3 scripts/research-db.py lookup-capabilities --json '{}'
+   python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'
+   python3 scripts/research-db.py query-gaps --json '{"capabilities": ["slug-1", "slug-2"]}'
+   ```
+   Derive capability slugs from the seed's `themes` and `core insight` using the vocabulary list — themes may map directly or expand (e.g., `ai-capabilities` → `ai-item-generation`, `ai-open-response-scoring`). Database results supplement the shared research files. Gap detection identifies where enrichment agents should focus live web research.
+
+6. **Competitor registry** — Glob `Research/shared/assessments/competitors/*.md`. For each file, read frontmatter only (first 15 lines or until `---` closes). Extract: name, category, themes, capabilities. Filter to competitors whose themes overlap with the seed's themes. The database `query-landscape` result from Step 5 provides additional competitor context (market tier, pricing model, structured findings) alongside the local registry. If the directory doesn't exist or is empty, the database query provides fallback coverage.
+
 ### Step 2: Validate the Seed
 
 Confirm the seed file has:
@@ -142,6 +153,7 @@ After all agents complete, re-read the shared research files:
 - `Research/shared/assessments/customer-evidence.md`
 - `Research/shared/assessments/competitive-landscape.md`
 - `Research/shared/assessments/market-sizing.md`
+- `Research/shared/assessments/competitors/*.md` (frontmatter only — agents may have written new files or updated existing)
 
 Agents may have written new entries during Phase 1. This refresh ensures Phase 3 works from the latest state.
 
@@ -166,6 +178,11 @@ No agent covers this — strategy docs, NPS, and OKRs require internal file acce
   NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
 - **Shared research check:** Review the refreshed shared research files for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any entries agents wrote during Phase 1.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
+- **Database enrichment:** When specific competitors surface during Stream A research, use the database for targeted deep-dives:
+  ```bash
+  python3 scripts/research-db.py query-competitor --json '{"name": "Competitor Name"}'
+  ```
+  This retrieves the full profile (intelligence body, all findings, capability tags) for that specific competitor — richer context than the local file frontmatter alone. Use selectively for competitors that are central to the idea's competitive positioning, not for every competitor in the registry.
 
 **Phase 4: Stream B Fallback (orchestrator — only if edtech-sme failed)**
 
@@ -240,6 +257,8 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 | Competitor | Relevant Capability | Comparison |
 |------------|---------------------|------------|
 | {Name} | {What they do} | {Differentiation / Parity / Behind} |
+
+Tag each competitor as `(registry)` or `(discovered)` to distinguish registry-sourced from organically-discovered competitors. This traceability supports eval criteria and registry maintenance.
 
 **Positioning narrative:** {2-3 sentences}
 
@@ -519,6 +538,45 @@ Note in the presentation which entries were added:
 > **Shared research updated:**
 > - `competitive-landscape.md`: +{N} entries ({brief descriptions})
 > - `market-sizing.md`: +{N} entries ({brief descriptions})
+
+**Database write-back:**
+
+Additionally, write qualifying findings to the strategy research database so future runs benefit from structured, queryable intelligence:
+
+```bash
+python3 scripts/research-db.py write-findings --json '{
+  "findings": [
+    {
+      "claim": "...",
+      "evidence": "...",
+      "confidence": "high|medium|low",
+      "source_url": "...",
+      "source_description": "...",
+      "ttl_months": 12,
+      "topic": "competitive-landscape|customer-evidence|market-sizing|enrichment",
+      "category": "capability-specific|capability-presence|competitive-gap|...",
+      "capabilities": ["slug-1", "slug-2"],
+      "competitor_id": "uuid-or-null"
+    }
+  ]
+}'
+```
+
+Use `python3 scripts/research-db.py lookup-competitor --json '{"name": "..."}'` to resolve competitor names to IDs. Prioritize findings that close gaps identified in Step 1 database queries.
+
+**Competitor registry updates:**
+
+After shared research writes, update the competitor registry:
+- **New competitors:** For competitors discovered during this run that are relevant to the competitive domain (not single-idea-only), create a new file at `Research/shared/assessments/competitors/{kebab-name}.md` with required fields (`name`, `category`, `themes`, `capabilities`, `last-researched`). Before creating, Glob existing files to check for the entity under variant names.
+- **Existing competitors:** For registry competitors that were researched during this run, update `last-researched` to today and add any new coarse capability tags discovered.
+- **Category changes:** If research suggests a competitor's category should change, propose the change with rationale in the presentation. Do NOT update the frontmatter `category` — wait for human confirmation.
+- **New competitors not in database:** Note in the presentation with proposed category, segments, and capabilities. Human gates database additions.
+
+Note in the presentation:
+> **Competitor registry updated:**
+> - New files: {list or "none"}
+> - Updated: {list of files with what changed, or "none"}
+> - Category changes proposed: {list with rationale, or "none"}
 
 ## Stop Rules
 
