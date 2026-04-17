@@ -258,8 +258,8 @@ python3 scripts/research-db.py write-findings --json '{
       "claim": "...",
       "evidence": "...",
       "confidence": "high|medium|low",
-      "source_url": "...",
-      "source_description": "...",
+      "source_url": "https://specific-page-url (REQUIRED — not a homepage)",
+      "source_description": "fallback only when no stable URL exists",
       "ttl_months": 12,
       "topic": "competitive-landscape",
       "category": "capability-specific|capability-presence|competitive-gap",
@@ -269,6 +269,8 @@ python3 scripts/research-db.py write-findings --json '{
   ]
 }'
 ```
+**Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists, with enough detail to locate the source. Do not write findings with neither.
+
 Use `python3 scripts/research-db.py lookup-competitor --json '{"name": "..."}'` to resolve competitor names to IDs. When a web search finding relates to a competitor already in the database, link it. When web research sparks a question about what the database already knows, query for it:
 ```bash
 python3 scripts/research-db.py query-competitor --json '{"name": "Competitor Name"}'
