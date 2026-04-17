@@ -1,8 +1,8 @@
--- Snowflake DDL for YOUR_DB.YOUR_SCHEMA
--- Run with YOUR_ROLE role
+-- Snowflake DDL for the strategy research schema
+-- Replace role, database, and schema names with your values from research-db-config.json
 
 USE ROLE YOUR_ROLE;
-USE DATABASE YOUR_DB;
+USE DATABASE YOUR_DATABASE;
 
 CREATE SCHEMA IF NOT EXISTS YOUR_SCHEMA;
 USE SCHEMA YOUR_SCHEMA;
