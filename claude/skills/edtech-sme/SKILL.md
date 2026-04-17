@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
 ---
 
 # /edtech-sme — EdTech Market Analysis (Enrichment Agent)
@@ -80,6 +81,14 @@ Extract from the idea file:
 
 **Shared research baseline:** Read `Research/shared/assessments/competitive-landscape.md` if it exists. Use within-TTL entries as known starting points — do not rediscover competitors already documented there. Treat past-TTL entries as directional only (relevant categories and framing, not current positioning). If the file does not exist, proceed without it.
 
+**Competitor registry:** Glob `Research/shared/assessments/competitors/*.md` if the directory exists. For each file, read frontmatter only (first 15 lines or until `---` closes). Extract: name, category, themes, capabilities. Filter to competitors whose themes overlap with the idea's themes — these are the registry-matched competitors. If the directory doesn't exist or is empty, proceed without it (the persona baseline list provides fallback coverage).
+
+**Database augmentation:** Additionally, query the strategy research database for structured competitive intelligence:
+```bash
+python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
+```
+Derive capability slugs from the idea's `themes` field. Database results supplement the shared research files and registry — use them as additional known starting points and to identify where live web research should focus. During Step 3, use `query-competitor` for targeted deep-dives on competitors central to the analysis.
+
 Context exclusions (strategy docs, OKRs, persona guide, approach docs) are enforced by the agent's scope constraints.
 
 ### Step 2: Frame Market Lens
@@ -95,6 +104,7 @@ If the idea is too abstract for market analysis — no discernible product conce
 Use `WebSearch` to gather current market intelligence. Execute 4-6 targeted searches derived from the idea's themes, competitive frame, and product category.
 
 **Search targets:**
+- **Registry-informed targeted searches:** For each registry-matched competitor (from Step 1), include at least one targeted search for that competitor's recent activity in the idea's capability domain. E.g., if the idea is about rubric design and FeedbackFruits is registry-matched, search for "FeedbackFruits rubric" or "FeedbackFruits assessment authoring 2025 2026". These targeted searches supplement — not replace — the generic searches below.
 - Competitor features and recent product launches in the relevant category
 - Acquisitions, mergers, and strategic partnerships in edtech assessment
 - Analyst commentary (EdSurge, EdTech Magazine, Gartner, HolonIQ)
@@ -239,6 +249,41 @@ EdTech market analysis complete: {idea-name}
 After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/competitive-landscape.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, feature page, report), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
 
 > **Shared research updated:** `competitive-landscape.md`: +{N} entries ({brief descriptions})
+
+**Database write-back:** Additionally, write qualifying findings to the strategy research database:
+```bash
+python3 scripts/research-db.py write-findings --json '{
+  "findings": [
+    {
+      "claim": "...",
+      "evidence": "...",
+      "confidence": "high|medium|low",
+      "source_url": "...",
+      "source_description": "...",
+      "ttl_months": 12,
+      "topic": "competitive-landscape",
+      "category": "capability-specific|capability-presence|competitive-gap",
+      "capabilities": ["slug-1", "slug-2"],
+      "competitor_id": "uuid-or-null"
+    }
+  ]
+}'
+```
+Use `python3 scripts/research-db.py lookup-competitor --json '{"name": "..."}'` to resolve competitor names to IDs. When a web search finding relates to a competitor already in the database, link it. When web research sparks a question about what the database already knows, query for it:
+```bash
+python3 scripts/research-db.py query-competitor --json '{"name": "Competitor Name"}'
+```
+This oscillation between web research and database lookups produces richer context than either source alone.
+
+**Competitor registry updates:**
+
+After competitive-landscape.md writes, update the competitor registry:
+- **New competitors:** For competitors discovered during this analysis that are relevant to the competitive domain beyond this single idea, create a new file at `Research/shared/assessments/competitors/{kebab-name}.md` with required fields. Before creating, Glob existing files to check for variant names.
+- **Existing competitors:** For registry competitors that were researched, update `last-researched` to today and add any new coarse capability tags.
+- **Category changes:** If analysis suggests a competitor's category should change, note the proposed change with rationale in the presentation. Do NOT update frontmatter `category` autonomously.
+
+Note in the presentation:
+> **Competitor registry updated:** +{N} new files, {N} updated ({brief descriptions})
 
 ## Stop Rules
 

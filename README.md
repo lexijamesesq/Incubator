@@ -31,6 +31,7 @@ cp CLAUDE.sample.md CLAUDE.md
 | `metrics.nps_product_a`, `metrics.nps_product_b` | CLAUDE.md > Configuration | Paths to NPS analysis directories for your products |
 | `jira-config.md` | Project root | Copy from `jira-config.sample.md`, fill in your Atlassian cloud ID, project key, field IDs, and option IDs for JPD integration |
 | `claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
+| `scripts/research-db-config.json` | Scripts directory | Copy from `research-db-config.sample.json`, fill in your database connection details for the research database integration (see below) |
 
 ## What's Included
 
@@ -76,6 +77,19 @@ Add research artifacts to an idea without changing its stage. Invokable standalo
 | Artifact | Type | What it does |
 |----------|------|-------------|
 | `/jpd-push` | Skill | Pushes a developed idea to Jira Product Discovery for stakeholder visibility, with re-push support |
+
+### Research database (optional)
+
+An optional Snowflake or PostgreSQL database provides structured competitive intelligence that augments the skills' existing web research and local file reads. The database gives enrichment agents a head start (what's already known about competitors), enables mid-research deep-dives (query the database when web research surfaces a known competitor), and receives write-back of durable findings for future runs.
+
+| Artifact | Type | What it does |
+|----------|------|-------------|
+| `scripts/research-db.py` | Utility | Database access layer — SQL generation, dialect translation (Snowflake/PostgreSQL), 8 commands for query, write, and gap detection |
+| `scripts/research-db-config.sample.json` | Config template | Connection details for your database backend |
+| `scripts/schema/ddl-snowflake.sql` | Schema | Snowflake DDL for the strategy research schema (5 tables, 1 view) |
+| `scripts/schema/ddl-postgresql.sql` | Schema | PostgreSQL DDL for the same schema (dev/eval compatible) |
+
+Without the database, skills work normally — they fall back to local shared research files and web searches. No functionality is lost.
 
 ### Reference documents
 
@@ -170,6 +184,7 @@ The system ships with domain knowledge tuned for education technology and assess
 - **Different product domain:** Update `persona.md` with your voice, update the agent personas in `claude/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `claude/skills/cross-domain/`.
 - **Different output formats:** Replace or modify the templates in `Templates/` and update `incubator-approach.md` with your methodology.
 - **Without JPD integration:** Skip `jira-config.md` setup. The `/jpd-push` and `/cross-domain` skills are self-contained and can be ignored.
+- **Without the research database:** Skip `scripts/research-db-config.json` setup. Skills fall back to local shared research files and web searches — the pre-database research flow that produced the system's baseline quality. The database is additive.
 - **Without enrichment agents:** Each enrichment agent is independently invokable. Remove any you don't need from `claude/skills/` and `claude/agents/` without affecting the core pipeline.
 
 ## Security

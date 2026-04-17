@@ -138,7 +138,8 @@ initiative: null  # parent initiative filename without .md, null if standalone
 # Tracking
 source: inbox | slack | conversation | meeting
 output-file: null  # path to output document (populated at Stage 3)
-research: []  # links to research artifacts
+research: []  # links to local research artifacts
+research-ids: []  # UUIDs referencing research_findings rows in Snowflake (populated by /develop)
 blocked-by: null  # terse reference — card title or theme blocking stage advancement
 
 # JPD Integration (populated after push, null before)

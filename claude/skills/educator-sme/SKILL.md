@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
 ---
 
 # /educator-sme — Educator SME Evaluation
@@ -75,6 +76,12 @@ Extract:
   - `cross-product` — evaluate both segments, note where they diverge
 
 **Shared research baseline:** Read `Research/shared/assessments/customer-evidence.md` if it exists. Use within-TTL entries as known starting points for customer pain signals and adoption evidence — do not rediscover patterns already documented there. Treat past-TTL entries as directional only. If the file does not exist, proceed without it.
+
+**Database augmentation:** Additionally, query the strategy research database for structured customer evidence and educator-relevant findings:
+```bash
+python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
+```
+Derive capability slugs from the idea's `themes` field. Database findings supplement the shared research file. During Step 4 (Optional Research), if web research surfaces a competitor or methodology, use `query-competitor` for a targeted deep-dive on what the database already knows about it.
 
 Context exclusions (strategy docs, OKRs, persona guide, competitive data, business framing) are enforced by the agent's scope constraints.
 
@@ -201,6 +208,26 @@ Idea frontmatter updated: research array now includes educator evaluation path.
 After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/customer-evidence.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, research page, blog post), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
 
 > **Shared research updated:** `customer-evidence.md`: +{N} entries ({brief descriptions})
+
+**Database write-back:** Additionally, write qualifying findings to the strategy research database:
+```bash
+python3 scripts/research-db.py write-findings --json '{
+  "findings": [
+    {
+      "claim": "...",
+      "evidence": "...",
+      "confidence": "high|medium|low",
+      "source_url": "...",
+      "source_description": "...",
+      "ttl_months": 12,
+      "topic": "customer-evidence",
+      "category": "pain-signal|research-validation|adoption-signal",
+      "capabilities": ["slug-1", "slug-2"],
+      "competitor_id": null
+    }
+  ]
+}'
+```
 
 Note: The impact dimension signals are advisory — they indicate what this evaluation suggests for the `customer-sentiment` and `user-experience` frontmatter fields, but this skill does NOT modify those fields. That's done during the development workflow or manually by the human.
 
