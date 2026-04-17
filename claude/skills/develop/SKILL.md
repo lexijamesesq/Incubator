@@ -550,8 +550,8 @@ python3 scripts/research-db.py write-findings --json '{
       "claim": "...",
       "evidence": "...",
       "confidence": "high|medium|low",
-      "source_url": "...",
-      "source_description": "...",
+      "source_url": "https://specific-page-url (REQUIRED — not a homepage)",
+      "source_description": "fallback only when no stable URL exists",
       "ttl_months": 12,
       "topic": "competitive-landscape|customer-evidence|market-sizing|enrichment",
       "category": "capability-specific|capability-presence|competitive-gap|...",
@@ -561,6 +561,8 @@ python3 scripts/research-db.py write-findings --json '{
   ]
 }'
 ```
+
+**Source URL requirement:** Every finding written to the database MUST have a `source_url` with the most specific available page (press release, feature page, research report) — not a homepage. If no stable URL exists, use `source_description` with enough detail to locate the source (publication name, date, title). Do not write findings with neither. This is the same standard applied to shared research file entries.
 
 Use `python3 scripts/research-db.py lookup-competitor --json '{"name": "..."}'` to resolve competitor names to IDs. Prioritize findings that close gaps identified in Step 1 database queries.
 
