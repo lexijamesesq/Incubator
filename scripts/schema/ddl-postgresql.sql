@@ -1,5 +1,5 @@
--- PostgreSQL DDL for strategy_research schema
--- Dev/eval environment (Pi server)
+-- PostgreSQL DDL for the strategy research schema
+-- Dev/eval environment — replace schema name if needed
 
 CREATE SCHEMA IF NOT EXISTS strategy_research;
 SET search_path TO strategy_research;
