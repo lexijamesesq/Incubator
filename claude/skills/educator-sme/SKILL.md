@@ -209,7 +209,7 @@ After presenting the above, review your findings against the shared research cap
 
 > **Shared research updated:** `customer-evidence.md`: +{N} entries ({brief descriptions})
 
-**Database write-back:** Additionally, write qualifying findings to the strategy research database:
+**Database write-back:** Additionally, write qualifying findings to the strategy research database. **Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists. Do not write findings with neither.
 ```bash
 python3 scripts/research-db.py write-findings --json '{
   "findings": [
@@ -217,8 +217,8 @@ python3 scripts/research-db.py write-findings --json '{
       "claim": "...",
       "evidence": "...",
       "confidence": "high|medium|low",
-      "source_url": "...",
-      "source_description": "...",
+      "source_url": "https://specific-page-url (REQUIRED — not a homepage)",
+      "source_description": "fallback only when no stable URL exists",
       "ttl_months": 12,
       "topic": "customer-evidence",
       "category": "pain-signal|research-validation|adoption-signal",
