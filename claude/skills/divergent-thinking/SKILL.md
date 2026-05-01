@@ -1,6 +1,6 @@
 ---
 name: divergent-thinking
-description: This skill should be used when the user asks to "think divergently about [idea]", "brainstorm angles for [idea]", "nonlinear thinking on [idea]", "explore creative connections for [idea]", or "divergent analysis of [idea]". Generates 3-5 unexpected, nonlinear connections for a strategic idea by following structural pattern similarity across domains.
+description: This skill should be used when the user asks to "think divergently about [idea]", "brainstorm angles for [idea/subject]", "nonlinear thinking on [idea/subject]", "explore creative connections for [idea/subject]", or "divergent analysis of [subject]". Generates 3-5 unexpected, nonlinear connections for a strategic idea OR an arbitrary subject by following structural pattern similarity across domains.
 argument-hint: [idea-name]
 context: fork
 agent: divergent-thinking
@@ -22,26 +22,34 @@ This is an enrichment agent, not a stage transition workflow. It does not change
 ## Invocation
 
 ```
-/divergent-thinking [idea-name]
+/divergent-thinking [idea-name]                # idea mode
+/divergent-thinking --adhoc "subject string"   # ad-hoc mode
 ```
 
-- Required argument: the name of an idea file in `Ideas/`
-- Works on ideas at any stage (seed, developing, drafting, refining)
-- Examples: `/divergent-thinking foraging-intelligence`, `/divergent-thinking cache-optimization`
+Two modes:
+
+- **Idea mode** (naked argument): generates angles for an idea. Writes local artifact + updates idea frontmatter.
+- **Ad-hoc mode** (`--adhoc "subject"`): generates angles for a free-form topic/concept. No local artifact, no frontmatter update.
+
+Examples: `/divergent-thinking foraging-intelligence`, `/divergent-thinking --adhoc "authentic assessment at scale"`.
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to determine mode:
 
-**Resolution rules:**
+- If `--adhoc "subject"` present: **ad-hoc mode**, subject = value of flag. Skip Ideas/ resolution.
+- Otherwise: **idea mode**, naked argument = candidate idea name.
+
+**Idea-mode resolution (fail-closed):**
 
 | Input | Behavior |
 |-------|----------|
-| Empty | List all ideas in Ideas/, ask user to select |
-| `idea-name` | Resolve to `Ideas/{idea-name}.md` |
-| `idea-name.md` | Strip `.md`, resolve as above |
-
-**Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
+| Empty | Glob `Ideas/*.md`, present titles, ask user to select |
+| `idea-name` or `idea-name.md` | Exact match at `Ideas/{arg}.md` (strip `.md` first) |
+| No exact match | Case-insensitive substring match against all `Ideas/*.md` filenames |
+| Single fuzzy match | Use it |
+| Multiple fuzzy matches | Present options, ask user to pick |
+| Zero matches | **ERROR**: "Idea file not found: `{arg}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc divergent thinking on a non-idea subject, use: `/divergent-thinking --adhoc \"{arg}\"`." Exit. Do NOT silently fall through to ad-hoc. |
 
 ## Persona
 
@@ -53,29 +61,28 @@ Execute these steps in order. Stop and report errors at any step rather than con
 
 ### Step 0: Parse Arguments
 
-1. Read `$ARGUMENTS`
-2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Read the first 20 lines of each to extract the idea title and stage from frontmatter. Present all ideas to the user and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
-3. If provided: attempt to resolve `Ideas/{argument}.md`
-   - Try exact match first (with and without `.md` extension)
-   - If not found, try fuzzy substring match against all filenames in Ideas/
-   - If exactly one fuzzy match, use it
-   - If multiple fuzzy matches, present options and ask user to pick
-   - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+1. Read `$ARGUMENTS`. Detect `--adhoc` flag.
+2. **If `--adhoc "subject"` is present:** mode = `ad-hoc`, subject = value of flag. Skip Ideas/ resolution.
+3. **Otherwise (idea mode):**
+   - If empty: `Glob` `Ideas/*.md`, read first 20 lines for title and stage, present all ideas, ask user to select. If none exist, exit.
+   - Try exact match at `Ideas/{argument}.md` (strip `.md` first)
+   - If no exact match, case-insensitive substring match
+   - Single fuzzy match → use it
+   - Multiple fuzzy matches → present options, ask user to pick
+   - Zero matches → **ERROR**: "Idea file not found: `{argument}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc divergent thinking, use: `/divergent-thinking --adhoc \"{argument}\"`." Exit. Do NOT silently fall through to ad-hoc.
 
 ### Step 1: Load Context
 
-Load only:
-
-1. **Idea file** at the resolved path — full content (frontmatter + body)
-
-Extract from it:
+**Idea mode:** Load only the idea file at the resolved path — full content (frontmatter + body). Extract:
 - Core insight
 - Themes (from frontmatter `themes: []`)
 - Domain (from frontmatter `domain:`)
 - Current stage (from frontmatter `stage:`)
 - Any existing body content relevant to understanding the idea
 
-That is it. Do NOT load any other files. No persona guide, no strategy docs, no OKRs, no other ideas, no research artifacts. Loading more anchors thinking to existing frames.
+**Ad-hoc mode:** The subject string is the seed for divergent thinking. No idea file, no themes, no domain. The subject itself is the core insight.
+
+Both modes: Do NOT load any other files. No persona guide, no strategy docs, no OKRs, no other ideas, no research artifacts. Loading more anchors thinking to existing frames.
 
 ### Step 2: Validate
 
@@ -98,10 +105,14 @@ Of the 3-5 angles generated, identify which one has the highest potential to fun
 
 ### Step 5: Write Research Artifact
 
+**Ad-hoc mode:** Skip this step — no idea-scoped folder, no frontmatter to update. Jump to Step 6 with angles presented in conversation only.
+
+**Idea mode:**
+
 1. Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
 2. Determine the idea name from the filename (strip `.md` extension)
 3. Create directory if needed: `Research/{idea-name}/`
-4. Write `Research/{idea-name}/divergent-angles.md` with this structure:
+4. Write `Research/{idea-name}/divergent-angles.md`. If a file already exists at that path from a prior run, write to `Research/{idea-name}/divergent-angles-{YYYY-MM-DD}.md` instead; if that also exists, append `-2`, `-3`, etc. Use this structure:
 
 ```markdown
 ---
@@ -154,10 +165,10 @@ created: {today's date YYYY-MM-DD}
 5. Update the idea file frontmatter: append the research artifact path to the `research: []` array.
 
 **Frontmatter update rules:**
-- The path to append is: `Research/{idea-name}/divergent-angles.md`
-- If `research:` is currently `[]` (empty array), replace with `[Research/{idea-name}/divergent-angles.md]`
+- The path to append is the file actually written in step 4 (may include dated suffix if it's an augment run)
+- If `research:` is currently `[]` (empty array), replace with `[{written path}]`
 - If `research:` already contains entries, append the new path to the existing array
-- If a `divergent-angles.md` path already exists in the array (from a previous run), replace it rather than duplicating
+- Do NOT remove older dated-suffix entries from prior runs — augment artifacts coexist
 - Update `updated:` to today's date
 - Do NOT change the `stage:` field — this agent does not transition stages
 
@@ -203,7 +214,7 @@ Divergent thinking complete: {idea-name}
 | Idea too vague for meaningful angles | Report and ask human to sharpen the core insight |
 | Idea file has malformed frontmatter | Report parsing issue with specifics, exit |
 | Research directory already exists | Continue (write/overwrite divergent-angles.md in it) |
-| divergent-angles.md already exists | Overwrite — this agent can be re-run for fresh angles |
+| divergent-angles.md already exists for this idea | Write dated-suffix augment file per Step 5 (`divergent-angles-{YYYY-MM-DD}.md`, counter for same-day); append new path to frontmatter; do not remove the original |
 | Frontmatter research array update fails | Report error, present angles in output anyway so work is not lost |
 
 ## Scope Boundaries

@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
 ---
 
 # /draft — Drafting Session (Stage 2→3)
@@ -78,11 +79,11 @@ Load these files in parallel:
 2. **Persona guide** — `persona.md`
 3. **OKRs** — Read the OKRs document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.okrs`)
 4. **Research artifacts** — All files referenced in the idea file's `research: []` frontmatter array. Read full content of each.
-5. **Shared research baseline** — Read the following files from `Research/shared/assessments/`:
-   - `customer-evidence.md`
-   - `competitive-landscape.md`
-   - `market-sizing.md`
-   Use as supplementary evidence for building the output document. Check TTL: within-TTL entries are usable; past-TTL entries are directional only.
+5. **Shared research baseline** — Query the strategy research database for structured evidence relevant to this idea's capabilities:
+   ```bash
+   python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'
+   ```
+   Derive capability slugs from the idea's `themes` field. Use as supplementary evidence for building the output document. Check TTL: within-TTL entries are usable; past-TTL entries are directional only.
 6. **Output template** — Based on the idea file's `output-format` frontmatter value:
    - If `strategy-doc`: `Templates/strategy-document-template.md`
    - If `product-brief`: `Templates/product-brief-template-v2.md`
@@ -150,6 +151,19 @@ For sections needing strategic grounding that isn't covered by preloaded researc
 - Target: competitor data, market context, technology trends relevant to specific draft sections.
 - Synthesize findings with source URLs.
 
+**Enrichment-skill augment (conditional):**
+When a specific section needs substantially more research than the existing artifacts provide — not a single web search, but a full re-run of an enrichment skill — invoke it in idea mode on this idea:
+
+- `/edtech-sme {idea-name}` — additional competitive/market intelligence
+- `/educator-sme {idea-name}` — additional adoption/pedagogical perspective
+- `/tam-estimate {idea-name}` — additional or revised market sizing
+- `/divergent-thinking {idea-name}` — additional reframing angles
+- `/cross-domain {idea-name}` — refreshed cross-domain signals
+
+Each enrichment skill detects the existing artifact and writes a dated-suffix augment file (e.g., `edtech-market-analysis-2026-04-20.md`). The original artifact is preserved. The new file is appended to the idea's `research: []` frontmatter — both entries coexist.
+
+Use sparingly. An enrichment augment is a 10-20 minute research run, not a quick lookup. Reserve for sections where the draft lacks a specific point the section needs to make and web search alone won't close the gap.
+
 ### Step 5: Draft
 
 Follow the output template structure exactly. Write every section.
@@ -157,12 +171,12 @@ Follow the output template structure exactly. Write every section.
 **Source priority for each section:**
 1. **TL;DR content** — Primary source. The TL;DR captures the idea's strategic essence.
 2. **Research artifacts** — Supporting evidence. Ground claims in findings.
-3. **Shared research baseline** — Supplementary evidence from `Research/shared/assessments/`. Within-TTL entries are usable as supporting evidence; past-TTL entries are directional only.
+3. **Shared research baseline** — Supplementary evidence from the research database query in Step 1. Within-TTL entries are usable as supporting evidence; past-TTL entries are directional only.
 4. **Strategy doc context** — Strategic grounding. Retrieved via Grep at runtime for specific sections needing organizational priority connections.
 5. **OKRs and goals** — Alignment anchoring. Connect to named 2026 priorities.
 6. **Original synthesis** — Connecting the dots. Where sources provide ingredients but no section provides a direct answer, synthesize across sources. Label synthesis explicitly vs. sourced claims.
 
-**Shared research verification:** When citing competitive claims or market data from shared research files in the output document, verify the claim is still current before asserting it. Shared findings are a dated baseline — stakeholder-facing documents require higher confidence than internal ratings. If a shared finding is past TTL or cannot be verified, note it as context rather than asserting it as fact.
+**Shared research verification:** When citing competitive claims or market data from the research database in the output document, verify the claim is still current before asserting it. Database findings are a dated baseline — stakeholder-facing documents require higher confidence than internal ratings. If a finding is past TTL or cannot be verified, note it as context rather than asserting it as fact.
 
 **For strategy documents, apply these methodology rules:**
 - Strategic Thesis: 1-2 sentences. Inspire + direct toward outcome. Differentiation focus.

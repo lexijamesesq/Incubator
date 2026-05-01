@@ -1,6 +1,6 @@
 ---
 name: tam-estimate
-description: This skill should be used when the user asks to "estimate TAM for [idea]", "size the market for [idea]", "market sizing for [idea]", or "TAM analysis for [idea]". Produces defensible TAM/SAM/SOM estimates using top-down and bottom-up methodologies for a strategic idea in the assessment/edtech space.
+description: This skill should be used when the user asks to "estimate TAM for [idea]", "size the market for [idea/subject]", "market sizing for [idea/subject]", "TAM analysis for [idea]", or "TAM estimate for [market category]". Produces defensible TAM/SAM/SOM estimates using top-down and bottom-up methodologies for a strategic idea OR an arbitrary market category/segment in the assessment/edtech space.
 argument-hint: [idea-name]
 context: fork
 agent: tam-estimate
@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
 ---
 
 # /tam-estimate — TAM Estimation Enrichment Agent
@@ -22,27 +23,34 @@ Produces defensible TAM/SAM/SOM estimates for a strategic idea in the assessment
 ## Invocation
 
 ```
-/tam-estimate [idea-name]
+/tam-estimate [idea-name]                  # idea mode
+/tam-estimate --adhoc "market category"    # ad-hoc mode
 ```
 
-- Required argument: the name of an idea file in `Ideas/`
-- Works on ideas at ANY stage (Stage 1 onward) — market sizing is useful throughout the pipeline
-- If no argument provided: list available ideas and ask the user to pick
-- Examples: `/tam-estimate foraging-intelligence`, `/tam-estimate cache-optimization`
+Two modes:
+
+- **Idea mode** (naked argument): sizes the market for an idea. Writes local artifact + updates idea frontmatter.
+- **Ad-hoc mode** (`--adhoc "subject"`): sizes a free-form market category/segment. No local artifact, no frontmatter update. Findings still write back to the research database.
+
+Examples: `/tam-estimate foraging-intelligence`, `/tam-estimate --adhoc "AI grading tools"`, `/tam-estimate --adhoc "K-12 authentic assessment"`.
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to determine mode:
 
-**Resolution rules:**
+- If `--adhoc "subject"` present: **ad-hoc mode**, subject = value of flag. Skip Ideas/ resolution.
+- Otherwise: **idea mode**, naked argument = candidate idea name.
+
+**Idea-mode resolution (fail-closed):**
 
 | Input | Behavior |
 |-------|----------|
-| Empty | List all ideas in Ideas/, ask user to select |
-| `idea-name` | Resolve to `Ideas/{idea-name}.md` |
-| `idea-name.md` | Strip `.md`, resolve as above |
-
-**Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
+| Empty | Glob `Ideas/*.md`, present titles, ask user to select |
+| `idea-name` or `idea-name.md` | Exact match at `Ideas/{arg}.md` (strip `.md` first) |
+| No exact match | Case-insensitive substring match against all `Ideas/*.md` filenames |
+| Single fuzzy match | Use it |
+| Multiple fuzzy matches | Present options, ask user to pick |
+| Zero matches | **ERROR**: "Idea file not found: `{arg}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc market sizing, use: `/tam-estimate --adhoc \"{arg}\"`." Exit. Do NOT silently fall through to ad-hoc. |
 
 ## Persona
 
@@ -56,26 +64,31 @@ Execute these steps in order. Stop and report errors at any step rather than con
 
 ### Step 0: Parse Arguments
 
-1. Read `$ARGUMENTS`
-2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Read the first 20 lines of each to extract frontmatter (stage, domain, themes). Present all ideas to the user (with stage indicated) and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
-3. If provided: attempt to resolve `Ideas/{argument}.md`
-   - Try exact match first (with and without `.md` extension)
-   - If not found, try fuzzy substring match against all filenames in Ideas/
-   - If exactly one fuzzy match, use it
-   - If multiple fuzzy matches, present options and ask user to pick
-   - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+1. Read `$ARGUMENTS`. Detect `--adhoc` flag.
+2. **If `--adhoc "subject"` is present:** mode = `ad-hoc`, subject = value of flag. Skip Ideas/ resolution. Proceed to Step 1.
+3. **Otherwise (idea mode):**
+   - If empty: `Glob` `Ideas/*.md`, read first 20 lines of each for frontmatter (stage, domain, themes), present all ideas with stage, ask user to select. If none exist, exit.
+   - Try exact match at `Ideas/{argument}.md` (strip `.md` first)
+   - If no exact match, case-insensitive substring match
+   - Single fuzzy match → use it
+   - Multiple fuzzy matches → present options, ask user to pick
+   - Zero matches → **ERROR**: "Idea file not found: `{argument}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc market sizing, use: `/tam-estimate --adhoc \"{argument}\"`." Exit. Do NOT silently fall through to ad-hoc.
 
 ### Step 1: Load Context
 
-Load the idea file at the resolved path — full content (frontmatter + body).
-
-Extract these fields for market scoping:
+**Idea mode:** Load the idea file at the resolved path — full content (frontmatter + body). Extract:
 - `domain` — assessments, platform, or cross-product
 - `themes` — thematic keywords for search targeting
 - **Core insight** — from body content
 - **Problem it addresses** — from body content (if populated; may not exist at seed stage)
 
-**Shared research baseline:** Read `Research/shared/assessments/market-sizing.md` if it exists. Use within-TTL entries as known starting points for TAM figures and growth rates — do not re-research established sizing data that is already documented and current. Treat past-TTL entries as directional only (useful for market category framing, not current figures). If the file does not exist, proceed without it.
+**Ad-hoc mode:** The subject string is the market category to size. No idea file, no themes, no domain. Frame Step 2 market scope entirely from the subject string. Ad-hoc subjects are expected to be reasonably specific (e.g., "K-12 authentic assessment" not "edtech"); if the subject is too broad, Step 2's stop rule fires.
+
+**Shared research baseline:** Query the strategy research database for TAM figures, growth rates, and buyer benchmarks:
+```bash
+python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
+```
+Derive capability slugs from the idea's `themes` field. Within-TTL entries are known starting points — do not re-research established sizing data that is already documented and current. Past-TTL entries are directional only (useful for market category framing, not current figures).
 
 No other files needed. TAM estimation is externally validated — internal strategy docs are not relevant.
 
@@ -190,8 +203,12 @@ Compare top-down and bottom-up results and produce a final estimate range.
 
 ### Step 6: Write Research Artifact
 
+**Ad-hoc mode:** Skip this step — no idea-scoped folder, no frontmatter to update. Jump to Step 7 with findings going to the database and conversation only.
+
+**Idea mode:**
+
 1. Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
-2. Write `Research/{idea-name}/tam-estimate.md` using the Write tool (which auto-creates intermediate directories). Use the following structure:
+2. Write `Research/{idea-name}/tam-estimate.md` using the Write tool (which auto-creates intermediate directories). If a file already exists at that path from a prior run, write to `Research/{idea-name}/tam-estimate-{YYYY-MM-DD}.md` instead; if that also exists, append `-2`, `-3`, etc., for same-day collisions. Structure:
 
 ```markdown
 ---
@@ -293,11 +310,12 @@ confidence: high | medium | low
 [How this TAM analysis feeds into the idea's revenue-potential impact dimension. What rating (Low/Med/High) this evidence supports and why.]
 ```
 
-4. Update the idea file frontmatter: append the research artifact path to the `research: []` array.
+4. Update the idea file frontmatter: append the written artifact path to the `research: []` array.
    - Read the idea file
    - Find the `research:` line in frontmatter
-   - If `research: []` (empty array), replace with `research:\n  - Research/{idea-name}/tam-estimate.md`
-   - If `research:` already has entries, append `  - Research/{idea-name}/tam-estimate.md` after the last entry
+   - If `research: []` (empty array), replace with `research:\n  - {written path}`
+   - If `research:` already has entries, append the written path after the last entry
+   - Do NOT remove older dated-suffix entries from prior runs — augment artifacts coexist
    - Do NOT modify any other frontmatter fields or body content
 
 ### Step 7: Present Results
@@ -333,9 +351,26 @@ TAM estimation complete: {idea-name}
 **Idea frontmatter updated:** research array now includes tam-estimate path.
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to TAM figures, growth rates, buyer counts, and market benchmarks that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/market-sizing.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (report page, press release, analyst summary), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
-
-> **Shared research updated:** `market-sizing.md`: +{N} entries ({brief descriptions})
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to TAM figures, growth rates, buyer counts, and market benchmarks that would benefit other ideas). Write qualifying findings to the strategy research database:
+```bash
+python3 scripts/research-db.py write-findings --json '{
+  "findings": [
+    {
+      "claim": "...",
+      "evidence": "...",
+      "confidence": "high|medium|low",
+      "source_url": "https://specific-page-url (REQUIRED — not a homepage)",
+      "source_description": "fallback only when no stable URL exists",
+      "ttl_months": 24,
+      "topic": "market-sizing",
+      "category": "tam-broad|tam-segment|growth-rate",
+      "capabilities": ["slug-1", "slug-2"],
+      "competitor_id": null
+    }
+  ]
+}'
+```
+**Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists, with enough detail to locate the source. Do not write findings with neither.
 
 ## Stop Rules
 

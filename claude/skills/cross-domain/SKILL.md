@@ -1,6 +1,6 @@
 ---
 name: cross-domain
-description: This skill should be used when the user asks to "check cross-domain signals for [idea]", "cross-domain discovery for [idea]", "what are other teams building related to [idea]", or "cross-domain [idea]". Queries the JPD project for ideas from other product domains that have functional overlap with an Incubator idea.
+description: This skill should be used when the user asks to "check cross-domain signals for [idea]", "cross-domain discovery for [idea/subject]", "what are other teams building related to [idea/subject]", "cross-domain [idea]", or "cross-domain signals for [capability/concept]". Queries the JPD project for ideas from other product domains that have functional overlap with an Incubator idea OR an arbitrary subject.
 argument-hint: [idea-name]
 context: fork
 disable-model-invocation: false
@@ -20,27 +20,34 @@ Queries the JPD project for ideas from other product domains that have functiona
 ## Invocation
 
 ```
-/cross-domain [idea-name]
+/cross-domain [idea-name]                  # idea mode
+/cross-domain --adhoc "subject string"     # ad-hoc mode
 ```
 
-- Required argument: the name of an idea file in `Ideas/`
-- Works on ideas at any stage (seed, developing, drafting, refining, complete)
-- If no argument provided: list available ideas and ask the user to pick
-- Examples: `/cross-domain foraging-intelligence`, `/cross-domain cache-optimization`
+Two modes:
+
+- **Idea mode** (naked argument): discovers cross-domain signals for an idea. Writes local artifact + updates idea frontmatter.
+- **Ad-hoc mode** (`--adhoc "subject"`): discovers JPD items overlapping with a free-form subject (capability, concept). No local artifact, no frontmatter update.
+
+Examples: `/cross-domain foraging-intelligence`, `/cross-domain --adhoc "rubric-based grading infrastructure"`.
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to determine mode:
 
-**Resolution rules:**
+- If `--adhoc "subject"` present: **ad-hoc mode**, subject = value of flag. Skip Ideas/ resolution.
+- Otherwise: **idea mode**, naked argument = candidate idea name.
+
+**Idea-mode resolution (fail-closed):**
 
 | Input | Behavior |
 |-------|----------|
-| Empty | List all ideas in Ideas/, ask user to select |
-| `idea-name` | Resolve to `Ideas/{idea-name}.md` |
-| `idea-name.md` | Strip `.md`, resolve as above |
-
-**Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
+| Empty | Glob `Ideas/*.md`, present titles, ask user to select |
+| `idea-name` or `idea-name.md` | Exact match at `Ideas/{arg}.md` (strip `.md` first) |
+| No exact match | Case-insensitive substring match against all `Ideas/*.md` filenames |
+| Single fuzzy match | Use it |
+| Multiple fuzzy matches | Present options, ask user to pick |
+| Zero matches | **ERROR**: "Idea file not found: `{arg}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc cross-domain discovery, use: `/cross-domain --adhoc \"{arg}\"`." Exit. Do NOT silently fall through to ad-hoc. |
 
 ## Role
 
@@ -60,29 +67,29 @@ Read `jira-config.md` from the Incubator project root (`Professional/Incubator/j
 
 ### Phase 0.1: Parse Arguments
 
-1. Read `$ARGUMENTS`
-2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Present all ideas to the user (with their stage from frontmatter) and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
-3. If provided: attempt to resolve `Ideas/{argument}.md`
-   - Try exact match first (with and without `.md` extension)
-   - If not found, try fuzzy substring match against all filenames in Ideas/
-   - If exactly one fuzzy match, use it
-   - If multiple fuzzy matches, present options and ask user to pick
-   - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+1. Read `$ARGUMENTS`. Detect `--adhoc` flag.
+2. **If `--adhoc "subject"` is present:** mode = `ad-hoc`, subject = value of flag. Skip Ideas/ resolution. Proceed to Phase 0.5.
+3. **Otherwise (idea mode):**
+   - If empty: `Glob` `Ideas/*.md`, present all ideas with stage, ask user to select. If none exist, exit.
+   - Try exact match at `Ideas/{argument}.md` (strip `.md` first)
+   - If no exact match, case-insensitive substring match
+   - Single fuzzy match → use it
+   - Multiple fuzzy matches → present options, ask user to pick
+   - Zero matches → **ERROR**: "Idea file not found: `{argument}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc cross-domain discovery, use: `/cross-domain --adhoc \"{argument}\"`." Exit. Do NOT silently fall through to ad-hoc.
 
 ### Phase 0.5: Load Context
 
-Read in parallel:
+Read the organizational structural reference: `.claude/skills/cross-domain/org-structural-reference.md`.
 
-1. **Idea file** at the resolved path — full content including frontmatter and body
-2. **Organizational structural reference** — `.claude/skills/cross-domain/org-structural-reference.md`
-
-Extract from the idea file:
+**Idea mode:** Also read the idea file at the resolved path — full content including frontmatter and body. Extract:
 - **Core insight** — the central idea
 - **Themes** — from frontmatter `themes: []`
 - **Domain** — from frontmatter `domain:`
 - **Original Capture** — raw context (often contains nuance the structured fields compressed)
 - **Problem it addresses / Who cares** — if present (developing+ stage)
 - **Strategic connection** — if present
+
+**Ad-hoc mode:** The subject string is the anchor for overlap discovery. No idea file, no themes, no domain, no original capture. Subsequent phases use the subject string in place of the idea's extracted fields — Phase 1.5 Step B.1 extracts key terms directly from the subject string.
 
 ### Phase 1: Status-Partitioned Retrieve
 
@@ -230,11 +237,15 @@ Phase 2 may classify more signals as relevant than the reader needs. This phase 
 
 ### Phase 2.6: Write Research Artifact
 
+**Ad-hoc mode:** Skip this phase — no idea-scoped folder, no frontmatter to update. Jump directly to Phase 3 with signals presented in conversation only.
+
+**Idea mode:**
+
 Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
 
 Create directory `Research/{idea-name}/` if it does not exist (use `Bash` to `mkdir -p`).
 
-Write the full cross-domain results to `Research/{idea-name}/cross-domain-signals.md`:
+Write the full cross-domain results to `Research/{idea-name}/cross-domain-signals.md`. If a file already exists at that path from a prior run, write to `Research/{idea-name}/cross-domain-signals-{YYYY-MM-DD}.md` instead; if that also exists, append `-2`, `-3`, etc. Structure:
 
 ```markdown
 ---
@@ -281,8 +292,8 @@ Update the idea file frontmatter: append `Research/{idea-name}/cross-domain-sign
 
 **Frontmatter update rules:**
 - Read the current frontmatter to get the existing `research:` array
-- Append the new path (do not overwrite existing entries)
-- If the path already exists (from a previous run), replace it rather than duplicating
+- Append the new path — including the dated suffix if this is an augment run
+- Do NOT remove older dated-suffix entries from prior runs — augment artifacts coexist
 - Do NOT change any other frontmatter fields (especially `stage:`)
 - Use `Edit` to make the targeted frontmatter change
 

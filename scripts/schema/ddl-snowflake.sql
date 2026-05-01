@@ -1,11 +1,13 @@
--- Snowflake DDL for the strategy research schema
--- Replace role, database, and schema names with your values from research-db-config.json
+-- Snowflake DDL for PRODUCT.STRATEGY_RESEARCH
+-- Run with PRODUCT_ANALYST role
+-- Last synced with actual schema: 2026-05-01 (INC-034)
+-- Verification: GET_DDL('TABLE', '<name>') matches this file modulo cosmetic differences (cluster-by inline vs ALTER, lowercase vs uppercase identifiers).
 
-USE ROLE YOUR_ROLE;
-USE DATABASE YOUR_DATABASE;
+USE ROLE PRODUCT_ANALYST;
+USE DATABASE PRODUCT;
 
-CREATE SCHEMA IF NOT EXISTS YOUR_SCHEMA;
-USE SCHEMA YOUR_SCHEMA;
+CREATE SCHEMA IF NOT EXISTS STRATEGY_RESEARCH;
+USE SCHEMA STRATEGY_RESEARCH;
 
 -- 1. Capabilities (reference vocabulary)
 -- Flat capability vocabulary. Tag cloud with governance guardrails.

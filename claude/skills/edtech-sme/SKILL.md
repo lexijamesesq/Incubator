@@ -1,6 +1,6 @@
 ---
 name: edtech-sme
-description: This skill should be used when the user asks to "get market analysis for [idea]", "edtech evaluation of [idea]", "competitive analysis for [idea]", "market perspective on [idea]", or "edtech SME review of [idea]". Evaluates a strategic idea against edtech market dynamics, competitive landscape, buyer behavior, and technology trends from an industry analyst perspective.
+description: This skill should be used when the user asks to "get market analysis for [idea]", "edtech evaluation of [idea/subject]", "competitive analysis for [idea/subject]", "market perspective on [company/technology/concept]", or "edtech SME review of [subject]". Evaluates a strategic idea OR an arbitrary subject (competitor, technology, concept) against edtech market dynamics, competitive landscape, buyer behavior, and technology trends from an industry analyst perspective.
 argument-hint: [idea-name]
 context: fork
 agent: edtech-sme
@@ -23,27 +23,40 @@ Evaluates a strategic idea against edtech market dynamics, competitive landscape
 ## Invocation
 
 ```
-/edtech-sme [idea-name]
+/edtech-sme [idea-name]                  # idea mode
+/edtech-sme --adhoc "subject string"     # ad-hoc mode
 ```
 
-- Required argument: the name of an idea file in `Ideas/`
-- Works on ideas at any stage (seed, developing, drafting, refining)
-- If no argument provided: list available ideas and ask the user to pick
-- Examples: `/edtech-sme foraging-intelligence`, `/edtech-sme cache-optimization`
+Two modes:
+
+- **Idea mode** (naked argument): the argument names an idea file in `Ideas/`. Skill loads the idea and evaluates it. Writes a local artifact at `Research/{idea-name}/edtech-market-analysis.md` and appends the path to the idea's `research: []` frontmatter.
+- **Ad-hoc mode** (`--adhoc "subject"`): the flag carries a free-form subject string (competitor, technology, concept). Skill evaluates the subject on its own. No local artifact, no frontmatter update. Findings still write back to the research database.
+
+Examples: `/edtech-sme foraging-intelligence`, `/edtech-sme --adhoc "Top Hat"`, `/edtech-sme --adhoc "adaptive learning platforms"`.
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to determine mode:
 
-**Resolution rules:**
+- If `--adhoc "subject"` present: **ad-hoc mode**, subject = value of flag. Skip Ideas/ resolution entirely.
+- Otherwise: **idea mode**, naked argument = candidate idea name.
+
+**Idea-mode resolution (fail-closed):**
 
 | Input | Behavior |
 |-------|----------|
-| Empty | List all ideas in Ideas/, ask user to select |
-| `idea-name` | Resolve to `Ideas/{idea-name}.md` |
-| `idea-name.md` | Strip `.md`, resolve as above |
+| Empty | Glob `Ideas/*.md`, present titles, ask user to select |
+| `idea-name` or `idea-name.md` | Exact match at `Ideas/{arg}.md` (strip `.md` first) |
+| No exact match | Case-insensitive substring match against all `Ideas/*.md` filenames |
+| Single fuzzy match | Use it |
+| Multiple fuzzy matches | Present options, ask user to pick |
+| Zero matches | **ERROR** (see below) — never silently fall through to ad-hoc |
 
-**Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
+**Zero-match error text:**
+
+> Idea file not found: `{arg}`. Closest candidates in Ideas/: `{list up to 5 filenames with lowest edit distance or shortest substring proximity}`. For ad-hoc analysis of a non-idea subject, use: `/edtech-sme --adhoc "{arg}"`.
+
+Exit. Do NOT silently interpret a no-match as ad-hoc mode.
 
 ## Persona
 
@@ -59,35 +72,43 @@ Execute these steps in order. Stop and report errors at any step rather than con
 
 ### Step 0: Parse Arguments
 
-1. Read `$ARGUMENTS`
-2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Present all ideas to the user (with their stage from frontmatter) and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
-3. If provided: attempt to resolve `Ideas/{argument}.md`
-   - Try exact match first (with and without `.md` extension)
-   - If not found, try fuzzy substring match against all filenames in Ideas/
-   - If exactly one fuzzy match, use it
-   - If multiple fuzzy matches, present options and ask user to pick
-   - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+1. Read `$ARGUMENTS`. Detect `--adhoc` flag.
+2. **If `--adhoc "subject"` is present:** mode = `ad-hoc`, subject = value of flag. Skip Ideas/ resolution. Proceed to Step 1.
+3. **Otherwise (idea mode):**
+   - If empty: use `Glob` to list all `.md` files in `Ideas/`. Present all ideas to the user (with their stage from frontmatter) and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
+   - Try exact match at `Ideas/{argument}.md` (strip `.md` extension first if present)
+   - If no exact match, try case-insensitive substring match against all filenames in `Ideas/`
+   - Single fuzzy match → use it
+   - Multiple fuzzy matches → present options, ask user to pick
+   - Zero matches → **ERROR**: "Idea file not found: `{argument}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc analysis of a non-idea subject, use: `/edtech-sme --adhoc \"{argument}\"`." Exit. Do NOT silently interpret as ad-hoc.
 
 ### Step 1: Load Context
 
-Read the idea file at the resolved path — full content including frontmatter and body.
-
-Extract from the idea file:
+**Idea mode:** Read the idea file at the resolved path — full content including frontmatter and body. Extract:
 - **Core insight** — the central idea being evaluated
 - **Themes** — from frontmatter `themes: []` array
 - **Domain** — from frontmatter `domain:` field
 - **Stage** — from frontmatter `stage:` field (for reporting, not gating)
 - **Existing research** — from frontmatter `research: []` array (to avoid duplicating work)
 
-**Shared research baseline:** Read `Research/shared/assessments/competitive-landscape.md` if it exists. Use within-TTL entries as known starting points — do not rediscover competitors already documented there. Treat past-TTL entries as directional only (relevant categories and framing, not current positioning). If the file does not exist, proceed without it.
+**Ad-hoc mode:** The subject string is the target. There is no idea file, no themes, no domain, no prior research. Frame the evaluation around the subject itself — the company, technology, or concept — rather than an idea being evaluated against the market.
 
-**Competitor registry:** Glob `Research/shared/assessments/competitors/*.md` if the directory exists. For each file, read frontmatter only (first 15 lines or until `---` closes). Extract: name, category, themes, capabilities. Filter to competitors whose themes overlap with the idea's themes — these are the registry-matched competitors. If the directory doesn't exist or is empty, proceed without it (the persona baseline list provides fallback coverage).
+**Shared research baseline:**
 
-**Database augmentation:** Additionally, query the strategy research database for structured competitive intelligence:
-```bash
-python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
-```
-Derive capability slugs from the idea's `themes` field. Database results supplement the shared research files and registry — use them as additional known starting points and to identify where live web research should focus. During Step 3, use `query-competitor` for targeted deep-dives on competitors central to the analysis.
+- **Idea mode:** Query by capability slugs derived from the idea's `themes` field:
+  ```bash
+  python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
+  ```
+- **Ad-hoc mode:** Look up the subject directly. If the subject names a company/product, try `lookup-competitor`:
+  ```bash
+  python3 scripts/research-db.py lookup-competitor --json '{"name": "Subject Name"}'
+  python3 scripts/research-db.py query-competitor --json '{"name": "Subject Name"}'
+  ```
+  If no match, query by inferred capability slugs if any apply, otherwise proceed with web research only.
+
+Within-TTL entries are known starting points — do not rediscover competitors already documented there. Past-TTL entries are directional only (relevant categories and framing, not current positioning). During Step 3, use `query-competitor` for targeted deep-dives on competitors central to the analysis.
+
+**Competitor registry:** Snowflake `competitors` table — accessed via `query-landscape` (Step 1 above) which returns name, category, market_tier, pricing_model, and matched capabilities filtered by capability slug. For deeper context on a specific competitor central to the analysis, use `query-competitor --json '{"name": "..."}'`.
 
 Context exclusions (strategy docs, OKRs, persona guide, approach docs) are enforced by the agent's scope constraints.
 
@@ -141,9 +162,13 @@ Analyze the market window with specific signals:
 
 ### Step 6: Write Research Artifact
 
+**Ad-hoc mode:** Skip this step entirely — no idea-scoped folder to write to, no frontmatter to update. Jump to Step 7 (present results) with findings going to the database and conversation only.
+
+**Idea mode:**
+
 1. Get today's date using `Bash(date:*)`: `date +%Y-%m-%d`
 2. Create directory `Research/{idea-name}/` if it does not exist (use `Bash` to `mkdir -p`)
-3. Write the research artifact to `Research/{idea-name}/edtech-market-analysis.md`
+3. Write the research artifact to `Research/{idea-name}/edtech-market-analysis.md` (if a file already exists at this path from a prior run, write to `Research/{idea-name}/edtech-market-analysis-{YYYY-MM-DD}.md` instead; if that also exists, append `-2`, `-3`, etc., for same-day collisions)
 
 **Artifact structure:**
 
@@ -206,18 +231,21 @@ confidence: high | medium | low
 - {Source 3 with URL}
 ```
 
-4. Update the idea file frontmatter: append `Research/{idea-name}/edtech-market-analysis.md` to the `research: []` array
+4. Update the idea file frontmatter: append the written artifact path to the `research: []` array
 
    **Frontmatter update rules:**
    - Read the current frontmatter to get the existing `research:` array
-   - Append the new path to the array (do not overwrite existing entries)
-   - If the path already exists in the array (from a previous run), replace it rather than duplicating
+   - Append the new path to the array (do not overwrite existing entries, do not remove older dated-suffix entries from prior runs)
    - Do NOT change any other frontmatter fields (especially `stage:`)
    - Use `Edit` to make the targeted frontmatter change
 
 ### Step 7: Present Results
 
-Present the completed analysis to the user with:
+**Idea mode:** Present the completed analysis with the idea-name, impact dimension implications (for /develop synthesis), and the research artifact path.
+
+**Ad-hoc mode:** Present the analysis with the subject string, omit impact dimension implications entirely, omit research artifact path. Findings still go to the database.
+
+Idea-mode presentation template:
 
 ```
 EdTech market analysis complete: {idea-name}
@@ -246,11 +274,7 @@ EdTech market analysis complete: {idea-name}
 **Confidence:** {High/Medium/Low}
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/competitive-landscape.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, feature page, report), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
-
-> **Shared research updated:** `competitive-landscape.md`: +{N} entries ({brief descriptions})
-
-**Database write-back:** Additionally, write qualifying findings to the strategy research database:
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings to the strategy research database:
 ```bash
 python3 scripts/research-db.py write-findings --json '{
   "findings": [
@@ -279,10 +303,26 @@ This oscillation between web research and database lookups produces richer conte
 
 **Competitor registry updates:**
 
-After competitive-landscape.md writes, update the competitor registry:
-- **New competitors:** For competitors discovered during this analysis that are relevant to the competitive domain beyond this single idea, create a new file at `Research/shared/assessments/competitors/{kebab-name}.md` with required fields. Before creating, Glob existing files to check for variant names.
-- **Existing competitors:** For registry competitors that were researched, update `last-researched` to today and add any new coarse capability tags.
-- **Category changes:** If analysis suggests a competitor's category should change, note the proposed change with rationale in the presentation. Do NOT update frontmatter `category` autonomously.
+Update the competitor registry via `upsert-competitor`:
+
+```bash
+python3 scripts/research-db.py upsert-competitor --json '{
+  "name": "Competitor Name",
+  "category": "core|adjacent|emerging|substitute",
+  "segments": ["k-12", "higher-ed"],
+  "market_tier": "tier-1|tier-2|tier-3",
+  "pricing_model": "per-seat|platform-fee|...",
+  "integration_posture": ["lti-certified"],
+  "capabilities": ["slug-1", "slug-2"],
+  "intelligence_body": "Substantive 2-5 sentence positioning narrative (min 50 chars)...",
+  "source_url": "https://specific-page (REQUIRED for new entries — not a homepage)"
+}'
+```
+
+- **New competitors:** The command's fuzzy-name dup check returns candidates if any look similar; if the new competitor is genuinely distinct, re-run with `force_create: true`. Evidence requirement: `source_url` or `source_description` is mandatory for inserts.
+- **Existing competitors:** Run the same command — exact-name lookup hits the existing row and updates the fields you provide. Skip a field to leave it untouched. `last_researched` stamps automatically.
+- **Category changes:** The command rejects a category change with `action: needs_category_confirmation`. Surface the proposal to the human in the presentation. The skill never passes `force_category_change: true` — that flag is reserved for human-initiated invocations.
+- **Found-superseded:** If the command returns `action: found_superseded` (the name exists but is soft-deleted/self-superseded), surface to the human with the message text. The skill never auto-revives a superseded row.
 
 Note in the presentation:
 > **Competitor registry updated:** +{N} new files, {N} updated ({brief descriptions})

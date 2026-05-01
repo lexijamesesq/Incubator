@@ -1,6 +1,6 @@
 ---
 name: educator-sme
-description: This skill should be used when the user asks to "get educator feedback on [idea]", "educator evaluation of [idea]", "teacher perspective on [idea]", "classroom reality check for [idea]", or "educator SME review of [idea]". Evaluates a strategic idea through the lens of a veteran educator — 20+ years K-12 and higher ed — focused on pedagogical practice, classroom reality, and adoption likelihood.
+description: This skill should be used when the user asks to "get educator feedback on [idea]", "educator evaluation of [idea/subject]", "teacher perspective on [idea/subject]", "classroom reality check for [idea]", or "educator SME review of [subject]". Evaluates a strategic idea OR an arbitrary subject (product, tool, methodology) through the lens of a veteran educator — 20+ years K-12 and higher ed — focused on pedagogical practice, classroom reality, and adoption likelihood.
 argument-hint: [idea-name]
 context: fork
 agent: educator-sme
@@ -23,26 +23,34 @@ Evaluates a strategic idea through the lens of a veteran educator with 20+ years
 ## Invocation
 
 ```
-/educator-sme [idea-name]
+/educator-sme [idea-name]                  # idea mode
+/educator-sme --adhoc "subject string"     # ad-hoc mode
 ```
 
-- Required argument: the name of an idea file in `Ideas/`
-- Works on ideas at any stage (seed, developing, drafting, refining)
-- Examples: `/educator-sme foraging-intelligence`, `/educator-sme cache-optimization`
+Two modes:
+
+- **Idea mode** (naked argument): evaluates an idea file. Writes local artifact + updates idea frontmatter.
+- **Ad-hoc mode** (`--adhoc "subject"`): evaluates a free-form subject (product, tool, methodology). No local artifact, no frontmatter update. DB findings still captured.
+
+Examples: `/educator-sme foraging-intelligence`, `/educator-sme --adhoc "Top Hat"`, `/educator-sme --adhoc "standards-based grading"`.
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to determine mode:
 
-**Resolution rules:**
+- If `--adhoc "subject"` present: **ad-hoc mode**, subject = value of flag. Skip Ideas/ resolution.
+- Otherwise: **idea mode**, naked argument = candidate idea name.
+
+**Idea-mode resolution (fail-closed):**
 
 | Input | Behavior |
 |-------|----------|
-| Empty | List all ideas in Ideas/, ask user to select |
-| `idea-name` | Resolve to `Ideas/{idea-name}.md` |
-| `idea-name.md` | Strip `.md`, resolve as above |
-
-**Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
+| Empty | Glob `Ideas/*.md`, present titles, ask user to select |
+| `idea-name` or `idea-name.md` | Exact match at `Ideas/{arg}.md` (strip `.md` first) |
+| No exact match | Case-insensitive substring match against all `Ideas/*.md` filenames |
+| Single fuzzy match | Use it |
+| Multiple fuzzy matches | Present options, ask user to pick |
+| Zero matches | **ERROR**: "Idea file not found: `{arg}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc analysis of a non-idea subject, use: `/educator-sme --adhoc \"{arg}\"`." Exit. Do NOT silently fall through to ad-hoc. |
 
 ## Persona
 
@@ -54,20 +62,19 @@ Execute these steps in order. Stop and report errors at any step rather than con
 
 ### Step 0: Parse Arguments
 
-1. Read `$ARGUMENTS`
-2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Read the first 20 lines of each to extract the idea title from the body content. Present all ideas to the user (any stage) and ask them to select one. If no ideas exist, report "No ideas found in Ideas/" and exit.
-3. If provided: attempt to resolve `Ideas/{argument}.md`
-   - Try exact match first (with and without `.md` extension)
-   - If not found, try fuzzy substring match against all filenames in Ideas/
-   - If exactly one fuzzy match, use it
-   - If multiple fuzzy matches, present options and ask user to pick
-   - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+1. Read `$ARGUMENTS`. Detect `--adhoc` flag.
+2. **If `--adhoc "subject"` is present:** mode = `ad-hoc`, subject = value of flag. Skip Ideas/ resolution. Proceed to Step 1.
+3. **Otherwise (idea mode):**
+   - If empty: `Glob` `Ideas/*.md`, read first 20 lines of each to extract title, present all ideas, ask user to select. If none exist, exit.
+   - Try exact match at `Ideas/{argument}.md` (strip `.md` extension first if present)
+   - If no exact match, try case-insensitive substring match
+   - Single fuzzy match → use it
+   - Multiple fuzzy matches → present options, ask user to pick
+   - Zero matches → **ERROR**: "Idea file not found: `{argument}`. Closest candidates in Ideas/: `{list up to 5}`. For ad-hoc analysis of a non-idea subject, use: `/educator-sme --adhoc \"{argument}\"`." Exit. Do NOT silently interpret as ad-hoc.
 
 ### Step 1: Load Context
 
-Read the idea file at the resolved path — full content (frontmatter + body).
-
-Extract:
+**Idea mode:** Read the idea file at the resolved path — full content (frontmatter + body). Extract:
 - **Core insight** — from the body content
 - **Problem statement** — from `Problem it addresses` if present (Stage 2+), or infer from core insight (Stage 1)
 - **Domain** — from frontmatter `domain` field, used for K-12 vs. higher ed calibration:
@@ -75,13 +82,13 @@ Extract:
   - `platform` — evaluate from downstream classroom impact
   - `cross-product` — evaluate both segments, note where they diverge
 
-**Shared research baseline:** Read `Research/shared/assessments/customer-evidence.md` if it exists. Use within-TTL entries as known starting points for customer pain signals and adoption evidence — do not rediscover patterns already documented there. Treat past-TTL entries as directional only. If the file does not exist, proceed without it.
+**Ad-hoc mode:** The subject string is the target. There is no idea file, no themes, no domain. Frame the evaluation around the subject itself (a product, tool, methodology, concept). Without a domain signal, evaluate both K-12 and higher ed perspectives unless the subject is clearly one or the other.
 
-**Database augmentation:** Additionally, query the strategy research database for structured customer evidence and educator-relevant findings:
+**Shared research baseline:** Query the strategy research database for customer evidence and educator-relevant findings:
 ```bash
 python3 scripts/research-db.py query-landscape --json '{"capabilities": ["cap-slug-1", "cap-slug-2"]}'
 ```
-Derive capability slugs from the idea's `themes` field. Database findings supplement the shared research file. During Step 4 (Optional Research), if web research surfaces a competitor or methodology, use `query-competitor` for a targeted deep-dive on what the database already knows about it.
+Derive capability slugs from the idea's `themes` field. Within-TTL entries are known starting points for customer pain signals and adoption evidence — do not rediscover patterns already documented there. Past-TTL entries are directional only. During Step 4 (Optional Research), if web research surfaces a competitor or methodology, use `query-competitor` for a targeted deep-dive on what the database already knows about it.
 
 Context exclusions (strategy docs, OKRs, persona guide, competitive data, business framing) are enforced by the agent's scope constraints.
 
@@ -114,11 +121,14 @@ If the idea is straightforward enough to evaluate from educator experience alone
 
 ### Step 5: Write Research Artifact
 
+**Ad-hoc mode:** Skip this step — no idea-scoped folder, no frontmatter to update. Jump to Step 6 with findings going to the database and conversation only.
+
+**Idea mode:**
+
 1. Use `Bash(date:*)` to get today's date in YYYY-MM-DD format
-2. Create directory if needed: `Research/{idea-name}/`
-   - Use `Glob` to check if it exists first
-   - If not, create it with `Bash(date:*)` — actually, use the Write tool which will create parent directories
-3. Write `Research/{idea-name}/educator-evaluation.md` with this structure:
+2. Create directory if needed: `Research/{idea-name}/` (Write tool auto-creates parents)
+3. Write `Research/{idea-name}/educator-evaluation.md` — if a file already exists at this path from a prior run, write to `Research/{idea-name}/educator-evaluation-{YYYY-MM-DD}.md` instead; if that also exists, append `-2`, `-3`, etc., for same-day collisions.
+4. Structure:
 
 ```markdown
 ---
@@ -160,18 +170,20 @@ domain-calibration: {k12 | higher-ed | both | platform-downstream}
 {If Step 4 was performed: queries, findings, sources. If skipped: "Evaluation based on educator practice knowledge — no external research needed."}
 ```
 
-4. Update the idea file's frontmatter: append the research artifact path to the `research: []` array.
+5. Update the idea file's frontmatter: append the written artifact path to the `research: []` array.
    - Read the idea file to get current frontmatter
-   - The path to append is: `Research/{idea-name}/educator-evaluation.md`
-   - If `research` already contains this path (re-evaluation), the new file overwrites the old one; do not duplicate the path in the array
+   - Append the new path (including dated suffix if applicable from step 3)
+   - Do NOT remove older dated-suffix entries from prior runs — augment artifacts coexist
    - Use `Edit` to update the frontmatter — find the `research:` line and update it
-   - Do NOT modify any other frontmatter fields
-   - Do NOT modify the idea body content
-   - Do NOT change the idea's stage
+   - Do NOT modify any other frontmatter fields, body content, or the idea's stage
 
 ### Step 6: Present Results
 
-Present the evaluation to the user in this format:
+**Idea mode:** Present the evaluation with the idea-name, impact dimension signals, and research artifact path.
+
+**Ad-hoc mode:** Present the evaluation with the subject string. Omit impact dimension signals entirely. Omit research artifact path. DB findings still captured per Step 6's write-back section.
+
+Idea-mode presentation template:
 
 ```
 Educator SME Evaluation: {idea-name}
@@ -205,11 +217,14 @@ Research artifact written to: Research/{idea-name}/educator-evaluation.md
 Idea frontmatter updated: research array now includes educator evaluation path.
 ```
 
-After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings directly to `Research/shared/assessments/customer-evidence.md` using the entry schema defined in the file header. Each entry's `Source:` field must include the specific URL from your web search — the most specific available page (press release, research page, blog post), not a homepage. If no stable URL exists, use the most authoritative available page. If no findings qualify, skip this step. Note in the presentation which entries were added:
+After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings to the strategy research database. **Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists. Do not write findings with neither.
 
-> **Shared research updated:** `customer-evidence.md`: +{N} entries ({brief descriptions})
+**Claim-content guardrail (added 2026-05-01 after INC-038 cleanup):** A finding's `claim` field must be a **substantive assertion** with content the reader can act on. The following are NOT findings — never write them as `claim`:
+- Search query strings (e.g., `"teacher experience using AI rubric generator 2025"`) — these are research metadata, not findings
+- Bare citations / titles (e.g., `[Title](URL)`) — a citation without an assertion is a bookmark, not a finding
+- Query-prefixed paragraphs where the leading quoted query is verbatim what you searched — strip the query; submit only the assertion
 
-**Database write-back:** Additionally, write qualifying findings to the strategy research database. **Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists. Do not write findings with neither.
+If research surfaced an article whose title is the most relevant signal, capture the article's *finding* as your `claim` (the assertion the article makes), with the article's URL as `source_url`. The title belongs at the URL's content, not in your `claim` field.
 ```bash
 python3 scripts/research-db.py write-findings --json '{
   "findings": [
@@ -250,7 +265,7 @@ Note: The impact dimension signals are advisory — they indicate what this eval
 | Frontmatter cannot be parsed | Report parsing issue, exit |
 | Domain field missing from frontmatter | Default to "both" (K-12 and higher ed), note the assumption |
 | Research directory already exists | Proceed — write/overwrite the evaluation file |
-| Educator evaluation already exists | Overwrite with fresh evaluation, do not duplicate research path in frontmatter |
+| Educator evaluation already exists for this idea | Write dated-suffix augment file per Step 5 (`educator-evaluation-{YYYY-MM-DD}.md`, counter for same-day); append new path to frontmatter; do not remove the original |
 | WebSearch returns no relevant results | Note "No relevant educator sentiment found for {query}" and continue with practice-based evaluation |
 
 ## Scope Boundaries

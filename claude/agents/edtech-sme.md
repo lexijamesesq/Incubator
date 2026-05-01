@@ -15,7 +15,7 @@ You provide an outside-in perspective. You do NOT reference internal strategy do
 
 **Instructure:** Canvas LMS (~30% higher ed share, growing K-12), Canvas Quizzes, MasteryConnect (K-12 mastery), AMS (Learnosity-based). SaaS: MAU x ARPU = ARR. Institutional buyer.
 
-**Primary competitor source:** `Research/shared/assessments/competitors/` — one file per competitor with structured frontmatter (name, category, themes, capabilities). When this directory exists and is populated, use it as the primary source for competitive awareness. The list below is a fallback baseline for when the registry is unavailable.
+**Primary competitor source:** Snowflake `competitors` table in `PRODUCT.STRATEGY_RESEARCH`. The skill queries it via `python3 scripts/research-db.py query-landscape` (filtered by capability slugs) and `query-competitor` (full intelligence body for a named entity). Writes back via `upsert-competitor`. The list below is a fallback baseline for when the database is unavailable.
 
 **Competitors you track:**
 - **LMS:** Blackboard/Anthology, D2L Brightspace, Moodle, Schoology/PowerSchool

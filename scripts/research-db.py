@@ -2,9 +2,8 @@
 """
 Strategy Research Database Access Layer
 
-Shared utility for Incubator skills to read/write the strategy research database.
-Handles dialect translation between Snowflake and PostgreSQL, SQL generation,
-execution, and structured output.
+Shared utility for Incubator skills to read/write the strategy research database
+(Snowflake). Handles SQL generation, execution, and structured output.
 
 Usage:
     python3 scripts/research-db.py <command> [--json '<args>']
@@ -15,12 +14,14 @@ Commands:
     query-gaps          Detect finding gaps for competitors on given capabilities
     write-finding       Write a research finding + capability links
     write-findings      Batch write multiple findings
+    upsert-competitor   Insert or update a competitor row + capability links
     lookup-competitor   Get competitor ID by name
     lookup-capabilities Get capability IDs by slugs
-    stats               Database health summary
+    stats               Database row counts + stale-finding count
+    health              Stewardship sweep: stale, orphans, thin records, self-superseded, dupes
 
-Backend selection:
-    Set RESEARCH_DB_BACKEND=snowflake or RESEARCH_DB_BACKEND=postgresql (default: postgresql)
+Connection details live in scripts/research-db-config.json (gitignored). Copy
+research-db-config.sample.json as a starting point.
 """
 
 import argparse
@@ -29,7 +30,6 @@ import os
 import subprocess
 import sys
 import uuid
-from textwrap import dedent
 
 # ---------------------------------------------------------------------------
 # Configuration — loaded from research-db-config.json (gitignored)
@@ -45,61 +45,27 @@ def _load_config():
         return json.load(f)
 
 _CONFIG = _load_config()
-BACKEND = os.environ.get("RESEARCH_DB_BACKEND", "postgresql")
-
-_pg = _CONFIG.get("postgresql", {})
-PG_SSH = _pg.get("ssh_command", "")
-_pg_exec_base = _pg.get("psql_exec", "")
-PG_EXEC = f"{_pg_exec_base} -t -A"
-PG_EXEC_FULL = _pg_exec_base
-
 _sf = _CONFIG.get("snowflake", {})
 SF_CMD = _sf.get("cli_command", "snow sql --enable-templating NONE")
-
-DOMAIN = _CONFIG.get(BACKEND, {}).get("domain", "mastery")
+DOMAIN = _sf.get("domain", "mastery")
 
 # ---------------------------------------------------------------------------
-# Dialect translation
+# SQL helpers (Snowflake dialect)
 # ---------------------------------------------------------------------------
-
-def sql_array_contains(col, val):
-    if BACKEND == "snowflake":
-        return f"ARRAY_CONTAINS('{val}', {col})"
-    return f"'{val}' = ANY({col})"
-
-def sql_dateadd_months(n, date_col):
-    if BACKEND == "snowflake":
-        return f"DATEADD('month', {n}, {date_col})"
-    # When n is a column reference (not a literal), use the || cast pattern
-    return f"{date_col} + ({n} || ' months')::interval"
-
-def sql_current_user():
-    if BACKEND == "snowflake":
-        return "CURRENT_USER()"
-    return "CURRENT_USER"
-
-def sql_json_field(col, key):
-    """Extract a text field from JSON/VARIANT column."""
-    if BACKEND == "snowflake":
-        return f"{col}:{key}::VARCHAR"
-    return f"{col}->>'{key}'"
-
-def sql_count_if(condition):
-    """Conditional count — FILTER (WHERE) for PG, COUNT_IF for Snowflake."""
-    if BACKEND == "snowflake":
-        return f"COUNT_IF({condition})"
-    return f"COUNT(*) FILTER (WHERE {condition})"
 
 def sql_preamble():
-    if BACKEND == "snowflake":
-        role = _sf.get("role", "PRODUCT_ANALYST")
-        db = _sf.get("database", "PRODUCT")
-        schema = _sf.get("schema", "STRATEGY_RESEARCH")
-        return f"USE ROLE {role};\nUSE DATABASE {db};\nUSE SCHEMA {schema};\n"
-    return "SET search_path TO strategy_research;\n"
+    role = _sf.get("role", "PRODUCT_ANALYST")
+    db = _sf.get("database", "PRODUCT")
+    schema = _sf.get("schema", "STRATEGY_RESEARCH")
+    return f"USE ROLE {role};\nUSE DATABASE {db};\nUSE SCHEMA {schema};\n"
+
+def sql_dateadd_months(n, date_col):
+    return f"DATEADD('month', {n}, {date_col})"
+
+def sql_count_if(condition):
+    return f"COUNT_IF({condition})"
 
 def sql_gen_uuid():
-    """Generate a UUID. For PG we use gen_random_uuid() in SQL; for SF we generate in Python."""
     return str(uuid.uuid4())
 
 def esc(s):
@@ -112,25 +78,23 @@ def esc(s):
 # Execution
 # ---------------------------------------------------------------------------
 
-def execute_sql(sql, raw_output=False):
-    """Execute SQL against the configured backend. Returns stdout."""
-    if BACKEND == "snowflake":
-        # Write to temp file and execute
-        tmp = "/tmp/research-db-query.sql"
-        with open(tmp, "w") as f:
-            f.write(sql)
-        cmd = f"{SF_CMD} -f {tmp}"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+def execute_sql(sql, output_format="default"):
+    """Execute SQL against Snowflake. Returns stdout.
+
+    output_format:
+        "default" — raw CLI output (table-formatted, for LLM consumption)
+        "json"    — JSON-parseable output (for programmatic parsing)
+    """
+    tmp = "/tmp/research-db-query.sql"
+    with open(tmp, "w") as f:
+        f.write(sql)
+
+    if output_format == "json":
+        cmd = f"{SF_CMD} --format json -f {tmp}"
     else:
-        # Write SQL to temp file, transfer and execute on PostgreSQL via SSH
-        tmp_local = "/tmp/research-db-query.sql"
-        with open(tmp_local, "w") as f:
-            f.write(sql)
-        if raw_output:
-            cmd = f"cat {tmp_local} | {PG_SSH} \"{PG_EXEC_FULL} -f /dev/stdin\""
-        else:
-            cmd = f"cat {tmp_local} | {PG_SSH} \"{PG_EXEC} -F '|' -f /dev/stdin\""
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+        cmd = f"{SF_CMD} -f {tmp}"
+
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
 
     if result.returncode != 0:
         print(json.dumps({"error": result.stderr.strip()}), file=sys.stderr)
@@ -138,17 +102,25 @@ def execute_sql(sql, raw_output=False):
 
     return result.stdout.strip()
 
-def parse_pg_rows(output, columns):
-    """Parse pipe-delimited PostgreSQL output into list of dicts."""
-    rows = []
-    for line in output.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split("|")
-        if len(parts) >= len(columns):
-            rows.append({col: parts[i].strip() for i, col in enumerate(columns)})
-    return rows
+def parse_json_result(output):
+    """Parse JSON output from `snow sql --format json`.
+
+    The CLI emits a list of result sets (one per statement). Preamble USE
+    statements produce empty or status-only result sets; the data result is the
+    last non-empty one.
+    """
+    try:
+        data = json.loads(output)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    for result_set in reversed(data):
+        if isinstance(result_set, list) and result_set and isinstance(result_set[0], dict):
+            # Filter out USE statement status rows (single 'status' key)
+            if not (len(result_set[0]) == 1 and "status" in result_set[0]):
+                return result_set
+    return []
 
 # ---------------------------------------------------------------------------
 # Commands
@@ -168,22 +140,6 @@ def cmd_query_landscape(args):
     cap_list = ",".join(f"'{c}'" for c in caps)
     ttl_filter = sql_dateadd_months("rf.ttl_months", "rf.created_at")
 
-    sql = f"""{sql_preamble()}
--- Competitors for these capabilities (compact — no intelligence body)
-SELECT c.id, c.name, c.category, c.market_tier, c.pricing_model,
-  array_agg(DISTINCT cap.slug) AS matched_caps
-FROM competitors c
-JOIN competitor_capabilities cc ON c.id = cc.competitor_id
-JOIN capabilities cap ON cc.capability_id = cap.id
-WHERE cap.slug IN ({cap_list})
-  AND c.superseded_by IS NULL
-GROUP BY c.id, c.name, c.category, c.market_tier, c.pricing_model
-ORDER BY
-  CASE c.market_tier WHEN 'tier-1' THEN 1 WHEN 'tier-2' THEN 2 WHEN 'tier-3' THEN 3 END,
-  CASE c.category WHEN 'core' THEN 1 WHEN 'adjacent' THEN 2 WHEN 'emerging' THEN 3 WHEN 'substitute' THEN 4 END;
-"""
-
-    # Single SQL with both queries separated by a marker comment
     sql = f"""{sql_preamble()}
 SELECT '--- COMPETITORS ---' AS section;
 
@@ -217,7 +173,7 @@ ORDER BY
 LIMIT 40;
 """
 
-    print(execute_sql(sql, raw_output=True))
+    print(execute_sql(sql))
 
 
 def cmd_query_competitor(args):
@@ -229,7 +185,7 @@ def cmd_query_competitor(args):
 
     sql = f"""{sql_preamble()}
 -- Competitor profile
-SELECT c.*, array_agg(DISTINCT cap.slug ORDER BY cap.slug) AS capabilities
+SELECT c.*, array_agg(DISTINCT cap.slug) AS capabilities
 FROM competitors c
 LEFT JOIN competitor_capabilities cc ON c.id = cc.competitor_id
 LEFT JOIN capabilities cap ON cc.capability_id = cap.id
@@ -244,8 +200,7 @@ WHERE rf.competitor_id = (SELECT id FROM competitors WHERE name = '{esc(name)}' 
   AND rf.superseded_by IS NULL
 ORDER BY rf.created_at DESC;
 """
-    output = execute_sql(sql, raw_output=True)
-    print(output)
+    print(execute_sql(sql))
 
 
 def cmd_query_gaps(args):
@@ -272,8 +227,7 @@ ORDER BY
   CASE WHEN COUNT(DISTINCT rf.id) = 0 THEN 0 ELSE 1 END,
   c.market_tier, c.category, c.name;
 """
-    output = execute_sql(sql, raw_output=True)
-    print(output)
+    print(execute_sql(sql))
 
 
 def cmd_write_finding(args):
@@ -290,11 +244,7 @@ def cmd_write_finding(args):
     source_desc = args.get("source_description")
     cap_slugs = args["capabilities"]
 
-    # Build SQL
     lines = [sql_preamble()]
-
-    # Look up capability IDs
-    cap_ids_sql = ",".join(f"'{c}'" for c in cap_slugs)
 
     url_val = f"'{esc(source_url)}'" if source_url else "NULL"
     desc_val = f"'{esc(source_desc)}'" if source_desc else "NULL"
@@ -308,7 +258,6 @@ VALUES ('{finding_id}', '{DOMAIN}', '{esc(args["topic"])}', '{esc(args["category
   {url_val}, {desc_val}, '{esc(args["confidence"])}', {args["ttl_months"]}, {comp_val});
 """)
 
-    # Junction rows
     for slug in cap_slugs:
         lines.append(f"""
 INSERT INTO finding_capabilities (finding_id, capability_id)
@@ -330,53 +279,32 @@ def cmd_write_findings(args):
     lines = [sql_preamble()]
     result_ids = []
 
-    # Generate IDs and build batch INSERT for findings
     for f in findings:
         f["_id"] = sql_gen_uuid()
         result_ids.append({"finding_id": f["_id"], "claim_preview": f["claim"][:80]})
 
-    if BACKEND == "snowflake":
-        lines.append("INSERT INTO research_findings (id, domain, topic, category, agent_type, claim, evidence, source_url, source_description, confidence, ttl_months, competitor_id)")
-        lines.append("SELECT * FROM (")
-        for i, f in enumerate(findings):
-            prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
-            url = f"'{esc(f.get('source_url'))}'" if f.get("source_url") else "NULL"
-            desc = f"'{esc(f.get('source_description'))}'" if f.get("source_description") else "NULL"
-            comp = f"'{f['competitor_id']}'" if f.get("competitor_id") else "NULL"
-            lines.append(f"{prefix}'{f['_id']}', '{DOMAIN}', '{esc(f['topic'])}', '{esc(f['category'])}', NULL, '{esc(f['claim'])}', '{esc(f['evidence'])}', {url}, {desc}, '{esc(f['confidence'])}', {f['ttl_months']}, {comp}")
-        lines.append(");")
-    else:
-        # PostgreSQL multi-row VALUES
-        lines.append("INSERT INTO research_findings (id, domain, topic, category, agent_type, claim, evidence, source_url, source_description, confidence, ttl_months, competitor_id) VALUES")
-        for i, f in enumerate(findings):
-            url = f"'{esc(f.get('source_url'))}'" if f.get("source_url") else "NULL"
-            desc = f"'{esc(f.get('source_description'))}'" if f.get("source_description") else "NULL"
-            comp = f"'{f['competitor_id']}'" if f.get("competitor_id") else "NULL"
-            comma = "," if i < len(findings) - 1 else ""
-            lines.append(f"('{f['_id']}', '{DOMAIN}', '{esc(f['topic'])}', '{esc(f['category'])}', NULL, '{esc(f['claim'])}', '{esc(f['evidence'])}', {url}, {desc}, '{esc(f['confidence'])}', {f['ttl_months']}, {comp}){comma}")
-        lines.append(";")
+    lines.append("INSERT INTO research_findings (id, domain, topic, category, agent_type, claim, evidence, source_url, source_description, confidence, ttl_months, competitor_id)")
+    lines.append("SELECT * FROM (")
+    for i, f in enumerate(findings):
+        prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
+        url = f"'{esc(f.get('source_url'))}'" if f.get("source_url") else "NULL"
+        desc = f"'{esc(f.get('source_description'))}'" if f.get("source_description") else "NULL"
+        comp = f"'{f['competitor_id']}'" if f.get("competitor_id") else "NULL"
+        lines.append(f"{prefix}'{f['_id']}', '{DOMAIN}', '{esc(f['topic'])}', '{esc(f['category'])}', NULL, '{esc(f['claim'])}', '{esc(f['evidence'])}', {url}, {desc}, '{esc(f['confidence'])}', {f['ttl_months']}, {comp}")
+    lines.append(");")
 
-    # Junction rows — batch
     junction_rows = []
     for f in findings:
         for slug in f.get("capabilities", []):
             junction_rows.append((f["_id"], slug))
 
     if junction_rows:
-        if BACKEND == "snowflake":
-            lines.append("\nINSERT INTO finding_capabilities (finding_id, capability_id)")
-            lines.append("SELECT fc.fid, c.id FROM (")
-            for i, (fid, slug) in enumerate(junction_rows):
-                prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
-                lines.append(f"{prefix}'{fid}' AS fid, '{slug}' AS slug")
-            lines.append(") fc JOIN capabilities c ON fc.slug = c.slug;")
-        else:
-            lines.append("\nINSERT INTO finding_capabilities (finding_id, capability_id)")
-            lines.append("SELECT fc.fid, c.id FROM (VALUES")
-            for i, (fid, slug) in enumerate(junction_rows):
-                comma = "," if i < len(junction_rows) - 1 else ""
-                lines.append(f"  ('{fid}'::uuid, '{slug}'::text){comma}")
-            lines.append(") AS fc(fid, slug) JOIN capabilities c ON fc.slug = c.slug;")
+        lines.append("\nINSERT INTO finding_capabilities (finding_id, capability_id)")
+        lines.append("SELECT fc.fid, c.id FROM (")
+        for i, (fid, slug) in enumerate(junction_rows):
+            prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
+            lines.append(f"{prefix}'{fid}' AS fid, '{slug}' AS slug")
+        lines.append(") fc JOIN capabilities c ON fc.slug = c.slug;")
 
     sql = "\n".join(lines)
     execute_sql(sql)
@@ -395,8 +323,8 @@ SELECT id, name, category, market_tier FROM competitors
 WHERE name ILIKE '%{esc(name)}%' AND superseded_by IS NULL
 ORDER BY name;
 """
-    output = execute_sql(sql)
-    rows = parse_pg_rows(output, ["id", "name", "category", "market_tier"])
+    output = execute_sql(sql, output_format="json")
+    rows = parse_json_result(output)
     print(json.dumps(rows))
 
 
@@ -409,9 +337,370 @@ def cmd_lookup_capabilities(args):
         slug_list = ",".join(f"'{s}'" for s in slugs)
         sql = f"{sql_preamble()}\nSELECT slug, id FROM capabilities WHERE slug IN ({slug_list}) ORDER BY slug;"
 
-    output = execute_sql(sql)
-    rows = parse_pg_rows(output, ["slug", "id"])
+    output = execute_sql(sql, output_format="json")
+    rows = parse_json_result(output)
     print(json.dumps(rows))
+
+
+CATEGORY_ENUM = {"core", "adjacent", "emerging", "substitute"}
+SEGMENT_ENUM = {"k-12", "higher-ed", "certification", "workforce"}
+MARKET_TIER_ENUM = {"tier-1", "tier-2", "tier-3"}
+INTELLIGENCE_BODY_MIN = 50
+
+
+def cmd_upsert_competitor(args):
+    """Insert or update a competitor row + capability junction rows.
+
+    Required fields (insert): name, category, segments, market_tier, capabilities[],
+    intelligence_body, plus source_url OR source_description.
+    Required fields (update): name (lookup key). Other fields applied if provided.
+
+    Gates:
+      - category must be in CATEGORY_ENUM
+      - each segment must be in SEGMENT_ENUM
+      - market_tier must be in MARKET_TIER_ENUM
+      - all capability slugs must exist
+      - intelligence_body min 50 chars at insert
+      - fuzzy name dup check on insert (rejected unless force_create=True)
+      - category change on update returns warning unless force_category_change=True
+        (intended for human use only — skills should never pass this flag)
+
+    Returns JSON with action: created | updated | rejected_dup | rejected_validation
+                              | needs_category_confirmation
+    """
+    name = args.get("name", "").strip()
+    if not name:
+        print(json.dumps({"error": "name required"}))
+        sys.exit(1)
+
+    force_create = args.get("force_create", False)
+    force_category_change = args.get("force_category_change", False)
+
+    # 1. Look up by exact name (case-insensitive) across ALL rows including superseded.
+    # The dup-detection pass must see superseded rows so we don't quietly duplicate
+    # a soft-deleted/self-superseded competitor.
+    sql_lookup = f"""{sql_preamble()}
+SELECT id, name, category, segments, pricing_model, integration_posture,
+  market_tier, intelligence, last_researched, superseded_by
+FROM competitors
+WHERE LOWER(name) = LOWER('{esc(name)}')
+ORDER BY (superseded_by IS NULL) DESC, created_at DESC
+LIMIT 1;
+"""
+    existing = parse_json_result(execute_sql(sql_lookup, output_format="json"))
+
+    # If the matched row is superseded (including self-supersession), surface to human.
+    # Skills must NOT auto-revive — that's a deliberate decision.
+    if existing and existing[0].get("SUPERSEDED_BY"):
+        sup_id = existing[0]["SUPERSEDED_BY"]
+        is_self_super = sup_id == existing[0]["ID"]
+        print(json.dumps({
+            "action": "found_superseded",
+            "id": existing[0]["ID"],
+            "name": existing[0]["NAME"],
+            "superseded_by": sup_id,
+            "self_superseded": is_self_super,
+            "message": (
+                f"Competitor '{name}' exists but is superseded "
+                f"({'self-superseded — soft-deleted state' if is_self_super else f'replaced by {sup_id}'}). "
+                "Surface to human. To revive, run: UPDATE competitors SET superseded_by = NULL WHERE id = '" + existing[0]["ID"] + "'; "
+                "then re-run upsert-competitor to refresh the row."
+            )
+        }))
+        sys.exit(0)
+
+    is_update = bool(existing)
+
+    # 2. Validate required fields based on action
+    errors = []
+    category = args.get("category")
+    if category and category not in CATEGORY_ENUM:
+        errors.append(f"category must be one of {sorted(CATEGORY_ENUM)}, got '{category}'")
+    segments = args.get("segments", [])
+    for s in segments:
+        if s not in SEGMENT_ENUM:
+            errors.append(f"segment '{s}' must be one of {sorted(SEGMENT_ENUM)}")
+    market_tier = args.get("market_tier")
+    if market_tier and market_tier not in MARKET_TIER_ENUM:
+        errors.append(f"market_tier must be one of {sorted(MARKET_TIER_ENUM)}, got '{market_tier}'")
+    intelligence_body = args.get("intelligence_body", "")
+    capabilities = args.get("capabilities", [])
+
+    if not is_update:
+        # Insert: stronger requirements
+        if not category:
+            errors.append("category required for insert")
+        if not segments:
+            errors.append("segments required for insert (at least one)")
+        if not market_tier:
+            errors.append("market_tier required for insert")
+        if not capabilities:
+            errors.append("capabilities required for insert (at least one)")
+        if not intelligence_body or len(intelligence_body) < INTELLIGENCE_BODY_MIN:
+            errors.append(f"intelligence_body required for insert, min {INTELLIGENCE_BODY_MIN} chars")
+        if not args.get("source_url") and not args.get("source_description"):
+            errors.append("source_url OR source_description required for insert (evidence requirement)")
+
+    if errors:
+        print(json.dumps({"action": "rejected_validation", "errors": errors}))
+        sys.exit(1)
+
+    # 3. Validate capability slugs exist
+    if capabilities:
+        cap_list = ",".join(f"'{s}'" for s in capabilities)
+        sql_caps = f"{sql_preamble()}\nSELECT id, slug FROM capabilities WHERE slug IN ({cap_list});"
+        cap_rows = parse_json_result(execute_sql(sql_caps, output_format="json"))
+        found_slugs = {r["SLUG"] for r in cap_rows}
+        missing = [s for s in capabilities if s not in found_slugs]
+        if missing:
+            print(json.dumps({
+                "action": "rejected_validation",
+                "errors": [f"unknown capability slugs: {missing}"]
+            }))
+            sys.exit(1)
+        cap_id_by_slug = {r["SLUG"]: r["ID"] for r in cap_rows}
+
+    # 4. INSERT path
+    if not is_update:
+        # Fuzzy name dup check
+        sql_fuzzy = f"""{sql_preamble()}
+SELECT id, name, category FROM competitors
+WHERE superseded_by IS NULL AND LOWER(name) LIKE LOWER('%{esc(name)}%')
+LIMIT 5;
+"""
+        fuzzy = parse_json_result(execute_sql(sql_fuzzy, output_format="json"))
+        if fuzzy and not force_create:
+            print(json.dumps({
+                "action": "rejected_dup",
+                "message": f"Possible duplicates of '{name}' found. Re-run with force_create=true to insert anyway.",
+                "candidates": fuzzy
+            }))
+            sys.exit(1)
+
+        new_id = sql_gen_uuid()
+        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{s}'" for s in segments) + ")"
+        ip_array = "NULL"
+        if args.get("integration_posture"):
+            ip_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{p}'" for p in args["integration_posture"]) + ")"
+        intel_json = json.dumps({
+            "body": intelligence_body,
+            "source_url": args.get("source_url"),
+            "source_description": args.get("source_description"),
+        })
+        pricing = args.get("pricing_model")
+        pricing_val = f"'{esc(pricing)}'" if pricing else "NULL"
+
+        lines = [sql_preamble()]
+        lines.append(f"""
+INSERT INTO competitors (id, domain, name, category, segments, pricing_model,
+  integration_posture, market_tier, intelligence, last_researched)
+SELECT '{new_id}', '{DOMAIN}', '{esc(name)}', '{category}', {seg_array}, {pricing_val},
+  {ip_array}, '{market_tier}', PARSE_JSON('{esc(intel_json)}'), CURRENT_DATE;
+""")
+        # Junction rows
+        for slug in capabilities:
+            cap_id = cap_id_by_slug[slug]
+            lines.append(f"INSERT INTO competitor_capabilities (competitor_id, capability_id) VALUES ('{new_id}', '{cap_id}');")
+        execute_sql("\n".join(lines))
+        print(json.dumps({"action": "created", "id": new_id, "name": name}))
+        return
+
+    # 5. UPDATE path
+    row = existing[0]
+    existing_id = row["ID"]
+    warnings = []
+
+    # Category change gate
+    if category and category != row["CATEGORY"]:
+        if not force_category_change:
+            print(json.dumps({
+                "action": "needs_category_confirmation",
+                "id": existing_id,
+                "name": name,
+                "current_category": row["CATEGORY"],
+                "proposed_category": category,
+                "message": "Category changes are gated. Surface to human; rerun with force_category_change=true (human-only) to apply."
+            }))
+            sys.exit(0)
+        warnings.append(f"category changed: {row['CATEGORY']} → {category}")
+
+    set_clauses = []
+    if category and category != row["CATEGORY"] and force_category_change:
+        set_clauses.append(f"category = '{category}'")
+    if segments:
+        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{s}'" for s in segments) + ")"
+        set_clauses.append(f"segments = {seg_array}")
+    if market_tier and market_tier != row["MARKET_TIER"]:
+        set_clauses.append(f"market_tier = '{market_tier}'")
+    if "pricing_model" in args:
+        pricing = args.get("pricing_model")
+        pv = f"'{esc(pricing)}'" if pricing else "NULL"
+        set_clauses.append(f"pricing_model = {pv}")
+    if "integration_posture" in args:
+        ip = args["integration_posture"]
+        if ip:
+            iv = "ARRAY_CONSTRUCT(" + ",".join(f"'{p}'" for p in ip) + ")"
+        else:
+            iv = "NULL"
+        set_clauses.append(f"integration_posture = {iv}")
+    if intelligence_body:
+        if len(intelligence_body) < INTELLIGENCE_BODY_MIN:
+            print(json.dumps({"action": "rejected_validation",
+                              "errors": [f"intelligence_body min {INTELLIGENCE_BODY_MIN} chars"]}))
+            sys.exit(1)
+        intel_json = json.dumps({
+            "body": intelligence_body,
+            "source_url": args.get("source_url"),
+            "source_description": args.get("source_description"),
+        })
+        set_clauses.append(f"intelligence = PARSE_JSON('{esc(intel_json)}')")
+    # Always stamp last_researched on update
+    set_clauses.append("last_researched = CURRENT_DATE")
+
+    sql_update = f"{sql_preamble()}\nUPDATE competitors SET {', '.join(set_clauses)} WHERE id = '{existing_id}';"
+    execute_sql(sql_update)
+
+    # Capabilities: replace junction rows if capabilities provided
+    if capabilities:
+        lines = [sql_preamble()]
+        lines.append(f"DELETE FROM competitor_capabilities WHERE competitor_id = '{existing_id}';")
+        for slug in capabilities:
+            cap_id = cap_id_by_slug[slug]
+            lines.append(f"INSERT INTO competitor_capabilities (competitor_id, capability_id) VALUES ('{existing_id}', '{cap_id}');")
+        execute_sql("\n".join(lines))
+
+    print(json.dumps({"action": "updated", "id": existing_id, "name": name, "warnings": warnings}))
+
+
+def cmd_health(args):
+    """Stewardship sweep: stale findings, orphans, thin records, self-superseded
+    rows, suspected duplicates, capability coverage. Returns a structured JSON
+    report. Read-only — does not mutate.
+    """
+    sql = f"""{sql_preamble()}
+-- 1. Stale findings (past TTL, still active)
+SELECT 'stale_findings' AS check_name, id, LEFT(claim, 80) AS claim_preview,
+  ttl_months, created_at::DATE AS created
+FROM research_findings
+WHERE superseded_by IS NULL
+  AND DATEADD('month', ttl_months, created_at) < CURRENT_DATE
+ORDER BY created_at;
+
+-- 2. Orphan competitors (active, zero linked findings)
+SELECT 'orphan_competitors' AS check_name, c.id, c.name, c.category, c.market_tier
+FROM competitors c
+LEFT JOIN research_findings rf ON rf.competitor_id = c.id AND rf.superseded_by IS NULL
+WHERE c.superseded_by IS NULL
+GROUP BY c.id, c.name, c.category, c.market_tier
+HAVING COUNT(rf.id) = 0
+ORDER BY c.name;
+
+-- 3. Orphan capabilities (zero competitors tagged AND zero findings tagged)
+SELECT 'orphan_capabilities' AS check_name, cap.slug,
+  COUNT(DISTINCT cc.competitor_id) AS competitor_count,
+  COUNT(DISTINCT fc.finding_id) AS finding_count
+FROM capabilities cap
+LEFT JOIN competitor_capabilities cc ON cc.capability_id = cap.id
+LEFT JOIN finding_capabilities fc ON fc.capability_id = cap.id
+GROUP BY cap.slug
+HAVING COUNT(DISTINCT cc.competitor_id) = 0 AND COUNT(DISTINCT fc.finding_id) = 0
+ORDER BY cap.slug;
+
+-- 4. Thin competitor intelligence (active, no body AND no structured intel)
+-- A row is "thin" only if intelligence is null OR has no useful keys.
+-- Body-shape rows: intelligence:body must be >= 50 chars.
+-- Structured-shape rows: intelligence has at least 1 non-body key.
+SELECT 'thin_competitors' AS check_name, id, name,
+  COALESCE(LENGTH(intelligence:body::VARCHAR), 0) AS body_len,
+  CASE WHEN intelligence IS NULL THEN 0 ELSE ARRAY_SIZE(OBJECT_KEYS(intelligence)) END AS key_count
+FROM competitors
+WHERE superseded_by IS NULL
+  AND (
+    intelligence IS NULL
+    OR ARRAY_SIZE(OBJECT_KEYS(intelligence)) = 0
+    OR (
+      -- has body key but body is too short, AND has no other content keys
+      intelligence:body IS NOT NULL
+      AND LENGTH(intelligence:body::VARCHAR) < 50
+      AND ARRAY_SIZE(ARRAY_EXCEPT(OBJECT_KEYS(intelligence), ARRAY_CONSTRUCT('body', 'source_url', 'source_description'))) = 0
+    )
+    OR (
+      -- no body key AND no structured content keys
+      intelligence:body IS NULL
+      AND ARRAY_SIZE(ARRAY_EXCEPT(OBJECT_KEYS(intelligence), ARRAY_CONSTRUCT('source_url', 'source_description'))) = 0
+    )
+  )
+ORDER BY body_len, name;
+
+-- 5. Findings missing both source_url and source_description
+SELECT 'unsourced_findings' AS check_name, id, LEFT(claim, 80) AS claim_preview, created_at::DATE AS created
+FROM research_findings
+WHERE superseded_by IS NULL
+  AND source_url IS NULL
+  AND (source_description IS NULL OR TRIM(source_description) = '')
+ORDER BY created_at;
+
+-- 6. Self-superseded competitors (soft-deleted state — invisible to most queries)
+SELECT 'self_superseded_competitors' AS check_name, id, name, created_at::DATE AS created
+FROM competitors
+WHERE superseded_by = id
+ORDER BY name;
+
+-- 7. Suspected duplicates (active competitors where one name is a substring of another)
+SELECT 'suspected_duplicate_competitors' AS check_name,
+  a.name AS name_a, b.name AS name_b, a.category AS category_a, b.category AS category_b
+FROM competitors a
+JOIN competitors b
+  ON a.id < b.id
+  AND (LOWER(a.name) LIKE '%' || LOWER(b.name) || '%'
+       OR LOWER(b.name) LIKE '%' || LOWER(a.name) || '%')
+WHERE a.superseded_by IS NULL AND b.superseded_by IS NULL
+ORDER BY a.name, b.name;
+
+-- 8. Capability coverage summary (any capability with under 2 competitors flagged thin)
+SELECT 'thin_capability_coverage' AS check_name, cap.slug,
+  COUNT(DISTINCT cc.competitor_id) AS competitor_count
+FROM capabilities cap
+LEFT JOIN competitor_capabilities cc ON cc.capability_id = cap.id
+GROUP BY cap.slug
+HAVING COUNT(DISTINCT cc.competitor_id) BETWEEN 1 AND 2
+ORDER BY competitor_count, cap.slug;
+"""
+    output = execute_sql(sql, output_format="json")
+    try:
+        all_results = json.loads(output)
+    except json.JSONDecodeError:
+        print(json.dumps({"error": "could not parse health output", "raw": output[:500]}))
+        sys.exit(1)
+
+    # Group results by check_name
+    report = {
+        "stale_findings": [],
+        "orphan_competitors": [],
+        "orphan_capabilities": [],
+        "thin_competitors": [],
+        "unsourced_findings": [],
+        "self_superseded_competitors": [],
+        "suspected_duplicate_competitors": [],
+        "thin_capability_coverage": [],
+    }
+    for result_set in all_results:
+        if not isinstance(result_set, list) or not result_set:
+            continue
+        first = result_set[0]
+        if not isinstance(first, dict):
+            continue
+        if len(first) == 1 and "status" in first:
+            continue
+        check_name = first.get("CHECK_NAME")
+        if check_name and check_name in report:
+            report[check_name] = [{k: v for k, v in row.items() if k != "CHECK_NAME"} for row in result_set]
+
+    summary = {
+        check: {"count": len(rows), "rows": rows}
+        for check, rows in report.items()
+    }
+    print(json.dumps(summary, indent=2, default=str))
 
 
 def cmd_stats(args):
@@ -430,8 +719,7 @@ SELECT COUNT(*) AS stale_findings FROM research_findings
 WHERE superseded_by IS NULL
   AND {sql_dateadd_months("ttl_months", "created_at")} < CURRENT_DATE;
 """
-    output = execute_sql(sql, raw_output=True)
-    print(output)
+    print(execute_sql(sql))
 
 
 # ---------------------------------------------------------------------------
@@ -444,9 +732,11 @@ COMMANDS = {
     "query-gaps": cmd_query_gaps,
     "write-finding": cmd_write_finding,
     "write-findings": cmd_write_findings,
+    "upsert-competitor": cmd_upsert_competitor,
     "lookup-competitor": cmd_lookup_competitor,
     "lookup-capabilities": cmd_lookup_capabilities,
     "stats": cmd_stats,
+    "health": cmd_health,
 }
 
 def main():
