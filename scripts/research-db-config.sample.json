@@ -1,9 +1,4 @@
 {
-  "postgresql": {
-    "ssh_command": "TODO: ssh -i /path/to/your/key user@your-host-ip",
-    "psql_exec": "TODO: docker exec -i your-container psql -U your-user -d your-database",
-    "domain": "TODO: YOUR_DOMAIN"
-  },
   "snowflake": {
     "cli_command": "snow sql --enable-templating NONE",
     "role": "TODO: YOUR_SNOWFLAKE_ROLE",

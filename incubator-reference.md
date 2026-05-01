@@ -226,7 +226,7 @@ Strategy documents and product briefs use templates in `Templates/`:
 
 ### Intake
 
-Seeds arrive from `Claude/Inbox Processing/` with frontmatter and Original Capture. The router does not interpret the capture — /refine-seed handles that before /develop. See `Claude/Inbox Processing/router-spec.md` for classification and routing behavior.
+Seeds arrive from `Projects/Router/` with frontmatter and Original Capture. The router does not interpret the capture — /refine-seed handles that before /develop. See `Projects/Router/router-spec.md` for classification and routing behavior.
 
 ### Refining a Seed (Stage 1 prep)
 
@@ -300,15 +300,19 @@ When an idea needs more context than what's available:
 
 ## Shared Research
 
-Cross-idea research findings that compound across pipeline runs. Located at `Research/shared/assessments/`.
+Cross-idea research findings that compound across pipeline runs. Stored in the Snowflake `research_findings` table, queried via `scripts/research-db.py`.
 
-### Files
+### Topics
 
-| File | Contents | Primary Skills |
+Findings are tagged with a `topic` value that groups them by concern:
+
+| Topic | Contents | Primary Skills |
 |---|---|---|
-| `customer-evidence.md` | Pain signals, adoption behavior, research validation | /develop (Stream A), /educator-sme |
-| `competitive-landscape.md` | Named competitors, specific capabilities, competitive gaps | /develop (Stream B), /edtech-sme |
-| `market-sizing.md` | TAM figures, growth rates, segment data | /tam-estimate |
+| `customer-evidence` | Pain signals, adoption behavior, research validation | /develop (Stream A), /educator-sme |
+| `competitive-landscape` | Named competitors, specific capabilities, competitive gaps | /develop (Stream B), /edtech-sme |
+| `market-sizing` | TAM figures, growth rates, segment data | /tam-estimate |
+
+Skills query the database at research start (`query-landscape`) to establish a baseline, then write qualifying findings back (`write-findings`) at the end of the run.
 
 ### Capture Heuristic
 
@@ -322,11 +326,10 @@ A finding qualifies for shared research when ALL four criteria are met:
 
 ### Governance
 
-- **Autonomous writes:** Skills evaluate findings against the capture heuristic and write qualifying entries directly. The heuristic (Sourced + Durable + Decision-relevant + Shared) is the quality gate — no human confirmation step.
+- **Autonomous writes:** Skills evaluate findings against the capture heuristic and write qualifying entries directly to Snowflake via `research-db.py write-findings`. The heuristic (Sourced + Durable + Decision-relevant + Shared) is the quality gate — no human confirmation step.
 - **Non-retroactivity:** Shared research informs future /develop runs only. New findings do not trigger updates to ideas that have already passed Stage 2. Past cards are revisited only if the human explicitly requests it.
-- **TTL by category:** Each entry has a category with a defined TTL. Reading skills treat expired entries as directional only — reverify before citing.
-- **Entry cap:** 50 entries per file. When approaching the cap, the writing skill surfaces a note to the human for review and pruning.
-- **Conflict handling:** If a new finding overlaps with an existing entry, tag with `supersedes:` or `extends:` referencing the older entry. Human resolves flagged conflicts.
+- **TTL by category:** Each entry has a category with a defined TTL (see table below). Reading skills treat expired entries as directional only — reverify before citing.
+- **Supersession:** Stale findings are not deleted — the newer finding points to the older via `superseded_by`. Query results filter `superseded_by IS NULL` to retrieve the current view.
 
 ### TTL Reference
 
@@ -344,7 +347,7 @@ A finding qualifies for shared research when ALL four criteria are met:
 
 ### Integration with Idea Cards
 
-Shared research files are NOT linked in the idea frontmatter `research:` array (that stays for per-idea provenance). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it with the original external source link from the entry's `Source:` field — the same format as any other Research Summary citation: `([Source Title](url))`. No internal file paths, no provenance tags. Provenance metadata (origin-idea, date-discovered) stays in the shared research entries and per-idea research artifacts.
+Shared findings in the database are NOT linked in the idea frontmatter `research:` array (that stays for per-idea local artifacts). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it with the original external source link from the finding's `source_url` — the same format as any other Research Summary citation: `([Source Title](url))`. No internal file paths, no provenance tags. Provenance metadata (origin idea, date created, confidence) stays on the finding row in the database.
 
 ### Verification at /draft
 

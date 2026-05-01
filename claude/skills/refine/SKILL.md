@@ -13,6 +13,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Bash(date:*)
+  - Bash(python3 scripts/research-db.py:*)
 ---
 
 # /refine — Refinement Session (Stage 3→4→5)
@@ -77,11 +78,11 @@ Load these files in parallel:
 2. **Output document** — resolve from the idea card's `output-file:` frontmatter field. Read full content.
 3. **Persona guide** — `persona.md`
 4. **Research artifacts** — All files referenced in the idea card's `research: []` frontmatter array. Read full content of each.
-5. **Shared research baseline** — Read the following files from `Research/shared/assessments/`:
-   - `customer-evidence.md`
-   - `competitive-landscape.md`
-   - `market-sizing.md`
-   Use as reference when verifying claims during refinement iterations. When the human questions a competitive or market claim, shared research provides the dated evidence trail. Within-TTL entries are citable; past-TTL entries are directional only — recommend reverification if the claim is central to the document.
+5. **Shared research baseline** — Query the strategy research database for structured evidence relevant to this idea's capabilities:
+   ```bash
+   python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'
+   ```
+   Derive capability slugs from the idea's `themes` field. Use as reference when verifying claims during refinement iterations. When the human questions a competitive or market claim, the database provides the dated evidence trail. Within-TTL entries are citable; past-TTL entries are directional only — recommend reverification if the claim is central to the document.
 6. **Approach methodology** — `incubator-approach.md`
    - Extract the output-format-specific section: "Output Format: Strategy Document" or "Output Format: Product Brief"
    - Also extract: "Collaboration Protocol" (Phase 3 self-critique protocol, Phase 4 validation, feedback patterns)
@@ -174,6 +175,20 @@ If you find issues, fix them and report what you changed. Don't ask permission t
 - Feedback implies a direction shift (changes the core thesis/hypothesis, not just section-level polish) — flag this: "This feedback seems to shift the strategic direction. Should I update the idea card to reflect this new framing?"
 - Feedback conflicts with the approach methodology — raise it: "The methodology suggests X, but your feedback points toward Y. Which should we follow here?"
 - You've been corrected for the same pattern 3+ times — stop and ask: "I keep doing X. Can you help me understand what's wrong with my mental model here?"
+
+**Enrichment-skill augment (conditional):**
+
+When a section needs substantially more research than the existing artifacts provide — not a single verification, but a full re-run of an enrichment skill — invoke it in idea mode on this idea:
+
+- `/edtech-sme {idea-name}` — refreshed competitive/market intelligence
+- `/educator-sme {idea-name}` — refreshed adoption/pedagogical perspective
+- `/tam-estimate {idea-name}` — refreshed or revised market sizing
+- `/divergent-thinking {idea-name}` — additional reframing angles
+- `/cross-domain {idea-name}` — refreshed cross-domain signals
+
+Each enrichment skill detects the existing artifact and writes a dated-suffix augment file (e.g., `edtech-market-analysis-2026-04-20.md`). The original artifact is preserved. The new file is appended to the idea's `research: []` frontmatter — both entries coexist.
+
+Propose the augment to the human before invoking: "This section needs stronger {competitive/market/adoption/...} grounding than the existing artifact provides. Run `/{skill} {idea-name}` to augment?" Wait for confirmation. Augment runs are 10-20 minutes — use only when web search and existing artifacts genuinely cannot close the gap.
 
 ### Step 5: Card Update Check
 

@@ -29,6 +29,8 @@ This is an enrichment agent, not a stage transition workflow. It does not change
 - Works on ideas at developing, drafting, refining, or complete stages (must have a Thought Outline)
 - Examples: `/buildable-surface foraging-intelligence`, `/buildable-surface cache-optimization`
 
+**Idea-only by design.** This skill has no `--adhoc` mode. Its value proposition is classifying an idea's Thought Outline as principle-shaped vs. feature-shaped — an idea-shape question that has no analogue when run against a free-form subject. The other five enrichment skills (edtech-sme, educator-sme, divergent-thinking, tam-estimate, cross-domain) support `--adhoc`; buildable-surface intentionally does not.
+
 ## Arguments
 
 Parse `$ARGUMENTS` to resolve the target idea file.
