@@ -79,21 +79,15 @@ Load these files in parallel:
    - **Complete-stage ideas:** Read frontmatter only (first 25 lines or until `---` closes). Extract: stage, themes, domain. These provide theme vocabulary only — complete ideas are excluded from Step 3 matching.
    - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used for Step 3 matching AND portfolio context in the synthesis handoff.
    From the loaded index, extract all unique `themes` values across all idea files into a **portfolio theme vocabulary** — the canonical set of themes in use. Used in Step 5d to ensure theme reuse.
-5. **Shared research baseline** — Read the following files from `Research/shared/assessments/`:
-   - `customer-evidence.md` (for Customer Sentiment rating)
-   - `competitive-landscape.md` (for Industry Disruption rating)
-   - `market-sizing.md` (for Revenue Potential rating)
-   Check TTL on each entry: entries within TTL are usable as baseline; entries past TTL are directional only and require reverification during Stream A/B research.
-
-   **Database augmentation:** Additionally, query the strategy research database for structured competitive intelligence relevant to this idea's capabilities:
+5. **Shared research baseline** — Query the strategy research database for structured competitive intelligence, customer evidence, and market sizing relevant to this idea's capabilities:
    ```bash
    python3 scripts/research-db.py lookup-capabilities --json '{}'
    python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'
    python3 scripts/research-db.py query-gaps --json '{"capabilities": ["slug-1", "slug-2"]}'
    ```
-   Derive capability slugs from the seed's `themes` and `core insight` using the vocabulary list — themes may map directly or expand (e.g., `ai-capabilities` → `ai-item-generation`, `ai-open-response-scoring`). Database results supplement the shared research files. Gap detection identifies where enrichment agents should focus live web research.
+   Derive capability slugs from the seed's `themes` and `core insight` using the vocabulary list — themes may map directly or expand (e.g., `ai-capabilities` → `ai-item-generation`, `ai-open-response-scoring`). Entries within TTL are baseline; entries past TTL are directional only and require reverification during Stream A/B research. Gap detection identifies where enrichment agents should focus live web research.
 
-6. **Competitor registry** — Glob `Research/shared/assessments/competitors/*.md`. For each file, read frontmatter only (first 15 lines or until `---` closes). Extract: name, category, themes, capabilities. Filter to competitors whose themes overlap with the seed's themes. The database `query-landscape` result from Step 5 provides additional competitor context (market tier, pricing model, structured findings) alongside the local registry. If the directory doesn't exist or is empty, the database query provides fallback coverage.
+6. **Competitor registry** — Snowflake `competitors` table. Already covered by Step 5's `query-landscape` call (returns name, category, market_tier, pricing_model, matched capabilities filtered by the seed's capability slugs). For competitors central to the seed's competitive frame, follow up with `query-competitor` for the full intelligence body and linked findings.
 
 ### Step 2: Validate the Seed
 
@@ -134,13 +128,13 @@ Invoke these five skills in order. Each runs in a forked context, produces a res
    Produces structural analogies and identifies "the disruptive one." Reads ONLY the idea file — deliberately context-starved. Fastest agent (no web searches). Produces `Research/{idea-name}/divergent-angles.md`.
 
 2. **`/educator-sme {idea-name}`** (Stream D: Educator Perspective)
-   Evaluates adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Reads `customer-evidence.md` as baseline. May write qualifying findings to `customer-evidence.md`. Produces `Research/{idea-name}/educator-evaluation.md`.
+   Evaluates adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Queries the research database for customer evidence as baseline. May write qualifying findings to the database. Produces `Research/{idea-name}/educator-evaluation.md`.
 
 3. **`/edtech-sme {idea-name}`** (Stream B: Market Intelligence — Competitive)
-   Competitive positioning, market fit, technology risk, go-to-market, strategic timing. Reads `competitive-landscape.md` as baseline. Writes qualifying findings to `competitive-landscape.md`. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+   Competitive positioning, market fit, technology risk, go-to-market, strategic timing. Queries the research database for competitive landscape as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/edtech-market-analysis.md`.
 
 4. **`/tam-estimate {idea-name}`** (Stream B: Market Intelligence — Sizing)
-   TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Reads `market-sizing.md` as baseline. Writes qualifying findings to `market-sizing.md`. Produces `Research/{idea-name}/tam-estimate.md`.
+   TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Queries the research database for market-sizing findings as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/tam-estimate.md`.
 
 5. **`/cross-domain {idea-name}`** (Stream C: Cross-Domain Discovery)
    Queries JPD for ideas from other product domains with functional overlap. Classifies signals as Direct overlap, Enabler/dependency, or Convergence. Writes `Research/{idea-name}/cross-domain-signals.md`.
@@ -149,13 +143,10 @@ Invoke these five skills in order. Each runs in a forked context, produces a res
 
 **Phase 2: Refresh Shared Research Baseline**
 
-After all agents complete, re-read the shared research files:
-- `Research/shared/assessments/customer-evidence.md`
-- `Research/shared/assessments/competitive-landscape.md`
-- `Research/shared/assessments/market-sizing.md`
-- `Research/shared/assessments/competitors/*.md` (frontmatter only — agents may have written new files or updated existing)
+After all agents complete, re-query the research database to pick up any findings or competitor entries agents wrote during Phase 1:
+- `python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'` — refreshed findings + competitor metadata
 
-Agents may have written new entries during Phase 1. This refresh ensures Phase 3 works from the latest state.
+Agents may have called `upsert-competitor` for new/updated competitors and `write-findings` for new findings. This refresh ensures Phase 3 works from the latest state.
 
 **Phase 3: Stream A — Internal Strategic Context (orchestrator)**
 
@@ -176,7 +167,7 @@ No agent covers this — strategy docs, NPS, and OKRs require internal file acce
   - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
 
   NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
-- **Shared research check:** Review the refreshed shared research files for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any entries agents wrote during Phase 1.
+- **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings agents wrote during Phase 1.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 - **Database enrichment:** When specific competitors surface during Stream A research, use the database for targeted deep-dives:
   ```bash
@@ -530,18 +521,9 @@ Based on the idea's nature, recommend one of:
 Present the recommendation with rationale: which signals does this idea exhibit? This is a recommendation — the human decides. The skill does NOT set `output-file` in frontmatter.
 ```
 
-**Shared research writes:**
-
-After presenting the TL;DR, review all findings from this development session against the shared research capture heuristic (Sourced + Durable + Decision-relevant + Shared). Write qualifying findings directly to the appropriate shared research files using the entry schema defined in the file headers (finding, source, date-discovered, category, ttl, relevant-ideas, origin-idea, origin-context, confidence). If no findings qualify, skip this step.
-
-Note in the presentation which entries were added:
-> **Shared research updated:**
-> - `competitive-landscape.md`: +{N} entries ({brief descriptions})
-> - `market-sizing.md`: +{N} entries ({brief descriptions})
-
 **Database write-back:**
 
-Additionally, write qualifying findings to the strategy research database so future runs benefit from structured, queryable intelligence:
+After presenting the TL;DR, review all findings from this development session against the shared research capture heuristic (Sourced + Durable + Decision-relevant + Shared). Write qualifying findings to the strategy research database so future runs benefit from structured, queryable intelligence:
 
 ```bash
 python3 scripts/research-db.py write-findings --json '{
@@ -568,17 +550,19 @@ Use `python3 scripts/research-db.py lookup-competitor --json '{"name": "..."}'` 
 
 **Competitor registry updates:**
 
-After shared research writes, update the competitor registry:
-- **New competitors:** For competitors discovered during this run that are relevant to the competitive domain (not single-idea-only), create a new file at `Research/shared/assessments/competitors/{kebab-name}.md` with required fields (`name`, `category`, `themes`, `capabilities`, `last-researched`). Before creating, Glob existing files to check for the entity under variant names.
-- **Existing competitors:** For registry competitors that were researched during this run, update `last-researched` to today and add any new coarse capability tags discovered.
-- **Category changes:** If research suggests a competitor's category should change, propose the change with rationale in the presentation. Do NOT update the frontmatter `category` — wait for human confirmation.
-- **New competitors not in database:** Note in the presentation with proposed category, segments, and capabilities. Human gates database additions.
+Update via `upsert-competitor` (Snowflake-backed). See the edtech-sme skill for the full command schema. Summary:
+
+- **New competitors:** Run `upsert-competitor` with full fields + evidence (`source_url` required). Fuzzy dup check returns candidates if a similar name exists — review and either pass `force_create: true` (new entity) or update the matched row instead.
+- **Existing competitors:** Same command. Exact-name lookup hits the existing row; `last_researched` stamps automatically.
+- **Category changes:** The command returns `action: needs_category_confirmation` rather than auto-applying. Surface the proposal to the human. Never pass `force_category_change: true` from a skill — that flag is human-only.
+- **Found-superseded:** If the command returns `action: found_superseded`, surface to the human; never auto-revive.
 
 Note in the presentation:
 > **Competitor registry updated:**
-> - New files: {list or "none"}
-> - Updated: {list of files with what changed, or "none"}
+> - New: {list with category and capabilities, or "none"}
+> - Updated: {list with what changed, or "none"}
 > - Category changes proposed: {list with rationale, or "none"}
+> - Superseded entries surfaced: {list with name, or "none"}
 
 ## Stop Rules
 

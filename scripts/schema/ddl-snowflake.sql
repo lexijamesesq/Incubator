@@ -1,8 +1,10 @@
--- Snowflake DDL for the strategy research schema
--- Replace role, database, and schema names with your values from research-db-config.json
+-- Snowflake DDL for YOUR_DB.YOUR_SCHEMA
+-- Run with YOUR_ROLE role
+-- Last synced with actual schema: 2026-05-01 (INC-034)
+-- Verification: GET_DDL('TABLE', '<name>') matches this file modulo cosmetic differences (cluster-by inline vs ALTER, lowercase vs uppercase identifiers).
 
 USE ROLE YOUR_ROLE;
-USE DATABASE YOUR_DATABASE;
+USE DATABASE YOUR_DB;
 
 CREATE SCHEMA IF NOT EXISTS YOUR_SCHEMA;
 USE SCHEMA YOUR_SCHEMA;

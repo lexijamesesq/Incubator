@@ -442,7 +442,7 @@ Strategic language gains power when it connects to broader initiatives the organ
 
 ### Working with Strategy Documents as Reference
 
-**Location:** `Professional/Strategic Context/`
+**Location:** `Projects/Strategy/` (org-level strategy docs at root)
 
 **Key documents:**
 - Product strategy document (path from CLAUDE.md Configuration > External References — large file, use targeted Grep, never load full)
