@@ -141,10 +141,10 @@ For each dimension, before assigning a rating: articulate the strongest argument
 - **None:** No customer-facing aspect
 
 **User experience** (maps to engagement/MAU)
-- **High:** Transforms how users approach a task — changes mental model, eliminates workflow, makes impractical feel effortless
-- **Medium:** Meaningfully improves existing workflow — users notice and prefer, but fundamental approach unchanged
-- **Low:** Incremental — smoother, faster, cleaner, but users wouldn't describe experience as different
-- **None:** No user-facing touchpoint
+- **High:** The workflow itself becomes something different — users wouldn't recognize the pre-state activity in the post-state activity. Either an impractical activity becomes routine, or the user's relationship to the work fundamentally changes.
+- **Medium:** Meaningfully improves an existing workflow — users notice, prefer, return for the support. The activity stays the same shape; the friction within it drops.
+- **Low:** Incremental — smoother, faster, cleaner, but users wouldn't describe the experience as different.
+- **None:** No user-facing touchpoint.
 
 **Revenue potential** (maps to ARPU)
 - **High:** Clear, direct revenue mechanism — articulable what customers pay for or what churn it addresses
@@ -153,10 +153,10 @@ For each dimension, before assigning a rating: articulate the strongest argument
 - **None:** Revenue not a relevant lens
 
 **Industry disruption** (maps to competitive positioning)
-- **High:** Changes how the category fundamentally works — shifts what users expect
-- **Medium:** Novel capability that meaningfully differentiates within existing paradigms
-- **Low:** Improves an existing pattern — better execution of known approach
-- **None:** No market-facing dimension
+- **High:** Shifts what the category itself looks like to users — new mental model, new workflow shape, new expectations users carry into adjacent products. The capability changes how the category is defined, not who occupies it.
+- **Medium:** Novel capability that meaningfully differentiates within existing category definitions — including first-mover bundles, integrations, and combinations of existing capabilities. Competitive moat lives here.
+- **Low:** Improves an existing pattern — better execution of a known approach.
+- **None:** No market-facing dimension.
 
 **Strategic alignment** (maps to organizational priority)
 - **High:** Case is self-evident — a VP reads the one-liner and immediately sees why. Not doing it leaves a visible gap.
