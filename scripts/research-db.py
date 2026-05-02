@@ -230,13 +230,40 @@ ORDER BY
     print(execute_sql(sql))
 
 
-def cmd_write_finding(args):
-    """Write a single research finding + capability junction rows."""
+CLAIM_MIN_CHARS = 30
+QUERY_STRING_PATTERN = __import__("re").compile(r'^[\s\-*]*(?:Query\s+\d+:\s*)?"[^"]+"\s*$')
+
+
+def _validate_finding(f, idx=None):
+    """Defense-in-depth validation for a single finding dict.
+    Returns list of error strings (empty list = valid).
+    Catches: missing fields, empty capabilities, query-string claims, stub claims,
+    and missing source URL+description (the four educator-sme/INC-038 anti-patterns).
+    """
+    errors = []
+    prefix = f"finding[{idx}]: " if idx is not None else ""
     required = ["claim", "evidence", "confidence", "ttl_months", "category", "topic", "capabilities"]
     for field in required:
-        if field not in args:
-            print(json.dumps({"error": f"missing required field: {field}"}))
-            sys.exit(1)
+        if field not in f or f[field] is None:
+            errors.append(f"{prefix}missing required field: {field}")
+    if "capabilities" in f and not f["capabilities"]:
+        errors.append(f"{prefix}capabilities must be a non-empty list (junction rows silently drop otherwise)")
+    claim = (f.get("claim") or "").strip()
+    if claim and len(claim) < CLAIM_MIN_CHARS:
+        errors.append(f"{prefix}claim too short ({len(claim)} chars; min {CLAIM_MIN_CHARS}) — write a substantive assertion, not a stub")
+    if claim and QUERY_STRING_PATTERN.match(claim):
+        errors.append(f"{prefix}claim looks like a search query string — claims must be assertions, not research metadata")
+    if not f.get("source_url") and not f.get("source_description"):
+        errors.append(f"{prefix}source_url OR source_description required (capture heuristic: Sourced is a gate)")
+    return errors
+
+
+def cmd_write_finding(args):
+    """Write a single research finding + capability junction rows."""
+    errors = _validate_finding(args)
+    if errors:
+        print(json.dumps({"error": "validation_failed", "errors": errors}))
+        sys.exit(1)
 
     finding_id = sql_gen_uuid()
     competitor_id = args.get("competitor_id")
@@ -274,6 +301,13 @@ def cmd_write_findings(args):
     findings = args.get("findings", [])
     if not findings:
         print(json.dumps({"error": "findings list required"}))
+        sys.exit(1)
+
+    all_errors = []
+    for i, f in enumerate(findings):
+        all_errors.extend(_validate_finding(f, idx=i))
+    if all_errors:
+        print(json.dumps({"error": "validation_failed", "errors": all_errors}))
         sys.exit(1)
 
     lines = [sql_preamble()]
