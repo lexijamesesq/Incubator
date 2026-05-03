@@ -8,7 +8,13 @@ allowed-tools:
   - Read
   - Glob
   - Bash(date:*)
+  - Bash(mkdir:*)
   - mcp__atlassian__searchJiraIssuesUsingJql
+  - mcp__obsidian__read_note
+  - mcp__obsidian__write_note
+  - mcp__obsidian__patch_note
+  - mcp__obsidian__update_frontmatter
+  - mcp__obsidian__list_directory
 ---
 
 # /cross-domain — Cross-Domain JPD Discovery (Enrichment Agent)
@@ -132,7 +138,7 @@ All queries use the same `fields` array and `maxResults=100`. Field IDs come fro
 **Overflow detection:** If any individual query returns exactly 100 results, note it in the retrieval stats footer (e.g., "Done partition truncated at 100"). This is informational — the skill proceeds with what was retrieved. Active statuses (Experimentation, GTM, Opportunity Identification) are unlikely to overflow; Done and Backlog may.
 
 **Error handling at this phase:**
-- If MCP tools are unavailable or return auth error on the first query: Stop. Output: "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run."
+- If MCP tools are unavailable or return auth error on the first query: surface the auth URL to the user, wait for the OAuth flow to complete, then retry the failed query once. If the retry succeeds, continue normally. If the retry also fails, stop and output: "Cross-domain discovery unavailable — Atlassian MCP authenticated but query still failed. Run `/mcp` to verify connection, then re-run."
 - If MCP call times out on any query: Stop. Output: "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection."
 - If ALL queries return 0 results combined: Stop. Output: "Warning: JPD queries returned 0 results across all statuses. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated."
 - If some queries succeed and others fail: Continue with partial results. Note failed partitions in the retrieval stats footer.
@@ -338,7 +344,8 @@ This is NOT a confident negative. Cross-domain signals were not evaluated.
 
 | Scenario | Detection | Behavior | Output |
 |---|---|---|---|
-| MCP not authenticated | MCP tools unavailable or auth error on first query | Stop immediately | "Cross-domain discovery unavailable — Atlassian MCP needs authentication. Run `/mcp` to authenticate, then re-run." |
+| MCP not authenticated (auth flow not yet attempted) | MCP tools unavailable on first query, no auth flow in progress | Surface auth URL, wait for user to complete OAuth, then retry the failed query once. Only stop if the retry also fails. | "Cross-domain discovery requires Atlassian MCP authentication. Open the auth URL, complete the flow, and the skill will retry automatically. If the retry fails, run `/mcp` to verify connection and re-invoke the skill." |
+| MCP not authenticated (retry exhausted) | First query failed, auth flow completed by user, retry also failed | Stop | "Cross-domain discovery unavailable — Atlassian MCP authenticated but query still failed. Run `/mcp` to verify connection, then re-run." |
 | MCP timeout | MCP call returns timeout error on any query | Stop. Do not retry. | "Could not check — Atlassian MCP timed out. Cross-domain signals were not evaluated. Restart Claude Code to refresh connection." |
 | All partitions return 0 | All 5 status queries return empty | Warn — JPD should contain ideas | "Warning: JPD queries returned 0 results across all statuses. This is unexpected — verify MCP connection. Cross-domain signals could not be evaluated." |
 | Some partitions fail | Some status queries succeed, others error | Continue with partial results | Note failed partitions in retrieval stats: "Note: {status} partition failed — {reason}." |
