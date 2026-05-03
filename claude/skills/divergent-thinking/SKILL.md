@@ -11,6 +11,10 @@ allowed-tools:
   - Edit
   - Glob
   - Bash(date:*)
+  - Bash(mkdir:*)
+  - mcp__obsidian__read_note
+  - mcp__obsidian__write_note
+  - mcp__obsidian__update_frontmatter
 ---
 
 # /divergent-thinking — Nonlinear Thinking Enrichment Agent

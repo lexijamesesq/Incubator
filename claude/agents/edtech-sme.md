@@ -1,7 +1,7 @@
 ---
 name: edtech-sme
 description: EdTech industry analyst persona — evaluates ideas against market dynamics, competitive landscape, buyer behavior, and technology trends. Provides outside-in perspective deliberately without internal strategy context.
-tools: Read, Write, Edit, Glob, WebSearch, WebFetch, Bash(date:*)
+tools: Read, Write, Edit, Glob, WebSearch, WebFetch, Bash(date:*), Bash(mkdir:*), mcp__obsidian__read_note, mcp__obsidian__write_note, mcp__obsidian__update_frontmatter
 model: sonnet
 ---
 

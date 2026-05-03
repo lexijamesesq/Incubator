@@ -77,7 +77,37 @@ Ideas in dense portfolio areas must earn their existence. The card must make cle
 
 *The Unique Territory:* Sibling ideas build the capabilities — rubric design, rubric generation, task creation, grading. This idea builds the PATH between them. Without it, every capability exists but teachers still default to quizzes because nothing helps them take the first step.
 
-**How this maps to the card:** The User's Moment becomes the Problem field and shapes the Core Insight. The Single Strategic Move becomes the Thought Outline's thesis. The Compound structures the Thought Outline's body. The Strategic Connection becomes the Strategic Connection field with named mechanism. The Unique Territory sharpens what the Core Insight emphasizes and prevents overlap with siblings.
+## Output Prose Translation
+
+**The reasoning notation is NOT the prose.** Arrows (`→`) and parenthetical dimension labels (`(adoption)`, `(retention)`, `(revenue)`) in the reasoning above are thinking aids — they exist so you can verify each outcome maps to a distinct business dimension. They MUST NOT appear in the output prose. Carrying them in produces dense compound sentences with corporate-noun clusters that violate the persona's voice.
+
+The persona's multiplicative pattern is parallel rhythm with a single em-dash close. The canonical example from `persona.md`:
+
+> "Configurability lets K-12 districts optimize for growth metrics while data analysts drill into granular patterns while administrators get simplified decision views—one strategic move serving diverse institutional needs simultaneously."
+
+Note the structure: `[move] does X while Y while Z—one move serving [unifying frame] simultaneously.` No labels. No arrows. No "compounds across N dimensions" scaffolding. The dimension mapping happens in your reasoning; the prose carries the rhythm.
+
+**Reasoning vs. prose for educator-transition (same content, both forms):**
+
+*Reasoning notation (your thinking step):*
+> More teachers attempting authentic assessment (adoption) → teachers who succeed don't defect to standalone tools (retention) → measurable transition metrics become proof points for institutional expansion (revenue).
+
+*Output prose (what goes in the Thought Outline):*
+> A designed pathway pulls quiz-only teachers into authentic assessment for the first time while holding the teachers who succeed against standalone-tool defection while turning measurable transition cohort data into the institutional proof point administrators need for expansion — one move serving adoption, retention, and revenue simultaneously.
+
+The reasoning version is for verification: each phrase has a label so you can confirm dimension coverage. The prose version is what the reader sees: the labels disappear, the rhythm carries the multiplicative weight, the em-dash closes with the unifying move.
+
+**Anti-patterns to avoid in output prose:**
+- "compounds across three dimensions: X (adoption), Y (retention), Z (revenue)"
+- "compounds across three outcomes that reinforce each other: X (label), Y (label), Z (label)"
+- Mega-sentences over ~50 words trying to pack three labeled clauses into one breath
+- Corporate-noun clusters: "engagement events," "adoption metrics," "convergence already underway," "primitive built once"
+
+These are reasoning-notation-as-prose. They read as scaffolding the writer never finished translating into voice.
+
+## How This Maps to the Card
+
+The User's Moment becomes the Problem field and shapes the Core Insight. The Single Strategic Move becomes the Thought Outline's thesis. The Compound — translated to prose per the section above — structures the Thought Outline's body. The Strategic Connection becomes the Strategic Connection field with named mechanism. The Unique Territory sharpens what the Core Insight emphasizes and prevents overlap with siblings.
 
 ## What You Read
 

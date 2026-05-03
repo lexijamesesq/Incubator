@@ -14,6 +14,15 @@ allowed-tools:
   - WebFetch
   - Bash(date:*)
   - Bash(python3 scripts/research-db.py:*)
+  - Bash(mkdir:*)
+  - mcp__obsidian__read_note
+  - mcp__obsidian__read_multiple_notes
+  - mcp__obsidian__write_note
+  - mcp__obsidian__patch_note
+  - mcp__obsidian__update_frontmatter
+  - mcp__obsidian__search_notes
+  - mcp__obsidian__list_directory
+  - mcp__obsidian__get_frontmatter
   - Skill
 ---
 
@@ -227,8 +236,10 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 - {OKR reference}: {how this idea advances it}
 
 ### NPS / Customer Evidence
-- {Product} ({date range}): {key finding or "Zero mentions of {topic}"}
+- {Product} ({date range}): {key finding or "Zero mentions of {topic}"} ([{Product} NPS — {Month YYYY} tab]({external_url from CLAUDE.md > Configuration > metrics.nps_product_a or .nps_product_b}))
 - **Key finding:** {synthesis of NPS evidence or absence}
+
+Citation rule: each NPS bullet must end with a linked source pointing at the configured Google Doc URL for the product (`external_url` field under `metrics.nps_product_a` for Canvas Quizzes, `metrics.nps_product_b` for MasteryConnect). Use the tab name (e.g., "March 2026 tab") in the link text so the reader knows which tab to navigate to. Local file paths (`Projects/Metrics/NPS/Analysis/...`) MUST NOT appear in citations — they're internal scan locations, not viewable sources.
 
 ### Shared Research Baseline (within TTL)
 - {Finding} ({confidence level}) ([Source Title](specific URL from entry's Source: field))
@@ -435,7 +446,7 @@ After writing the card to file, invoke the artifact critic to check structural a
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `artifact-critic`, passing the completed idea card file path as the argument (e.g., `Ideas/foraging-intelligence.md`).
 
-The artifact-critic skill runs in the artifact-critic agent's isolated context — separate from this session — using only Read, Glob, and Grep. It returns a deviation report.
+The artifact-critic skill runs in the artifact-critic agent's isolated context — separate from this session — with read access to vault notes via Obsidian MCP. It returns a deviation report.
 
 **Triage the findings:**
 For each finding the critic returns, either:
@@ -443,6 +454,14 @@ For each finding the critic returns, either:
 - **Override it** with a stated reason (the deviation is intentional and improves the artifact)
 
 If any findings are overridden, note them in the Step 9 presentation under the confidence assessment so the human has visibility.
+
+**Critic-skipped fallback:**
+If the artifact-critic invocation returns an error, fails to produce a deviation report, or otherwise does not complete its check, do NOT silently proceed. The orchestrator must:
+1. Note the failure reason in working memory.
+2. Perform a best-effort self-review against the format spec and persona guide as a stopgap.
+3. Explicitly surface in Step 9 under the confidence assessment: "Artifact-critic skipped — {reason}. Self-review only; independent adversarial check did not run."
+
+The point of this skill is the independent check. A silent skip turns synthesis self-evaluation into the only quality gate, which is exactly the bias the critic exists to backstop. The human should always know whether the critic actually ran.
 
 ### Step 7: Self-Critique
 

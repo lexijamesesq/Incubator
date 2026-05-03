@@ -14,6 +14,13 @@ allowed-tools:
   - mcp__atlassian__createJiraIssue
   - mcp__atlassian__editJiraIssue
   - mcp__atlassian__transitionJiraIssue
+  - mcp__obsidian__read_note
+  - mcp__obsidian__read_multiple_notes
+  - mcp__obsidian__update_frontmatter
+  - mcp__obsidian__get_frontmatter
+  - mcp__claude_ai_Google_Drive__create_file
+  - mcp__claude_ai_Google_Drive__search_files
+  - mcp__claude_ai_Google_Drive__get_file_metadata
 ---
 
 # /jpd-push — Push Idea to JPD
@@ -32,9 +39,19 @@ Pushes a developed idea to JPD for stakeholder visibility. One-directional — n
 
 ## Arguments
 
-Parse `$ARGUMENTS` to resolve the target idea file.
+Parse `$ARGUMENTS` to resolve the target idea file and any flags.
 
-**Resolution rules:**
+**Argument structure:** `[idea-name] [flags]` — idea-name is the positional argument; flags are space-separated and follow.
+
+**Recognized flags:**
+
+| Flag | Effect |
+|---|---|
+| `--regenerate-sidecar` | On re-push only: force regeneration of the Research Sidecar Google Doc with an incremented version suffix `(v2)`, `(v3)`, etc. Triggers the regenerate-sidecar branch in Step 5's re-push behavior. Ignored on first push (sidecar always generated on first push regardless of flag). Unknown on a malformed first push attempt — if `jira-key` is null and this flag is present, treat as first push and ignore the flag with a one-line note in the review gate output. |
+
+Unknown flags should be reported as an error and exit before resolution proceeds — e.g., `Unknown flag: '--foo'. Recognized flags: --regenerate-sidecar.` This prevents typos from silently no-op'ing.
+
+**Idea-name resolution rules** (applied after flag parsing, against the positional argument):
 
 | Input | Behavior |
 |-------|----------|
@@ -48,11 +65,13 @@ Parse `$ARGUMENTS` to resolve the target idea file.
 
 ### Step 0: Load Configuration
 
-Read `jira-config.md` from the Incubator project root (`Professional/Incubator/jira-config.md`). All Jira connection details, field IDs, and option IDs used in this skill come from that file. Do not proceed if the file cannot be read.
+Read `jira-config.md` from the Incubator project root (`Projects/Incubator/jira-config.md`) via `mcp__obsidian__read_note`. All Jira connection details, field IDs, and option IDs used in this skill come from that file. Do not proceed if the file cannot be read.
+
+Also read `Projects/Incubator/CLAUDE.md` Configuration > External References block to resolve `incubator.jpd_sidecars_folder_id` (used in Step 3c) and the strategy doc `path` → `external_url` mappings (used in Step 3 link translation).
 
 ### Step 1: Load and Validate
 
-Read the idea file. Verify all push prerequisites:
+Read the idea file via `mcp__obsidian__read_note` (vault `.md` files are blocked from generic Read by the vault redirect hook — Obsidian MCP is the canonical reader for vault content). Verify all push prerequisites:
 
 **Required for push:**
 - `stage` is `developing`, `drafting`, `refining`, or `complete`
@@ -97,11 +116,18 @@ Map the TL;DR sections into this structure:
 ## Research Summary
 {Findings — verbatim from card}
 
+[Full development research](<<SIDECAR_URL>>)
+
+The `<<SIDECAR_URL>>` token is a literal placeholder. On first push, Step 3c stages content with this placeholder in the description; Step 5a creates the JPD issue with the placeholder still in place; Step 5b creates the sidecar Google Doc; Step 5c calls editJiraIssue to replace `<<SIDECAR_URL>>` with the real `viewUrl`. On re-push, the description is built with `jira-sidecar-url` from frontmatter substituted directly (no placeholder, no extra edit).
+
 ## Cross-Domain Signals
-{Include ONLY if cross-domain research exists — see Step 3a below. Omit section entirely if no research artifact found.}
+{Mirror the card's `### Cross-Domain Signals` section verbatim — see Step 3a. Omit if absent on card.}
 
 ## Thought Outline
 {Content — verbatim from card}
+
+## Disruptive Reframing
+{Disruptive divergent angle — see Step 3b. Omit if no divergent-angles artifact exists.}
 
 ## Buildable Surface
 {Include ONLY if Buildable Surface section exists on the card. Transfer verbatim. Omit section entirely if not present on card.}
@@ -116,24 +142,83 @@ Map the TL;DR sections into this structure:
 
 Apply to the entire description body.
 
-**Step 3a: Cross-Domain Signals section (conditional)**
+**Step 3a: Cross-Domain Signals section (mirror card, conditional)**
 
-Check if a cross-domain research artifact exists at `Research/{idea-name}/cross-domain-signals.md`. If it does not exist, omit the Cross-Domain Signals section entirely from the description.
+If the card body has a `### Cross-Domain Signals` section, transfer it verbatim into the JPD body as `## Cross-Domain Signals` (heading level adjusted from h3 to h2; content preserved exactly). The card carries the curated 5 signals + 1 convergence group selected by the cross-domain skill's Phase 2.5 ranking — JPD shows the same curated set. The full classified set (including the 2 typically excluded from card output, plus retrieval stats) lives in the Research Sidecar (Step 3c) for stakeholders who want depth.
 
-If it exists, read it and extract the relevant signals (those classified as Direct overlap, Enabler/dependency, or Convergence). Build the section as:
+If the card has no `### Cross-Domain Signals` section, omit the JPD section entirely. Do NOT re-derive the section from `Research/{idea-name}/cross-domain-signals.md` — the card is canonical.
+
+**Step 3b: Disruptive Reframing section (divergent inline excerpt, conditional)**
+
+Check if `Research/{idea-name}/divergent-angles.md` exists. If not, omit the Disruptive Reframing section.
+
+If it exists, read it via `mcp__obsidian__read_note` and extract:
+1. **The Disruptive One** — the angle marked with the heading "## The Disruptive One" or similar. The divergent-thinking skill identifies one of its 3–5 angles as the disruptive frame; that's the one to inline.
+2. The **2–3 sentence insight** — distill from the disruptive angle's "The connection" and "What it opens up" content. Stay close to the artifact's language; do not generatively rewrite.
+
+Format as:
 
 ```markdown
-## Cross-Domain Signals
-{N} ideas from other domains with possible functional overlap:
-- [{issue-key}]({Atlassian base URL from jira-config.md}/browse/{issue-key}) {summary} ({Domain Label}) — {Signal type}: {Connection sentence}
+## Disruptive Reframing
 
-Domain Label is a derived field from the cross-domain research artifact (Brand → Product Domain → Squad inference → Squad name). Omit the parenthetical entirely if no domain label is available for a signal.
+**{Disruptive Angle Title}** — {2-3 sentence insight summarizing the connection and what it opens up}
 
-{If convergence groups exist, add:}
-Convergence: {Group description — which teams, what shared need, one sentence on what it means}
+[Full development research](<<SIDECAR_URL>>)
 ```
 
-Each issue key is a clickable link to the JPD item within the Atlassian environment. Content is transferred from the research artifact — no generative rewriting.
+This section captures the disruptive reframing that informs the strategic move. It sits between the Thought Outline (the move) and the Buildable Surface (concrete approaches) in the JPD body description structure. Avoid the word "leveraged" as a section heading — it's on the persona's kill list and conveys nothing concrete; "Disruptive Reframing" names what the section actually is.
+
+**Step 3c: Stage Research Sidecar content (first push only)**
+
+If this is a first push (no `jira-key` in frontmatter), stage the four sidecar `.md` files in memory here. Folder + file creation happens in Steps 5b/5c — after the JPD issue is created and `jira-key` is known — so each file's frontmatter can carry a working back-link to the JPD issue. The Drive MCP doesn't expose a content-edit tool, so each create_file call must be made with the JPD reference already substituted in.
+
+The sidecar architecture is **one folder per pushed idea, four `.md` files per folder** — one per research stream. The folder name is `{jira-key} - {Idea Title}` (with `/` characters in the title replaced with `-`; other Unicode preserved). The Research Summary link in the JPD body points to the folder URL.
+
+1. Read the four primary research artifacts in parallel via `mcp__obsidian__read_multiple_notes`:
+   - `Research/{idea-name}/edtech-market-analysis.md`
+   - `Research/{idea-name}/tam-estimate.md`
+   - `Research/{idea-name}/educator-evaluation.md`
+   - `Research/{idea-name}/divergent-angles.md`
+
+2. Skip any artifact that doesn't exist (the corresponding /develop agent must have failed). Note any skipped artifacts in the review gate output for transparency.
+
+3. For each artifact, strip the existing YAML frontmatter and prepend a sidecar-specific frontmatter block with literal placeholders for the JPD reference (substituted in Step 5c). The body keeps the artifact's existing H1 and content untouched.
+
+**Per-stream sidecar template:**
+
+```markdown
+---
+type: incubator/research-sidecar
+idea: {idea-name}
+jira-key: <<JIRA_KEY>>
+jira-url: <<JIRA_URL>>
+stream: {stream-slug}
+sources:
+{sources-block — see mapping below}
+generated: {YYYY-MM-DD via Bash(date:*)}
+---
+
+{full body of the artifact, frontmatter stripped, H1 onward preserved}
+```
+
+**Per-stream slug + sources mapping:**
+
+| File name | stream slug | sources |
+|---|---|---|
+| `EdTech Market Analysis.md` | `edtech-market-analysis` | `- /edtech-sme agentic researcher (web research + competitor evaluation)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — competitive landscape findings` |
+| `TAM Estimate.md` | `tam-estimate` | `- /tam-estimate agentic researcher (top-down + bottom-up market sizing)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — market-sizing findings` |
+| `Educator Evaluation.md` | `educator-evaluation` | `- /educator-sme agentic researcher (classroom-reality evaluation)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — customer-evidence findings` |
+| `Divergent Angles.md` | `divergent-angles` | `- /divergent-thinking agentic researcher (cross-domain pattern matching)` |
+
+The Divergent Angles file has only one source — `/divergent-thinking` does not write findings to Snowflake by design (creative reframing is excluded from the research database).
+
+The Research Summary link line in the JPD body description (built in Step 3) uses the literal placeholder `<<SIDECAR_URL>>` that's substituted in Step 5d after the folder is created and its URL is known.
+
+**Re-push behavior:** On re-push (`jira-key` already present), do NOT regenerate the sidecar by default. Read `jira-sidecar-url` from the idea file frontmatter and reuse it directly in the JPD body description's "Full development research:" link line — no Drive call needed.
+
+If the frontmatter `jira-sidecar-url` is missing on a re-push (i.e., the idea was first pushed before the sidecar feature existed, or the field was removed), fall back to one of: (a) treat the re-push as a sidecar-bootstrap and run Step 3c to generate a v1 sidecar now, then store the URL in frontmatter, or (b) prompt the user at the review gate to confirm bootstrap. Default to (a) when the four research artifacts exist; prompt only when one or more are missing.
+
+If the user explicitly invokes `/jpd-push {idea} --regenerate-sidecar`, generate a new doc with title `{Idea Title} — Research Sidecar (v2)` (or v3, v4 etc., incrementing past the highest existing version found via `mcp__claude_ai_Google_Drive__search_files` query `title contains '{Idea Title} — Research Sidecar'`). Update both the JPD body link and the frontmatter `jira-sidecar-url` to point at the latest version. Older versions remain in Drive for history.
 
 **Executive Summary:** The Core insight sentence, plain text only (strip bold markers). Max 255 characters — if the core insight exceeds this, condense to fit without losing the key claim. Show the condensed version in the review gate.
 
@@ -174,6 +259,8 @@ Type: {First push | Re-push to {jira-key}}
 
 ---
 Confirm to push, or provide overrides (e.g., "change Surface Area to X", "change Roadmap Priority to Y").
+
+**Placeholders in description preview:** On first push, the preview shows `<<SIDECAR_URL>>` in two places — the Research Summary trailer and the Disruptive Reframing trailer (both render as `[Full development research](<<SIDECAR_URL>>)`). Both placeholders are replaced with the real Drive folder URL in Step 5d after the sidecar folder is created — the JPD issue will land with working links, not literal tokens. The same applies to `<<JIRA_KEY>>` and `<<JIRA_URL>>` in the staged sidecar file frontmatter (substituted in Step 5c once `jira-key` is known). Mention this in the review output so the user isn't surprised.
 ```
 
 **Wait for human confirmation.** Do not push without explicit approval.
@@ -182,14 +269,18 @@ Confirm to push, or provide overrides (e.g., "change Surface Area to X", "change
 
 ### Step 5: Push
 
-**First push:**
+**First push (multi-step: create JPD with placeholder → create sidecar → edit JPD with sidecar URL → transition + frontmatter):**
+
+**Step 5a — Create JPD issue with `<<SIDECAR_URL>>` placeholder:**
+
+The description body built in Step 3 still contains the literal `<<SIDECAR_URL>>` token in the Research Summary's "Full development research:" link line. Submit it as-is — the placeholder gets replaced in Step 5c after the sidecar exists.
 
 Call `mcp__atlassian__createJiraIssue` with:
 - `cloudId`: Cloud ID from `jira-config.md > Connection`
 - `projectKey`: project key from `jira-config.md > Connection`
 - `issueTypeName`: `Idea`
 - `summary`: the prepared summary
-- `description`: the prepared description body
+- `description`: the prepared description body (still contains `<<SIDECAR_URL>>`)
 - `additional_fields`: object containing all custom fields:
   - All static fields from `jira-config.md > Static Field Values` (field IDs and option IDs as specified there)
   - Executive Summary field ID and format from `jira-config.md > Dynamic Field Mappings`: string value
@@ -197,24 +288,89 @@ Call `mcp__atlassian__createJiraIssue` with:
   - AI Feature field ID from `jira-config.md > Dynamic Field Mappings`: `1` (numeric, omit if not applicable)
   - `labels`: themes array (e.g., `["ai-capabilities"]`)
 
-After successful creation, extract the issue key from the response.
+Extract `jira-key` from the response. Build `jira-url` as `{Atlassian base URL from jira-config.md}/browse/{jira-key}`.
 
-Transition the issue to "1 - Opportunity Identification" using `mcp__atlassian__transitionJiraIssue` with the transition ID from `jira-config.md > Transition`. This moves the issue from the default "Backlog" status into the proper workflow state.
+**Step 5b — Create the sidecar folder:**
 
-Update the idea file frontmatter:
-- Add or update `jira-key: {issue-key}`
-- Add or update `jira-pushed-at: {today's date YYYY-MM-DD}` — use `Bash(date:*)` to get today's date
+Build the folder name: `{jira-key} - {sanitized-idea-title}`. Sanitize the idea title by replacing forward slashes (`/`) with hyphens (`-`); preserve other characters including Unicode. Example: `PM2025-2919 - Structured Peer Review and Feedback Workflow`.
 
-**Re-push:**
+Submit to `mcp__claude_ai_Google_Drive__create_file`:
+- `title`: the sanitized folder name
+- `parentId`: `incubator.jpd_sidecars_folder_id` from CLAUDE.md
+- `contentMimeType`: `application/vnd.google-apps.folder`
+(no `textContent` — folders have no content)
+
+Capture `id` and `viewUrl` from the response. The `viewUrl` is the `sidecar-folder-url` (used in Step 5d). The `id` is the folder ID (used as `parentId` for each file in Step 5c).
+
+**Step 5c — Create the four sidecar `.md` files in parallel:**
+
+For each of the four staged files from Step 3c, substitute the literal frontmatter placeholders:
+- Replace `<<JIRA_KEY>>` with `{jira-key}`
+- Replace `<<JIRA_URL>>` with `{jira-url}` (built as `{Atlassian base URL}/browse/{jira-key}`)
+
+Then submit four parallel `mcp__claude_ai_Google_Drive__create_file` calls — one per stream:
+
+```
+For each (filename, stream-slug, content):
+  create_file:
+    title: {filename}                              # e.g. "EdTech Market Analysis.md"
+    parentId: {sidecar-folder-id from Step 5b}
+    textContent: {full substituted markdown including frontmatter}
+    contentMimeType: text/markdown
+```
+
+The `text/markdown` content uploads as a raw `.md` file (not auto-converted to a Google Doc). This is by design — the sidecar architecture treats `.md` as the canonical format. Drive's preview pane renders the markdown as readable text; readers who want a styled Doc can right-click → Open with → Google Docs (per-account markdown preference must be enabled — see Google's [July 2024 markdown import announcement](https://workspaceupdates.googleblog.com/2024/07/import-and-export-markdown-in-google-docs.html)).
+
+If any file create fails, note the failure and continue — partial sidecar is better than rolled-back. Surface the failure list in Step 6's success report.
+
+**Step 5d — Edit JPD issue to substitute the sidecar folder URL:**
 
 Call `mcp__atlassian__editJiraIssue` with:
 - `cloudId`: Cloud ID from `jira-config.md > Connection`
-- `issueIdOrKey`: the existing `jira-key`
-- `fields`: object containing all fields being updated (same structure as additional_fields above, plus `summary`, `description`, `labels`)
+- `issueIdOrKey`: `{jira-key}` from Step 5a
+- `fields`: object with `description` set to the description body where every occurrence of `<<SIDECAR_URL>>` has been replaced with `{sidecar-folder-url}` (the placeholder appears twice — Research Summary trailer and Disruptive Reframing trailer; both must be substituted). The folder URL is the canonical sidecar reference, NOT a per-file URL.
+
+Description-only edit — all other fields stay as set in Step 5a.
+
+**Step 5e — Transition and update local frontmatter:**
+
+Transition the issue to "1 - Opportunity Identification" using `mcp__atlassian__transitionJiraIssue` with the transition ID from `jira-config.md > Transition`. This moves the issue from the default "Backlog" status into the proper workflow state.
+
+Update the idea file frontmatter via `mcp__obsidian__update_frontmatter` (the vault redirect hook blocks generic Edit on vault `.md` files):
+- Add or update `jira-key: {jira-key}`
+- Add or update `jira-pushed-at: {today's date YYYY-MM-DD}` — use `Bash(date:*)` to get today's date
+- Add `jira-sidecar-url: {sidecar-folder-url}` (folder URL, not a single-file URL)
+
+**Re-push (default — sidecar unchanged):**
+
+The description body built in Step 3 uses `jira-sidecar-url` from idea frontmatter substituted directly into the Research Summary "Full development research:" link line — no `<<SIDECAR_URL>>` placeholder, no Drive call, no second editJiraIssue. Just one editJiraIssue.
+
+Call `mcp__atlassian__editJiraIssue` with:
+- `cloudId`: Cloud ID from `jira-config.md > Connection`
+- `issueIdOrKey`: the existing `jira-key` from frontmatter
+- `fields`: object containing fields being updated (`summary`, `description`, `labels`, plus any custom field changes — same structure as Step 5a's `additional_fields`)
 
 Before pushing, show a diff of what changed since the last push (compare current payload to what was previously pushed — if this is the first re-push and no prior payload is stored, note "First re-push — showing full payload").
 
-Update `jira-pushed-at` in frontmatter.
+Update `jira-pushed-at` in frontmatter via `mcp__obsidian__update_frontmatter`. Do NOT change `jira-sidecar-url` — the existing sidecar is unchanged.
+
+**Re-push with `--regenerate-sidecar` flag:**
+
+Re-push that explicitly regenerates the sidecar. Use when significant research artifact updates have happened since first push.
+
+Because `jira-key` is already known on re-push, the placeholder dance from first push is unnecessary — substitute the JPD reference directly into each file's frontmatter, build the JPD description with the new folder URL already in place, then one editJiraIssue.
+
+1. **Stage new sidecar content** per Step 3c — substitute `<<JIRA_KEY>>` and `<<JIRA_URL>>` directly using the known `jira-key` (no placeholders needed in the staged content for re-push).
+2. **Determine new version number:** call `mcp__claude_ai_Google_Drive__search_files` with query `title contains '{jira-key} - {Idea Title}' and mimeType = 'application/vnd.google-apps.folder'`. Find the highest existing `(vN)` suffix on the folder (treat the unsuffixed v1 folder as N=1). Increment to N+1.
+3. **Create the new sidecar folder** via `mcp__claude_ai_Google_Drive__create_file`:
+   - `title`: `{jira-key} - {sanitized-idea-title} (v{N+1})`
+   - `parentId`: `incubator.jpd_sidecars_folder_id` from CLAUDE.md
+   - `contentMimeType`: `application/vnd.google-apps.folder`
+   Capture the returned folder `id` and `viewUrl` (the latter is `new-sidecar-folder-url`).
+4. **Create the four new sidecar files** in parallel inside the new folder, same as Step 5c (filenames unchanged across versions — `EdTech Market Analysis.md` etc.).
+5. **Build the description body** with `new-sidecar-folder-url` substituted directly into the Research Summary link line (no `<<SIDECAR_URL>>` placeholder needed since the URL is known).
+6. **Edit JPD issue** via `mcp__atlassian__editJiraIssue` with the updated description and any other field changes.
+7. **Update frontmatter** via `mcp__obsidian__update_frontmatter`: bump `jira-pushed-at`, replace `jira-sidecar-url` with `new-sidecar-folder-url`. Older versioned folders + their files remain in Drive for history.
 
 ### Step 6: Report
 
@@ -224,9 +380,14 @@ Push successful: {idea-name}
 **JPD Issue:** {issue-key}
 **URL:** {Atlassian base URL from jira-config.md}/browse/{issue-key}
 
+**Research Sidecar Folder:** {sidecar-folder-url, omit on re-push if not regenerated}
+- {N} files created (of 4 expected): {comma-separated filenames; flag any missing as "skipped — {artifact} not present"}
+{On re-push without regeneration: "Sidecar unchanged: {jira-sidecar-url from frontmatter}"}
+
 Local frontmatter updated:
 - jira-key: {issue-key}
 - jira-pushed-at: {date}
+- jira-sidecar-url: {sidecar-folder-url, only on first push or --regenerate-sidecar}
 ```
 
 ## Re-push Guidance
