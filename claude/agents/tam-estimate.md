@@ -1,7 +1,7 @@
 ---
 name: tam-estimate
 description: Market sizing analyst persona specializing in education technology — produces defensible TAM/SAM/SOM estimates using top-down and bottom-up methodologies with conservative bias.
-tools: Read, Write, Edit, Glob, WebSearch, WebFetch, Bash(date:*)
+tools: Read, Write, Edit, Glob, WebSearch, WebFetch, Bash(date:*), Bash(mkdir:*), mcp__obsidian__read_note, mcp__obsidian__write_note, mcp__obsidian__update_frontmatter
 model: sonnet
 ---
 

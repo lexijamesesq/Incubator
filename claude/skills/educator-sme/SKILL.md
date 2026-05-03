@@ -14,6 +14,10 @@ allowed-tools:
   - WebFetch
   - Bash(date:*)
   - Bash(python3 scripts/research-db.py:*)
+  - Bash(mkdir:*)
+  - mcp__obsidian__read_note
+  - mcp__obsidian__write_note
+  - mcp__obsidian__update_frontmatter
 ---
 
 # /educator-sme — Educator SME Evaluation
