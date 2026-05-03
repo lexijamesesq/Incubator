@@ -18,6 +18,7 @@ allowed-tools:
   - mcp__obsidian__read_multiple_notes
   - mcp__obsidian__update_frontmatter
   - mcp__obsidian__get_frontmatter
+  - mcp__obsidian__patch_note
   - mcp__claude_ai_Google_Drive__create_file
   - mcp__claude_ai_Google_Drive__search_files
   - mcp__claude_ai_Google_Drive__get_file_metadata
@@ -142,11 +143,47 @@ The `<<SIDECAR_URL>>` token is a literal placeholder. On first push, Step 3c sta
 
 Apply to the entire description body.
 
-**Step 3a: Cross-Domain Signals section (mirror card, conditional)**
+**Step 3a: Cross-Domain Signals section (mirror card or self-heal from artifact)**
 
-If the card body has a `### Cross-Domain Signals` section, transfer it verbatim into the JPD body as `## Cross-Domain Signals` (heading level adjusted from h3 to h2; content preserved exactly). The card carries the curated 5 signals + 1 convergence group selected by the cross-domain skill's Phase 2.5 ranking — JPD shows the same curated set. The full classified set (including the 2 typically excluded from card output, plus retrieval stats) lives in the Research Sidecar (Step 3c) for stakeholders who want depth.
+The default path is card-canonical: if the card body has a `### Cross-Domain Signals` section, transfer it verbatim into the JPD body as `## Cross-Domain Signals` (heading level adjusted from h3 to h2; content preserved exactly). The card carries the curated 5 signals + 1 convergence group selected by the cross-domain skill's Phase 2.5 ranking — JPD shows the same curated set. The full classified set (including any signals excluded from card output, plus retrieval stats) lives in the Research Sidecar (Step 3c) for stakeholders who want depth.
 
-If the card has no `### Cross-Domain Signals` section, omit the JPD section entirely. Do NOT re-derive the section from `Research/{idea-name}/cross-domain-signals.md` — the card is canonical.
+**Self-heal fallback** — if the card has NO `### Cross-Domain Signals` section but `Research/{idea-name}/cross-domain-signals.md` exists, derive the section from the artifact and patch it onto the card BEFORE building the JPD payload. This handles cards developed before /cross-domain became a standard /develop step (architecture migration).
+
+Self-heal procedure:
+
+1. Read the artifact via `mcp__obsidian__read_note`. Extract signals from the `## Signals` section only (NOT from `## Signals Reviewed and Excluded`). Extract convergence groups from `## Convergence Groups`.
+
+2. Apply the curation cap: 5 signals maximum, 1 convergence group maximum.
+   - **If the artifact has ≤5 signals under `## Signals`:** use all of them.
+   - **If the artifact has >5 signals under `## Signals`:** rank and select the top 5 using these criteria from /cross-domain Phase 2.5 (applied as reasoning lenses, not a scoring formula):
+     - **Actionability:** Direct overlap and Convergence rank highest. Enablers rank higher when they represent a specific named integration point than when they're general platform infrastructure.
+     - **Status weight:** Done > 3 - GTM > 2 - Experimentation > 1 - Opportunity Identification > Backlog. Done items represent proven organizational investment; Backlog is weakest.
+     - **Domain breadth:** Prefer signals from different brands/squads/domains over multiple from one team's roadmap.
+     - **Connection specificity:** A named integration point outranks a thematic similarity.
+   - **Convergence:** if the artifact has multiple convergence groups, pick the one that spans the most domains and whose anchor signals remain in the kept-5.
+
+3. Format the curated set into a `### Cross-Domain Signals` section using the canonical card template:
+
+   ```
+   ### Cross-Domain Signals
+   {N} ideas from other domains with possible functional overlap:
+   - [{issue-key}](https://instructure.atlassian.net/browse/{issue-key}) {Issue Title} ({Domain Label}) — {Signal type}: {Connection text — verbatim from artifact's **Connection:** field}
+   - ...
+
+   Convergence: {theme} — [{issue-key}](URL) ({Domain Label}), [{issue-key}](URL) ({Domain Label}). {Convergence narrative — verbatim from artifact}.
+   ```
+
+   For each signal, derive the parenthetical Domain Label using the same priority chain /cross-domain uses: Brand → Product Domain → Squad → omit. If the artifact's `**Domain Label:**` line is populated, use that value directly.
+
+4. Patch the new section into the card body BETWEEN `### Research Summary` (and its content) and `### Thought Outline` using `mcp__obsidian__patch_note`. Replace the boundary string `\n\n### Thought Outline\n` with `\n\n{new section}\n\n### Thought Outline\n`.
+
+5. Re-read the card to confirm the section is present and correctly positioned. If verification fails, halt and report — do not proceed to JPD push with an unconfirmed card edit.
+
+6. Continue with JPD payload construction — Step 3a's main path now picks up the section that was just inserted.
+
+**If neither card section nor artifact exists:** omit the JPD Cross-Domain Signals section entirely. This is the only case where the section is silently dropped.
+
+**Self-heal scope:** This fallback only inserts a missing section. It does NOT re-curate cards that already have a section but with stale content (e.g., >5 signals, malformed entries). For those cases, the card edit is a manual operation outside this skill.
 
 **Step 3b: Disruptive Reframing section (divergent inline excerpt, conditional)**
 
@@ -422,5 +459,5 @@ This skill does NOT:
 - Sync back from JPD (sync-back is conversational and ad-hoc)
 - Push seeds (must be developing or later)
 - Push without human review
-- Modify the idea card body (only adds/updates `jira-key` and `jira-pushed-at` in frontmatter)
+- Modify the idea card body, with one exception — the Step 3a self-heal fallback may insert a `### Cross-Domain Signals` section if it's missing from the card and the artifact exists (architecture migration handling). All other body content is left untouched. Frontmatter updates remain limited to `jira-key`, `jira-pushed-at`, and `jira-sidecar-url`.
 - Manage initiative hierarchy in JPD (initiatives are local only)
