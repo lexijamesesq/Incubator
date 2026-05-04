@@ -88,6 +88,21 @@ All outputs from Stage 2 onward follow `persona.md`.
 
 ---
 
+## Session Preconditions
+
+The pipeline depends on multiple MCP servers. Verify connections before invoking long-running skills (especially `/develop` and `/draft`) — partial-state failures mid-run waste both work and tokens.
+
+| MCP Server | Used By | Failure Mode |
+|---|---|---|
+| Obsidian | All skills that read/write vault `.md` files | Pipeline-wide failure — vault redirect hook blocks `Read`/`Edit`/`Write`/`Grep` and routes to Obsidian MCP. Without it, skills cannot read idea cards, NPS files, persona, strategy docs. |
+| Atlassian | `/cross-domain` (read JPD), `/jpd-push` (write to JPD) | Skill-local failure with auth-flow recovery — surface the OAuth URL, retry once after user completes flow. |
+
+**Recommended start-of-session check:** Run `/mcp` to surface connection state. If Obsidian or Atlassian shows disconnected, reconnect before invoking pipeline skills. Skills will fail noisily with auth instructions if MCP is missing, but a pre-flight check avoids interrupting a running pipeline mid-stream.
+
+The optional research database is accessed via `python3 scripts/research-db.py`, not via MCP — separate auth path. See `scripts/research-db-config.sample.json` for setup.
+
+---
+
 ## Configuration
 
 ### Role
@@ -117,9 +132,23 @@ strategic_context.design_strategy:
 strategic_context.okrs:
   path: "<your-okrs-document-path>"
 
-# NPS or customer sentiment analysis directories (used by /develop)
-metrics.nps_product_a: "<path-to-nps-analysis-for-product-a>"
-metrics.nps_product_b: "<path-to-nps-analysis-for-product-b>"
+# NPS or customer sentiment analysis directories (used by /develop).
+# Each product has a local directory of monthly analysis files (one .md per month) AND a Google Doc
+# that aggregates all months as separate tabs. Cite the external_url (with tab name in link text) when
+# referencing NPS findings in research artifacts — internal docs/file paths should not appear as citations.
+metrics.nps_product_a:
+  path: "<path-to-nps-analysis-for-product-a>"
+  external_url: "<google-doc-url-for-product-a>"
+metrics.nps_product_b:
+  path: "<path-to-nps-analysis-for-product-b>"
+  external_url: "<google-doc-url-for-product-b>"
+
+# Google Drive folder where /jpd-push generates Research Sidecar folders.
+# Each pushed idea gets a sidecar folder containing the full research artifacts
+# (TAM, EdTech, Educator, Divergent). Linked from the JPD body Research Summary
+# and Disruptive Reframing trailers as `[Full development research](URL)`.
+incubator.jpd_sidecars_folder_id: "YOUR_DRIVE_FOLDER_ID"
+incubator.jpd_sidecars_folder_url: "YOUR_DRIVE_FOLDER_URL"
 ```
 
 ### JPD Integration (Optional)
