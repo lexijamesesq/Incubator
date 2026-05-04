@@ -149,6 +149,12 @@ metrics.nps_product_b:
 # and Disruptive Reframing trailers as `[Full development research](URL)`.
 incubator.jpd_sidecars_folder_id: "YOUR_DRIVE_FOLDER_ID"
 incubator.jpd_sidecars_folder_url: "YOUR_DRIVE_FOLDER_URL"
+
+# Research database label used in /jpd-push sidecar `sources` blocks. Substituted into the
+# <<RESEARCH_DB_REF>> placeholder at sidecar staging time, so the public skill template stays
+# free of installation-specific identifiers while the generated sidecar files carry the
+# concrete reference stakeholders need. Example: "Snowflake research database (PRODUCT.STRATEGY_RESEARCH)".
+incubator.research_db_label: "YOUR_RESEARCH_DATABASE_LABEL"
 ```
 
 ### JPD Integration (Optional)
