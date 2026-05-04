@@ -69,7 +69,7 @@ Execute these phases in order. Stop and report errors at any phase rather than c
 
 ### Phase 0: Load Configuration
 
-Read `jira-config.md` from the Incubator project root (`Professional/Incubator/jira-config.md`). All Jira connection details, field IDs, and JQL parameters used in this skill come from that file. Do not proceed if the file cannot be read.
+Read `jira-config.md` from the Incubator project root (`Projects/Incubator/jira-config.md`) via `mcp__obsidian__read_note`. All Jira connection details, field IDs, and JQL parameters used in this skill come from that file. Do not proceed if the file cannot be read.
 
 ### Phase 0.1: Parse Arguments
 
@@ -385,21 +385,21 @@ This skill does NOT:
 
 ## Worked Example
 
-The grading idea (`authentic-assessment-grading`) produced this output. Study the reasoning, not just the format.
+The cache-route-optimization idea (`cache-route-optimization`) produced this output, using the fictional brand vocabulary from `org-taxonomy.sample.md` (Oakwood, Acorn, Burrow, Canopy). Study the reasoning, not just the format.
 
 **6 candidates evaluated. 4 selected, 2 excluded.**
 
 Selected:
-- SpeedGrader Phase 2 (Canvas, Done) — Enabler: adds moderated grading, directly enables multi-evaluator routing this idea requires. *Selected because: specific integration point, Done status (proven investment).*
-- Enhanced Rubrics Phase 3 (Canvas, Done) — Enabler: rubric infrastructure quality is foundational to any qualitative evaluation workflow on SpeedGrader. *Selected because: specifically load-bearing for a grading idea — not general infrastructure.*
-- DocViewer rotated document annotation (Canvas, GTM) — Enabler: restores annotation on photographed handwritten work, exactly the artifact type authentic assessment produces. *Selected because: specific to this idea's multi-modal grading surface, shipping imminently.*
-- PDB Outcome & Rubrics integration (Parchment, Opportunity Identification) — Convergence: Parchment building rubric-based credentialing — different angle on the same need for trustworthy rubric evaluation of qualitative work. *Selected because: different domain, same underlying need.*
+- Multi-stop Route Builder Phase 2 (Oakwood, Done) — Enabler: adds intermediate-stop scheduling, directly enables the cache-checkpoint sequencing this idea requires. *Selected because: specific integration point, Done status (proven investment).*
+- Enhanced Cache Tags Phase 3 (Acorn, Done) — Enabler: cache metadata schema improvements, foundational to any cache-route join logic. *Selected because: specifically load-bearing for a cache-routing idea — not general infrastructure.*
+- Map Layer rotated terrain views (Oakwood, GTM) — Enabler: aligns territory views with seasonal foraging direction, exactly the orientation this idea's checkpoint scheduling depends on. *Selected because: specific to this idea's spatial layer, shipping imminently.*
+- Burrow Inventory & Cache integration (Burrow, Opportunity Identification) — Convergence: Burrow building cross-cache inventory tracking — different angle on the same need for trustworthy cache state at routing time. *Selected because: different domain, same underlying need.*
 
 Excluded:
-- Enhanced Rubrics pre-GA Tasks (Canvas, Done) — duplicative with Enhanced Rubrics Phase 3, null description, low incremental value.
-- Responsive SpeedGrader (Canvas, Done) — general UI infrastructure (responsive design, accessibility). Benefits every SpeedGrader feature, not specific to qualitative evaluation.
+- Enhanced Cache Tags pre-GA Tasks (Acorn, Done) — duplicative with Enhanced Cache Tags Phase 3, null description, low incremental value.
+- Responsive Map UI (Oakwood, Done) — general UI infrastructure (responsive design, accessibility). Benefits every map feature, not specific to cache-route optimization.
 
 Convergence group:
-> Rubric evaluation quality for downstream decisions — SpeedGrader Phase 2 (Canvas), Enhanced Rubrics Phase 3 (Canvas), PDB Outcome & Rubrics (Parchment). Canvas is investing in rubric grading infrastructure while Parchment is building rubric-based credentialing — both need rubric evaluation to work well for non-traditional assessment, creating shared organizational interest that this idea can leverage.
+> Trustworthy cache state for downstream decisions — Multi-stop Route Builder Phase 2 (Oakwood), Enhanced Cache Tags Phase 3 (Acorn), Burrow Inventory & Cache (Burrow). Oakwood is investing in route infrastructure while Burrow is building cross-cache inventory — both need cache state to be trustworthy enough to drive downstream decisions, creating shared organizational interest that this idea can leverage.
 
 *Why this convergence group works: the synthesis line states something the individual entries do not — "shared organizational interest" across domains. It answers "so what?" for the reader.*

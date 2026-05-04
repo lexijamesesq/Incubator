@@ -87,7 +87,7 @@ Load these files in parallel:
 4. **Idea index** — Use `Glob` to list all `.md` files in `Ideas/`, then apply tiered reading:
    - **Complete-stage ideas:** Read frontmatter only (first 25 lines or until `---` closes). Extract: stage, themes, domain. These provide theme vocabulary only — complete ideas are excluded from Step 3 matching.
    - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used for Step 3 matching AND portfolio context in the synthesis handoff.
-   From the loaded index, extract all unique `themes` values across all idea files into a **portfolio theme vocabulary** — the canonical set of themes in use. Used in Step 5d to ensure theme reuse.
+   From the loaded index, extract all unique `themes` values across all idea files into a **portfolio theme vocabulary** — the canonical set of themes in use. Used in Step 5e to ensure theme reuse.
 5. **Shared research baseline** — Query the strategy research database for structured competitive intelligence, customer evidence, and market sizing relevant to this idea's capabilities:
    ```bash
    python3 scripts/research-db.py lookup-capabilities --json '{}'
@@ -239,7 +239,7 @@ This artifact is the curated research input for the synthesis agent. Preserve sp
 - {Product} ({date range}): {key finding or "Zero mentions of {topic}"} ([{Product} NPS — {Month YYYY} tab]({external_url from CLAUDE.md > Configuration > metrics.nps_product_a or .nps_product_b}))
 - **Key finding:** {synthesis of NPS evidence or absence}
 
-Citation rule: each NPS bullet must end with a linked source pointing at the configured Google Doc URL for the product (`external_url` field under `metrics.nps_product_a` for Canvas Quizzes, `metrics.nps_product_b` for MasteryConnect). Use the tab name (e.g., "March 2026 tab") in the link text so the reader knows which tab to navigate to. Local file paths (`Projects/Metrics/NPS/Analysis/...`) MUST NOT appear in citations — they're internal scan locations, not viewable sources.
+Citation rule: each NPS bullet must end with a linked source pointing at the configured Google Doc URL for the product (`external_url` field under the matching `metrics.nps_product_*` config key in CLAUDE.md > Configuration > External References). Use the tab name (e.g., "March 2026 tab") in the link text so the reader knows which tab to navigate to. Local file paths under the configured `path` value MUST NOT appear in citations — they're internal scan locations, not viewable sources.
 
 ### Shared Research Baseline (within TTL)
 - {Finding} ({confidence level}) ([Source Title](specific URL from entry's Source: field))
@@ -407,7 +407,22 @@ The buildable-surface skill runs in an isolated agent context. It reads the idea
 
 Either way, proceed to Step 5d. If the skill reports an error (e.g., research too thin for grounded candidates), note it in the Step 9 presentation and proceed.
 
-### Step 5d: Theme Management
+### Step 5d: Disruptive Reframing Section
+
+If `/divergent-thinking` succeeded, write a `### Disruptive Reframing` section to the card between Thought Outline and Buildable Surface (or between Thought Outline and Open Questions if Buildable Surface did not fire). The content is a 2-3 sentence distillation of the disruptive angle from `Research/{idea-name}/divergent-angles.md`.
+
+Read the artifact and locate "## The Disruptive One" — the divergent-thinking skill identifies one of its 3-5 angles as the disruptive frame. Distill from that angle's "The connection" and "What it opens up" content. Stay close to the artifact's language; do not generatively rewrite. Use the format:
+
+```markdown
+### Disruptive Reframing
+**{Disruptive Angle Title}** — {2-3 sentence insight summarizing the connection and what it opens up}
+```
+
+This section is card-canonical — `/jpd-push` Step 3b reads it from the card first, with self-heal fallback to the artifact if missing. The card content must match exactly what gets pushed to JPD; do not add additional paragraphs, links, or commentary that would not also appear in JPD.
+
+If `/divergent-thinking` failed or no `divergent-angles.md` exists, omit the section entirely.
+
+### Step 5e: Theme Management
 
 Using the portfolio theme vocabulary collected in Step 1 and the research findings from Step 4, assess whether the seed's theme classifications still hold.
 
@@ -427,7 +442,7 @@ Check the research before deciding — cross-domain signals, buildable surface c
 
 **Record all changes** (additions/removals with one-sentence rationale each) for Step 9 presentation.
 
-### Step 5e: Title Revision
+### Step 5f: Title Revision
 
 Assessment question: "If someone reads only this title and the Core insight sentence, do they get an accurate picture of what this idea is?"
 
@@ -593,7 +608,7 @@ At any point during execution, stop and report when:
 | No strategic connection can be established honestly | Stop. Report: no connection found after searching strategy docs and OKRs. Classify as "pause" (no foundation). |
 | Critical context can only come from human | Stop. Report what's missing and why you cannot research it. Ask the human to provide. |
 | Idea too vague to research meaningfully | Stop. Report: core insight too abstract for targeted research. Ask human to sharpen it. |
-| Idea serves domain outside Assessments | Stop. Flag for rerouting to appropriate domain leader. Classify as "redirect". |
+| Idea serves a domain outside the configured project domain (see CLAUDE.md > Configuration > Role) | Stop. Flag for rerouting to appropriate domain leader. Classify as "redirect". |
 | Self-declared weakness in strategic connection | Treat as pre-filter signal. Validate quickly (one targeted Grep + one OKR check) before investing in full research. If validation fails, fire stop rule. |
 
 **Minimum strategic connection threshold:** A viable connection requires at least one of:
@@ -639,6 +654,6 @@ This skill does NOT:
 - Run the Sufficiency Evaluator (that is an MLP-phase agent)
 - Process inbox items (that is `/process-inbox`)
 - Merge or consolidate ideas (that is `/refine-seed`'s job)
-- Load full strategy docs into context (Grep only for `product_strategy_assessments.md` and `design_strategy_assessments.md`)
+- Load full strategy docs into context (Grep only — paths configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy` and `strategic_context.design_strategy`)
 - Invoke Gemini CLI (notes Atlassian references for manual lookup instead)
 - Modify the idea file body after Stage 2 — the idea card is the permanent scannable artifact. /develop enriches it (Stage 1→2); subsequent stages create linked output documents.

@@ -185,25 +185,38 @@ Self-heal procedure:
 
 **Self-heal scope:** This fallback only inserts a missing section. It does NOT re-curate cards that already have a section but with stale content (e.g., >5 signals, malformed entries). For those cases, the card edit is a manual operation outside this skill.
 
-**Step 3b: Disruptive Reframing section (divergent inline excerpt, conditional)**
+**Step 3b: Disruptive Reframing section (mirror card or self-heal from artifact)**
 
-Check if `Research/{idea-name}/divergent-angles.md` exists. If not, omit the Disruptive Reframing section.
+The default path is card-canonical: if the card body has a `### Disruptive Reframing` section, transfer it verbatim into the JPD body as `## Disruptive Reframing` (heading level adjusted h3→h2; content preserved exactly), then append the `[Full development research](<<SIDECAR_URL>>)` link trailer below the distillation. The card carries the 2-3 sentence distillation produced by /develop Step 5d — JPD shows the same content. The link trailer is a JPD-only addition; the card version does not include it.
 
-If it exists, read it via `mcp__obsidian__read_note` and extract:
-1. **The Disruptive One** — the angle marked with the heading "## The Disruptive One" or similar. The divergent-thinking skill identifies one of its 3–5 angles as the disruptive frame; that's the one to inline.
-2. The **2–3 sentence insight** — distill from the disruptive angle's "The connection" and "What it opens up" content. Stay close to the artifact's language; do not generatively rewrite.
+**Self-heal fallback** — if the card has NO `### Disruptive Reframing` section but `Research/{idea-name}/divergent-angles.md` exists, derive the section from the artifact and patch it onto the card BEFORE building the JPD payload. This handles cards developed before /develop Step 5d became standard (architecture migration).
 
-Format as:
+Self-heal procedure:
 
-```markdown
-## Disruptive Reframing
+1. Read the artifact via `mcp__obsidian__read_note`. Locate "## The Disruptive One" — the divergent-thinking skill identifies one of its 3–5 angles as the disruptive frame; that's the one to inline.
 
-**{Disruptive Angle Title}** — {2-3 sentence insight summarizing the connection and what it opens up}
+2. Distill the **2–3 sentence insight** from that angle's "The connection" and "What it opens up" content. Stay close to the artifact's language; do not generatively rewrite.
 
-[Full development research](<<SIDECAR_URL>>)
-```
+3. Format the distillation into a `### Disruptive Reframing` section using the canonical card template:
 
-This section captures the disruptive reframing that informs the strategic move. It sits between the Thought Outline (the move) and the Buildable Surface (concrete approaches) in the JPD body description structure. Avoid the word "leveraged" as a section heading — it's on the persona's kill list and conveys nothing concrete; "Disruptive Reframing" names what the section actually is.
+   ```
+   ### Disruptive Reframing
+   **{Disruptive Angle Title}** — {2-3 sentence insight summarizing the connection and what it opens up}
+   ```
+
+   No link trailer in the card section — that's a JPD-only addition.
+
+4. Patch the new section into the card body BETWEEN `### Thought Outline` (and its content) and the next `### ` heading (which will be `### Buildable Surface` if it exists, otherwise `### Open Questions`) using `mcp__obsidian__patch_note`. Anchor on the next `### ` heading after Thought Outline and insert the new section before it.
+
+5. Re-read the card to confirm the section is present and correctly positioned. If verification fails, halt and report — do not proceed to JPD push with an unconfirmed card edit.
+
+6. Continue with JPD payload construction — Step 3b's main path now picks up the section that was just inserted, and appends the `[Full development research](<<SIDECAR_URL>>)` link trailer for JPD.
+
+**If neither card section nor artifact exists:** omit the JPD Disruptive Reframing section entirely.
+
+**Self-heal scope:** This fallback only inserts a missing section. It does NOT re-curate cards that already have a section but with stale content. For those cases, the card edit is a manual operation outside this skill.
+
+Avoid the word "leveraged" as a section heading — it's on the persona's kill list and conveys nothing concrete; "Disruptive Reframing" names what the section actually is.
 
 **Step 3c: Stage Research Sidecar content (first push only)**
 
@@ -242,9 +255,9 @@ generated: {YYYY-MM-DD via Bash(date:*)}
 
 | File name | stream slug | sources |
 |---|---|---|
-| `EdTech Market Analysis.md` | `edtech-market-analysis` | `- /edtech-sme agentic researcher (web research + competitor evaluation)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — competitive landscape findings` |
-| `TAM Estimate.md` | `tam-estimate` | `- /tam-estimate agentic researcher (top-down + bottom-up market sizing)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — market-sizing findings` |
-| `Educator Evaluation.md` | `educator-evaluation` | `- /educator-sme agentic researcher (classroom-reality evaluation)`<br>`- Snowflake research database (PRODUCT.STRATEGY_RESEARCH) — customer-evidence findings` |
+| `EdTech Market Analysis.md` | `edtech-market-analysis` | `- /edtech-sme agentic researcher (web research + competitor evaluation)`<br>`- Research database via scripts/research-db.py — competitive landscape findings` |
+| `TAM Estimate.md` | `tam-estimate` | `- /tam-estimate agentic researcher (top-down + bottom-up market sizing)`<br>`- Research database via scripts/research-db.py — market-sizing findings` |
+| `Educator Evaluation.md` | `educator-evaluation` | `- /educator-sme agentic researcher (classroom-reality evaluation)`<br>`- Research database via scripts/research-db.py — customer-evidence findings` |
 | `Divergent Angles.md` | `divergent-angles` | `- /divergent-thinking agentic researcher (cross-domain pattern matching)` |
 
 The Divergent Angles file has only one source — `/divergent-thinking` does not write findings to Snowflake by design (creative reframing is excluded from the research database).
@@ -459,5 +472,5 @@ This skill does NOT:
 - Sync back from JPD (sync-back is conversational and ad-hoc)
 - Push seeds (must be developing or later)
 - Push without human review
-- Modify the idea card body, with one exception — the Step 3a self-heal fallback may insert a `### Cross-Domain Signals` section if it's missing from the card and the artifact exists (architecture migration handling). All other body content is left untouched. Frontmatter updates remain limited to `jira-key`, `jira-pushed-at`, and `jira-sidecar-url`.
+- Modify the idea card body, with two exceptions — the Step 3a self-heal fallback may insert a `### Cross-Domain Signals` section if it's missing from the card and the artifact exists, and the Step 3b self-heal fallback may insert a `### Disruptive Reframing` section if it's missing from the card and the divergent-angles artifact exists (both architecture migration handling). All other body content is left untouched. Frontmatter updates remain limited to `jira-key`, `jira-pushed-at`, and `jira-sidecar-url`.
 - Manage initiative hierarchy in JPD (initiatives are local only)
