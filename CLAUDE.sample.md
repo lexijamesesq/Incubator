@@ -45,7 +45,7 @@ Incubator/
 ├── incubator-reference.md        <- Stage model, architecture, schemas, templates
 ├── incubator-approach.md         <- Unified methodology (strategy docs + product briefs)
 ├── persona.md                    <- Voice and style guide (Stage 2 onward) — CUSTOMIZE
-├── backlog.json                  <- Task tracking
+├── (backlog in Linear)           <- Task tracking
 ├── Context/                      <- Context docs for backlog items
 ├── Templates/                    <- Output templates
 │   ├── strategy-document-template.md
@@ -212,10 +212,13 @@ Before using this system, you must customize:
 ## Intake
 
 ### Tasks
-**Method:** backlog-json
-**Location:** backlog.json
-**Schema:** Minimal (id, title, description, status, source, created, context_doc)
+**Method:** Linear
+**Project ID:** YOUR_PROJECT_UUID_HERE
+**Location:** [Linear project: YOUR_PROJECT_NAME](YOUR_LINEAR_PROJECT_URL) (YOUR_TEAM team)
 **Context:** Context/
+
+### Narrative
+**Method:** Linear Project Updates
 
 ### Notes
 **Seed intake (Stage 0→1):** Items classified as strategy seeds by the inbox router are delivered here as seed files in `Ideas/`. Seeds require the full frontmatter schema and seed template defined in `incubator-reference.md` (sections: Frontmatter Schema, Seed Template). The router reads this contract and conforms — it does not carry its own copy of the schema.
