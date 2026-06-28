@@ -39,3 +39,6 @@ snowflake permissions.csv
 # === System files ===
 .DS_Store
 **/.DS_Store
+
+# operator PII detection rules (gitignored symlink -> dotty-private)
+.gitleaks-operator-rules.toml

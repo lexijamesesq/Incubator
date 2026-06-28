@@ -1,6 +1,5 @@
 -- Snowflake DDL for YOUR_DB.YOUR_SCHEMA
 -- Run with YOUR_ROLE role
--- Last synced with actual schema: 2026-05-01 (INC-034)
 -- Verification: GET_DDL('TABLE', '<name>') matches this file modulo cosmetic differences (cluster-by inline vs ALTER, lowercase vs uppercase identifiers).
 
 USE ROLE YOUR_ROLE;
