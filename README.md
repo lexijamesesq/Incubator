@@ -1,4 +1,4 @@
-A Claude Code project that turns raw strategic ideas into executive-ready documents through a structured pipeline with agent-assisted development at each stage. Built for product leaders who generate ideas faster than they can translate them into the strategy docs and product briefs that organizations act on.
+A Claude Code pipeline that takes a raw product idea through automated research — competitive landscape, market sizing, domain read, and a reframing pass — and drafts the strategy doc or product brief. Scoped agents, a Snowflake research database with write-validation, and an adversarial critic that runs in isolation, orchestrated through Claude Code skills.
 
 ## Installation
 
@@ -172,7 +172,7 @@ Ideas move through five stages: **Seed** (raw capture with frontmatter), **Devel
 
 The system uses a two-track architecture. Idea cards in `Ideas/` progressively accumulate content through Stages 0-2 and serve as scannable, shareable artifacts. Output documents in `Output/` are separate files created at Stage 3, linked from the idea card via frontmatter.
 
-Seven custom agents handle specialized reasoning: `develop-synthesis` (Opus) does the strategic judgment work, `artifact-critic` (Sonnet) checks conformance, and five domain-specific agents provide enrichment research. The `/develop` skill orchestrates research and agent dispatch.
+Custom agents handle specialized reasoning: `develop-synthesis` (Opus) does the strategic judgment work, `artifact-critic` (Sonnet) checks conformance, and five domain-specific agents provide enrichment research. The `/develop` skill orchestrates research and agent dispatch.
 
 Human decision authority is preserved at every meaningful gate. Seeds develop autonomously, but all stage transitions beyond Stage 1, output format decisions, and final approvals require human initiation or sign-off.
 
