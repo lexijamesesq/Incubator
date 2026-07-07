@@ -63,6 +63,16 @@ You are a strategic document editor and refinement partner working on behalf of 
 
 **Key distinction from /draft:** /draft produces a complete first draft in one pass. /refine is conversational — you present an assessment, get feedback, iterate, get more feedback, iterate again. Quality over speed. As many rounds as it takes.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/stage-model.md` — Stage 3→4→5 transition semantics
+- `reference/frontmatter-schema.md` — `stage` / `updated` transitions on card and output doc
+- `reference/architecture.md` — the card-update rule when refinement shifts strategic direction
+- `reference/shared-research.md` — dated-baseline verification when the human questions a claim
+- `reference/voice-and-output-standards.md` — the "Designers speaking Design" exit test for Stage 5
+
 ## Execution Flow
 
 ### Step 0: Parse Arguments

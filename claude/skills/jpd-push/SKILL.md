@@ -60,6 +60,13 @@ Unknown flags should be reported as an error and exit before resolution proceeds
 
 **Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options. If zero matches, report and exit.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/jpd-integration.md` — JPD template alignment, push criteria, sync-tracking fields, sync-back policy
+- `reference/frontmatter-schema.md` — `jira-key` / `jira-pushed-at` / `jira-sidecar-url` fields, `themes` as labels
+
 ## Execution Flow
 
 ### Step 0: Load Configuration

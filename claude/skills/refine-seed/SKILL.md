@@ -46,6 +46,15 @@ Parse `$ARGUMENTS` to resolve the target idea file.
 
 Fuzzy matching: if exact match fails, try substring match. One match: use it. Multiple: present options. Zero: report and exit.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/stage-model.md` — seed-stage semantics
+- `reference/frontmatter-schema.md` — domain, themes, related-ideas fields
+- `reference/templates.md` — Seed Template (validation) and TL;DR header fields (drafting)
+- `reference/architecture.md` — related-idea consolidation and merge mechanics
+
 ## Execution Flow
 
 ### Step 1: Load Context

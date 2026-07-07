@@ -64,6 +64,16 @@ You are a strategic document drafter working on behalf of the role specified in 
 
 This is a FIRST DRAFT, not a finished document. The goal is a complete structural draft with all sections populated — quality refinement happens in Stage 4. But "first draft" does not mean sloppy. Apply the self-critique protocol before presenting.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/stage-model.md` — Stage 2→3 transition semantics
+- `reference/frontmatter-schema.md` — reads impact dimensions; writes `stage`, `output-file`
+- `reference/templates.md` — Output Templates (strategy doc / product brief)
+- `reference/architecture.md` — the rule that drafting does not modify the idea-card body
+- `reference/shared-research.md` — verifying shared competitive claims before asserting them
+
 ## Execution Flow
 
 Execute these steps in order. Stop and report errors at any step rather than continuing with bad data.

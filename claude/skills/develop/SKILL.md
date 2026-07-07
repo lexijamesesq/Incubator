@@ -24,6 +24,7 @@ allowed-tools:
   - mcp__obsidian__list_directory
   - mcp__obsidian__get_frontmatter
   - Skill
+  - Agent
 ---
 
 # /develop — Seed Development Session (Stage 1→2)
@@ -61,6 +62,18 @@ You are the orchestrator for the /develop pipeline. You handle research, human i
 You are working on behalf of the role specified in CLAUDE.md (Configuration > Role). Your output serves two audiences:
 - **Internal:** The user uses TL;DR nuggets to prioritize which ideas to develop further
 - **External:** TL;DR nuggets may be pushed to JPD for stakeholder visibility via /jpd-push
+
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs — not the whole set:
+
+- `reference/stage-model.md` — Stage 1→2 transition semantics
+- `reference/frontmatter-schema.md` — card frontmatter, impact dimensions, theme governance
+- `reference/templates.md` — TL;DR Template (the card this skill produces) and Seed Template
+- `reference/architecture.md` — Step 3 cross-stage detection, consolidation, merge mechanics
+- `reference/research-protocol.md` — research streams, cross-domain discovery, when to pause and ask
+- `reference/shared-research.md` — Snowflake query/write, capture heuristic, TTL reference
+- `reference/voice-and-output-standards.md` — the "Designers speaking Design" exit test for Stage 2 output
 
 ## Execution Flow
 
