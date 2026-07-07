@@ -55,6 +55,7 @@ Check structural conformance against this spec:
 | Dimension | Rating | Rationale |
 Each rationale cell: One sentence — the judgment, not the evidence
 No inline data points (N-values, market figures, survey sizes) in rationale cells
+Rating calibration: a rating must follow from its own rationale — a rationale that argues Low (or High) under a different rating is a calibration finding.
 
 ### Research Summary
 3-5 bullets
