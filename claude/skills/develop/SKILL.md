@@ -166,7 +166,7 @@ Execution contract (overrides where the protocol assumes slash-command invocatio
 
 **divergent-thinking variant:** divergent-thinking does no web research and no DB access by design, so omit the two contract lines about research-db.py READ queries and bounded web research. It still holds back frontmatter writes — its HOLD BACK line reduces to "do NOT modify the idea card or its frontmatter; return your research-array entry in your final report for the orchestrator to apply."
 
-**Model overrides:** launch educator-sme, edtech-sme, and tam-estimate with a Sonnet-class model override (persona-rubric-validated 2026-07-07 — run records in Eval/Suites/enrichment-skills/Runs/). divergent-thinking inherits the session model — it has no persona rubric by design and its output quality is the feedstock for Disruptive Reframing. If any stream's artifact fails its persona rubric, revert that stream to inheriting the session model.
+**Model overrides:** launch edtech-sme and tam-estimate with a Sonnet-class model override (persona-rubric-validated 2026-07-07 — run records in Eval/Suites/enrichment-skills/Runs/). educator-sme and divergent-thinking inherit the session model — educator-sme failed its persona rubric's pedagogical-judgment signal under the override (gate rule applied 2026-07-07; re-gate after the artifact template gains an explicit student-outcome-judgment section), and divergent-thinking has no persona rubric by design since its output quality is the feedstock for Disruptive Reframing. If any stream's artifact fails its persona rubric, revert that stream to inheriting the session model.
 
 **/cross-domain (Stream C) — immediately after the parallel block:** Invoke `/cross-domain {idea-name}` via the Skill tool exactly as before — it overlaps the background agents. It queries JPD for ideas from other product domains with functional overlap, classifies signals as Direct overlap, Enabler/dependency, or Convergence, and writes `Research/{idea-name}/cross-domain-signals.md`. Its existing behavior, output handling, and Step 5b are unchanged.
 
@@ -401,6 +401,8 @@ Populate from Step 4 research findings. Sections with no findings should note th
 
 Invoke the synthesis agent to produce the TL;DR card content.
 
+**Spine snapshot (before invoking synthesis):** record three things from the seed as it exists right now — (1) the exact text of its `Initial strategic connection` line, (2) every interrogative sentence in its `### Original Capture` section, and (3) any non-null impact-dimension ratings in frontmatter. The synthesis overwrites the card; this snapshot is the only way Step 9's spine check can diff against the seed state. Skip the snapshot (and the Step 9 spine check) when the Original Capture is under ~80 words — a seed that thin has no spine to rubber-stamp.
+
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `develop-synthesis`, passing the idea name as the argument.
 
@@ -571,6 +573,13 @@ Development complete: {idea-name}
 - High: Strong strategic connection + market validation + clear impact path
 - Medium: Decent strategic connection but gaps in market data or impact clarity
 - Low: Weak connections, thin research, or significant open questions
+
+**Spine check (rubber-stamp detector):** {Skipped — seed too thin | results below}
+- Strategic connection: {moved — seed text replaced | UNCHANGED from seed}
+- Seed capture questions: {N of M survive in Open Questions}
+- Seed dimension ratings: {n/a — seed had none | {K} of {J} unchanged}
+- Mechanical rule: this check is a string-level diff (normalized whitespace, substring survival) — never a judgment call. Judgment about what it means stays with the human reading this advisory.
+{If the strategic connection is UNCHANGED **and** half or more of the seed's questions survive: add — "The developed card preserved the seed's strategic spine. If this seed arrived rich (its own calibration and posture), that can mean the research confirmed it — or that no agent challenged it. A `/thesis-test {idea-name}` second pass tests the spine adversarially while keeping this run's empirical artifacts." Otherwise omit this paragraph — when the spine moved, say only what moved, in one line.}
 
 **Completed TL;DR:**
 {Show the full updated file content}
