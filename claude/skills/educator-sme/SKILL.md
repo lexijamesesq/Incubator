@@ -60,6 +60,8 @@ Parse `$ARGUMENTS` to determine mode:
 
 This skill runs in the educator-sme agent's context. The agent carries the full veteran educator persona (20+ years K-12 and higher ed), domain calibration framework, evaluation dimensions, and quality standards. See `.claude/agents/educator-sme.md`.
 
+**Invocation note:** When executed by a pointer-invoked agent rather than the Skill tool: generic Read/Write/Edit on vault .md files may be redirected — use the Obsidian MCP equivalents; run research-db.py from the project root.
+
 ## Execution Flow
 
 Execute these steps in order. Stop and report errors at any step rather than continuing with bad data.
@@ -120,6 +122,8 @@ If the idea makes specific pedagogical claims or references methodologies that n
 - Research on similar interventions and their adoption rates
 - Adoption data for comparable edtech tools
 - Educator community discussions (Reddit r/Teachers, education blogs, union publications)
+
+Bound research to 3-6 targeted searches; stop when the artifact template's fields are covered.
 
 If the idea is straightforward enough to evaluate from educator experience alone, skip this step and note "No external research needed — evaluation based on educator practice knowledge."
 
@@ -250,6 +254,8 @@ python3 scripts/research-db.py write-findings --json '{
 
 Note: The impact dimension signals are advisory — they indicate what this evaluation suggests for the `customer-sentiment` and `user-experience` frontmatter fields, but this skill does NOT modify those fields. That's done during the development workflow or manually by the human.
 
+Your impact-dimension signals are advisory. If a signal contradicts the idea card's existing frontmatter ratings, state the contradiction explicitly in your report — do not silently align to the card.
+
 ## Stop Rules
 
 | Condition | Action |
@@ -279,4 +285,3 @@ This skill does NOT:
 - Modify the idea body content
 - Modify impact dimension frontmatter fields (advisory signals only)
 - Recommend go/no-go decisions (that's a human decision)
-
