@@ -129,33 +129,48 @@ Check the seed file for refinement indicators:
 
 Conduct five research streams. Streams B-E invoke specialized agents; Stream A is orchestrator-executed. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
 
-**Phase 1: Agent Research (sequential — platform constraint)**
+**Phase 1: Agent Research (parallel fan-out)**
 
-Invoke these five skills in order. Each runs in a forked context, produces a research artifact at `Research/{idea-name}/`, and may write qualifying findings to shared research files. No agent depends on another's output.
+Launch FOUR research agents — divergent-thinking, educator-sme, edtech-sme, tam-estimate — as parallel background subagents in a SINGLE message via the Agent tool: one `Agent` call per stream, all in the same message, with `subagent_type` set to the matching agent name. They run concurrently in isolated contexts; no agent depends on another's output. Each produces a research artifact at `Research/{idea-name}/` and returns its held-back writes-of-record as payloads for the orchestrator to apply in Phase 1.5.
 
-1. **`/divergent-thinking {idea-name}`** (Stream E: Divergent Discovery)
-   Produces structural analogies and identifies "the disruptive one." Reads ONLY the idea file — deliberately context-starved. Fastest agent (no web searches). Produces `Research/{idea-name}/divergent-angles.md`.
+- **`divergent-thinking`** (Stream E: Divergent Discovery) — structural analogies and "the disruptive one." Reads ONLY the idea file; no web or DB access, so it is the fastest stream. Produces `Research/{idea-name}/divergent-angles.md`.
+- **`educator-sme`** (Stream D: Educator Perspective) — adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Produces `Research/{idea-name}/educator-evaluation.md`.
+- **`edtech-sme`** (Stream B: Market Intelligence — Competitive) — positioning, market fit, technology risk, go-to-market, strategic timing. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+- **`tam-estimate`** (Stream B: Market Intelligence — Sizing) — TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Produces `Research/{idea-name}/tam-estimate.md`.
 
-2. **`/educator-sme {idea-name}`** (Stream D: Educator Perspective)
-   Evaluates adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Queries the research database for customer evidence as baseline. May write qualifying findings to the database. Produces `Research/{idea-name}/educator-evaluation.md`.
+Each subagent's SKILL.md assumes slash-command invocation — a parsed `$ARGUMENTS`, a cwd-relative `research-db.py`, generic file tools. None of that holds under a pointer-invoked Agent call, so the prompt supplies the argument explicitly and overrides those assumptions with an execution contract. Use this pointer-prompt template per agent, substituting `{idea-name}` and `{skill}` (the agent's skill directory name, e.g. `educator-sme`):
 
-3. **`/edtech-sme {idea-name}`** (Stream B: Market Intelligence — Competitive)
-   Competitive positioning, market fit, technology risk, go-to-market, strategic timing. Queries the research database for competitive landscape as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+```
+Read your operational protocol at claude/skills/{skill}/SKILL.md (via Obsidian MCP read_note if generic Read is redirected) and execute it in idea-mode for the idea: {idea-name}.
+Execution contract (overrides where the protocol assumes slash-command invocation):
+- Treat {idea-name} as the parsed argument; you are in idea-mode.
+- Write your research artifact to Research/{idea-name}/ exactly per your protocol's artifact template (Obsidian MCP write_note for .md files).
+- HOLD BACK writes-of-record: do NOT run research-db.py write commands (write-findings, upsert-competitor) and do NOT modify the idea card or its frontmatter. Return these as exact executable payloads in your final report (full command JSON; the research-array entry) for the orchestrator to apply.
+- research-db.py READ queries (lookup-*, query-*) are allowed; run them from the project root.
+- Bound your web research: 3-6 targeted searches; stop when your artifact template's fields are covered.
+- Final report: artifact path written, held-back payloads verbatim, advisory impact-dimension signals, any blocker encountered.
+```
 
-4. **`/tam-estimate {idea-name}`** (Stream B: Market Intelligence — Sizing)
-   TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Queries the research database for market-sizing findings as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/tam-estimate.md`.
+**divergent-thinking variant:** divergent-thinking does no web research and no DB access by design, so omit the two contract lines about research-db.py READ queries and bounded web research. It still holds back frontmatter writes — its HOLD BACK line reduces to "do NOT modify the idea card or its frontmatter; return your research-array entry in your final report for the orchestrator to apply."
 
-5. **`/cross-domain {idea-name}`** (Stream C: Cross-Domain Discovery)
-   Queries JPD for ideas from other product domains with functional overlap. Classifies signals as Direct overlap, Enabler/dependency, or Convergence. Writes `Research/{idea-name}/cross-domain-signals.md`.
+**/cross-domain (Stream C) — immediately after the parallel block:** Invoke `/cross-domain {idea-name}` via the Skill tool exactly as before — it overlaps the background agents. It queries JPD for ideas from other product domains with functional overlap, classifies signals as Direct overlap, Enabler/dependency, or Convergence, and writes `Research/{idea-name}/cross-domain-signals.md`. Its existing behavior, output handling, and Step 5b are unchanged.
 
-**Agent failure handling:** If any agent fails (timeout, stop rule, error), note the failure reason and continue to the next agent. No single agent blocks the pipeline. See error handling table for per-agent fallback behavior.
+**Agent failure handling:** The four streams run concurrently, so evaluate their reports as a set once they return rather than one at a time. A failure in any one stream (timeout, stop rule, error, or no report) does not affect the others and no single agent blocks the pipeline — record the failed or empty stream by name with its reason in Phase 1.5 and continue with the successful streams. See the error handling table for per-agent fallback behavior.
+
+**Phase 1.5: Serialized writes-of-record**
+
+The parallel agents held back every write-of-record; the orchestrator applies them serially here, after all four agents report and /cross-domain returns. Serialization is deliberate — concurrent writes to the shared card frontmatter and to the research database must not happen in-stream.
+
+1. **Validate and apply database payloads.** For each held-back `research-db.py` write payload (`write-findings`, `upsert-competitor`), validate before executing: capability slugs resolve via `lookup-capabilities`, `source_url` is present, and the `claim` is a substantive assertion (not a search query, bare citation, or bookmark). Execute the passing write commands one at a time from the project root. A payload that fails validation is surfaced to the human with the specific failure reason — never silently dropped.
+2. **Append artifact paths in one write.** Collect ALL new artifact paths returned by the successful agents and append them to the idea card's `research:` frontmatter array in a SINGLE read-modify-write operation: read the current array, append the new paths, and write once via `update_frontmatter`. Do not issue per-agent frontmatter writes — the agents held these back precisely so the orchestrator serializes them.
+3. **Record stream outcomes.** A stream that failed or returned no report is recorded by name with its failure reason; continue with the successful streams. The existing per-agent failure rules (error handling table) apply, and Phase 4's EdTech WebSearch fallback is unchanged.
 
 **Phase 2: Refresh Shared Research Baseline**
 
-After all agents complete, re-query the research database to pick up any findings or competitor entries agents wrote during Phase 1:
+After Phase 1.5 applies the held-back writes, re-query the research database to pick up the findings and competitor entries just written:
 - `python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'` — refreshed findings + competitor metadata
 
-Agents may have called `upsert-competitor` for new/updated competitors and `write-findings` for new findings. This refresh ensures Phase 3 works from the latest state.
+Phase 1.5 applied `upsert-competitor` for new/updated competitors and `write-findings` for new findings from the agents' held-back payloads. This refresh ensures Phase 3 works from the latest state.
 
 **Phase 3: Stream A — Internal Strategic Context (orchestrator)**
 
@@ -176,7 +191,7 @@ No agent covers this — strategy docs, NPS, and OKRs require internal file acce
   - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
 
   NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
-- **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings agents wrote during Phase 1.
+- **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings applied in Phase 1.5 from the agents' held-back payloads.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 - **Database enrichment:** When specific competitors surface during Stream A research, use the database for targeted deep-dives:
   ```bash
@@ -504,7 +519,7 @@ The synthesis handoff was created in Step 4.5. This step creates the full persis
    - Synthesis notes connecting findings to the idea
    - Date of research
    Both files persist — `synthesis-handoff.md` is the curated input to the synthesis agent, `development-research.md` is the full research trail for downstream stages.
-3. **Frontmatter verification:** Read the idea file's `research:` array. Each agent that succeeded should have already appended its artifact path during its run. Verify all expected paths are present and add any that are missing:
+3. **Frontmatter verification:** Read the idea file's `research:` array. Phase 1.5 appended each successful agent's artifact path (the agents hold back frontmatter writes so the orchestrator can serialize them in one read-modify-write). Verify all expected paths are present and add any that are missing:
    - `Research/{idea-name}/synthesis-handoff.md` (orchestrator — always)
    - `Research/{idea-name}/development-research.md` (orchestrator — always)
    - `Research/{idea-name}/edtech-market-analysis.md` (if edtech-sme succeeded)

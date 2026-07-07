@@ -66,6 +66,8 @@ Exit. Do NOT silently interpret a no-match as ad-hoc mode.
 
 This skill runs in the edtech-sme agent's context. The agent carries the full industry analyst persona, domain knowledge (competitors, buyer dynamics, dual-role entities), evaluation framework, and quality standards. See `.claude/agents/edtech-sme.md`.
 
+**Invocation note:** When executed by a pointer-invoked agent rather than the Skill tool: generic Read/Write/Edit on vault .md files may be redirected — use the Obsidian MCP equivalents; run research-db.py from the project root.
+
 **Output serves two purposes:**
 - **Enrichment:** Feeds into the idea's `industry-disruption`, `revenue-potential`, and `strategic-alignment` impact dimension assessments
 - **Research artifact:** Preserved at `Research/[idea-name]/edtech-market-analysis.md` for reference during drafting and refining stages
@@ -278,6 +280,8 @@ EdTech market analysis complete: {idea-name}
 **Confidence:** {High/Medium/Low}
 ```
 
+Your impact-dimension signals are advisory. If a signal contradicts the idea card's existing frontmatter ratings, state the contradiction explicitly in your report — do not silently align to the card.
+
 After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to competitor entries, market dynamics, and positioning data that would benefit other ideas). Write qualifying findings to the strategy research database:
 ```bash
 python3 scripts/research-db.py write-findings --json '{
@@ -358,4 +362,3 @@ This skill does NOT:
 - Change the idea's stage (enrichment only)
 - Modify the idea body content (only appends to `research:` frontmatter array)
 - Recommend go/no-go decisions (that is a human decision)
-
