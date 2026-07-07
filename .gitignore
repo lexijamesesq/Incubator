@@ -7,8 +7,9 @@ Archive/
 
 # === Operational State ===
 backlog.json
+backlog-archive.json
 incubator-backlog-archive.json
-incubator-progress.md
+incubator-progress-archive.md
 Context/
 Eval/
 Knowledge/

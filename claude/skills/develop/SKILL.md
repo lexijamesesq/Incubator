@@ -651,7 +651,7 @@ This skill does NOT:
 - Create seed files (that is the router's job via `/process-inbox`)
 - Decide output format — strategy doc vs. product brief (that is a human decision at Stage 2→3)
 - Draft the full document (that is the `/draft` skill, Stage 2→3)
-- Run the Sufficiency Evaluator (that is an MLP-phase agent)
+- Run the Sufficiency Evaluator (planned MLP-phase agent — not yet built)
 - Process inbox items (that is `/process-inbox`)
 - Merge or consolidate ideas (that is `/refine-seed`'s job)
 - Load full strategy docs into context (Grep only — paths configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy` and `strategic_context.design_strategy`)
