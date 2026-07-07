@@ -140,7 +140,7 @@ source: inbox | slack | conversation | meeting
 output-file: null  # path to output document (populated at Stage 3)
 research: []  # links to local research artifacts
 research-ids: []  # UUIDs referencing research_findings rows in Snowflake (populated by /develop)
-blocked-by: null  # terse reference — card title or theme blocking stage advancement
+blocked_by: null  # terse reference — card title or theme blocking stage advancement
 
 # JPD Integration (populated after push, null before)
 jira-key: null  # e.g., PROJ-1234
@@ -386,7 +386,7 @@ child-ideas: []  # Authoritative list of child idea filenames (without path or .
 source: inbox | slack | conversation | meeting
 output-file: null  # Path to initiative-level output document, if one is produced
 research: []
-blocked-by: null
+blocked_by: null
 ---
 ```
 
