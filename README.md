@@ -94,7 +94,8 @@ Without the database, skills work normally — they fall back to web searches. N
 
 | File | What it does |
 |------|-------------|
-| `incubator-reference.md` | Stage model, two-track architecture, frontmatter schema, templates, workflow, research protocol, initiative schema, JPD integration |
+| `incubator-reference.md` | Thin section index mapping each topic to a file under `reference/` — loaded on demand so skills pull one section, not the whole doc |
+| `reference/` | Section-scoped reference files (stage model, two-track architecture, frontmatter schema, templates, workflow, research protocol, shared research, initiative schema, JPD integration, skill conventions) |
 | `incubator-approach.md` | Unified methodology for strategy docs and product briefs (Rumelt, Perri, Torres synthesis) |
 | `persona.md` | Voice and style guide governing all output from Stage 2 onward |
 | `Templates/strategy-document-template.md` | Output template for strategy documents |
