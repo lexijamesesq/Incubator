@@ -29,6 +29,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import uuid
 
 # ---------------------------------------------------------------------------
@@ -85,22 +86,28 @@ def execute_sql(sql, output_format="default"):
         "default" — raw CLI output (table-formatted, for LLM consumption)
         "json"    — JSON-parseable output (for programmatic parsing)
     """
-    tmp = "/tmp/research-db-query.sql"
-    with open(tmp, "w") as f:
-        f.write(sql)
+    fd, tmp = tempfile.mkstemp(prefix="research-db-query-", suffix=".sql")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(sql)
 
-    if output_format == "json":
-        cmd = f"{SF_CMD} --format json -f {tmp}"
-    else:
-        cmd = f"{SF_CMD} -f {tmp}"
+        if output_format == "json":
+            cmd = f"{SF_CMD} --format json -f {tmp}"
+        else:
+            cmd = f"{SF_CMD} -f {tmp}"
 
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
 
-    if result.returncode != 0:
-        print(json.dumps({"error": result.stderr.strip()}), file=sys.stderr)
-        sys.exit(1)
+        if result.returncode != 0:
+            print(json.dumps({"error": result.stderr.strip()}), file=sys.stderr)
+            sys.exit(1)
 
-    return result.stdout.strip()
+        return result.stdout.strip()
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
 def parse_json_result(output):
     """Parse JSON output from `snow sql --format json`.
@@ -185,7 +192,17 @@ def cmd_query_competitor(args):
 
     sql = f"""{sql_preamble()}
 -- Competitor profile
-SELECT c.*, array_agg(DISTINCT cap.slug) AS capabilities
+SELECT c.id, ANY_VALUE(c.domain) AS domain, ANY_VALUE(c.name) AS name,
+  ANY_VALUE(c.category) AS category, ANY_VALUE(c.segments) AS segments,
+  ANY_VALUE(c.pricing_model) AS pricing_model,
+  ANY_VALUE(c.integration_posture) AS integration_posture,
+  ANY_VALUE(c.market_tier) AS market_tier,
+  ANY_VALUE(c.intelligence) AS intelligence,
+  ANY_VALUE(c.last_researched) AS last_researched,
+  ANY_VALUE(c.superseded_by) AS superseded_by,
+  ANY_VALUE(c.created_at) AS created_at,
+  ANY_VALUE(c.created_by) AS created_by,
+  array_agg(DISTINCT cap.slug) AS capabilities
 FROM competitors c
 LEFT JOIN competitor_capabilities cc ON c.id = cc.competitor_id
 LEFT JOIN capabilities cap ON cc.capability_id = cap.id
