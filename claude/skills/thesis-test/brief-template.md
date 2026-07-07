@@ -1,6 +1,6 @@
 # Thesis Brief Template
 
-Bundled with `/thesis-test`, loaded by Step 1 when a brief must be co-drafted. The brief is the committed strategic position(s) under test. It is **human-owned** — the human states every claim; the skill helps structure it and presses for falsifiable break conditions. The skill never invents a thesis.
+Bundled with `/thesis-test`, loaded by Step 1 when a brief must be co-drafted. The brief is the committed strategic position(s) under test. It is **human-owned** — the human states every claim; the skill helps structure it and presses for falsifiable break conditions.
 
 **Hybrid contract:** the *structure* below is required; the *reasoning within each section* is freeform. Fill every required section. `/thesis-test` refuses to run the lenses until the break-condition table has full (thesis × lens) coverage and the learning-outcome row is populated.
 
@@ -107,5 +107,3 @@ Shape drawn from multi-thesis product-vision stress-tests. Placeholders only —
 - Likely reusable: {e.g., competitor universe, cross-domain signals}
 - Likely re-run: {e.g., positioning under the committed thesis, market definition}
 ```
-
-**On the survivor shape:** a run may end with a clean survivor + conditions (one thesis HOLDS, conditions stated — the "conditions for success" pattern), OR with none-survive-cleanly + a recomposition (surviving components pulled across theses into a revised position). Both are legitimate. Write the theses to be genuinely rival so the recomposition has parts to draw from.

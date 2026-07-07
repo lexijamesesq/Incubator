@@ -27,7 +27,7 @@ Two modes:
 - **Card-mode** (naked argument): the argument names an idea file in `Ideas/` at stage `developing` or later. The skill locates or co-drafts `Research/{idea}/thesis-brief.md`, tests, and (on survival) routes results back into the card.
 - **Subject-mode** (`--subject "…"`): the argument is an arbitrary subject (a product vision set, a market question, an acid-test subject). No idea card. The brief is caller-supplied via `--brief PATH` or co-drafted; the synthesis is written to the caller location and presented — nothing is routed into a card.
 
-Examples: `/thesis-test third-party-assessment-data-ingestion`, `/thesis-test --subject "Authentic Assessment Platform product vision" --brief Research/at2/thesis-brief.md`.
+Examples: `/thesis-test sample-foraging-intelligence`, `/thesis-test --subject "Foraging Intelligence platform vision" --brief Research/sample-foraging-intelligence/thesis-brief.md`.
 
 This mirrors the idea-vs-adhoc split the enrichment lenses already use (`/edtech-sme --adhoc`).
 
@@ -86,14 +86,16 @@ Execute in order. Stop and report at any step rather than continuing with bad da
 
 The brief is the committed position(s) under test. It is **human-owned**. The skill NEVER invents theses.
 
+**Weight gate (before co-drafting).** Confirm acid-test weight: a load-bearing decision with two or more research-formed rival directions in tension. A single obvious direction with no live rival is enrichment wearing a test's clothes — say so and point to `/develop`.
+
+**Co-draft posture.** This is a conversation, not a form. Invite the human to state their conviction in their own prose first; reflect it back structured; propose candidate break conditions for them to react to and revise. Never present the template as fields to complete and never offer option-menu selections for a strategic claim. The (thesis × lens) grid is your accounting tool, filled from the dialogue — not a questionnaire you administer.
+
+**Authorship refusal (non-negotiable).** If the human asks you to author the thesis for them to react to: decline the origination — "If I write the position and you react, we've rebuilt the rubber-stamp this test exists to catch. Give me your conviction in your own words, even rough, and I'll structure it." You may surface candidate framings drawn only from their prior card and research as reaction prompts; you may not originate a strategic position.
+
 1. **Locate.** Card-mode: look for `Research/{idea}/thesis-brief.md`. Subject-mode: use `--brief PATH` if given.
 2. **If absent — co-draft interactively.** Load `brief-template.md` (bundled). Walk the human through it: they state the strategic claim(s); you help structure them into the required sections and press for falsifiable break conditions. You assist with structure and phrasing; the human owns every strategic claim. If the human declines to co-draft, STOP (a thesis-test with no thesis is not a run — see Stop Rules).
 3. **REFUSAL RULE (non-negotiable).** Do not proceed to Step 2 unless the brief contains, for EVERY (thesis × lens) pair, an explicit, falsifiable break condition ("if X, this thesis weakens/breaks"). This asserts *coverage*, not mere presence — N theses × 3 lenses must all have a break-condition cell. A brief with theses but partial break-condition coverage is refused. Surface exactly which (thesis × lens) cells are missing and offer to co-draft them. Without break conditions, "test this thesis" collapses into "find evidence for this thesis" — confirmation bias dressed as testing.
-4. **Required brief contents** (the template enforces these; verify them before proceeding):
-   - **1..N theses**, each a committed position with reasoning — a claim, not a question.
-   - **Per-(thesis × lens) break-condition table** covering edtech-sme, tam-estimate, educator-sme.
-   - **The required learning-outcome break condition** — phrasing configured in CLAUDE.md under Configuration > `incubator.learning_outcome_break_condition` (an installation-specific value; this skill carries only the key reference). Assigned to educator-sme's pass (Step 3). It is a permanent break condition on every thesis: does the wedge land on a learning/product surface, or only on a buyer pain through a procurement motion? A thesis can pass every market, sizing, and adoption test and still fail this one.
-   - **Register declaration block** — audience, persona file (if one exists for that audience), artifact shape. A missing persona file is surfaced as a gap, NEVER defaulted to a generic register (generic register *is* the failure mode).
+4. **Required brief contents.** Verify the brief carries every section the template requires — `brief-template.md` is authoritative.
 
 ### Step 2: Reuse / Re-Run Partition (card-mode only)
 
@@ -105,9 +107,11 @@ For each section / finding class, apply the test: **"Would this finding hold und
 - **YES** → carry forward as established context (passed to the lenses in Step 3 as given).
 - **NO** → mark for adversarial re-run (the lens must redo it under the committed thesis).
 
-This is never a fixed rule. Divergent-thinking and cross-domain artifacts are *usually* thesis-independent, but they take the same test — an angle that only holds under the thesis being tested is thesis-dependent and must be re-run. The worked example's intra-artifact pattern is the model: the **competitor universe** was reused but the **positioning analysis** re-run; the **TAM methodology** reused but the **market definition** re-run (`Research/third-party-assessment-data-ingestion/thesis-brief.md` § "What gets reused").
+This is never a fixed rule. Divergent-thinking and cross-domain artifacts are *usually* thesis-independent, but they take the same test — an angle that only holds under the thesis being tested is thesis-dependent and must be re-run. The canonical intra-artifact split is the model: a **competitor universe** carried forward but its **positioning analysis** re-run; a **TAM methodology** reused but its **market definition** re-run under the committed thesis.
 
 **Output:** write a partition table to `Research/{idea}/thesis-test-partition-{date}.md` (get `{date}` via `date +%Y-%m-%d`) — columns: artifact · section/finding · verdict (reuse | re-run) · one-line reason. This is a recorded decision, auditable later. Append its path to the card `research:` array in the Step 3 serialized-write step (not now).
+
+**Human one-look check.** Before launching the lenses, show the human the partition table for a quick pass. A slice they flag as thesis-dependent moves from reuse to re-run — their flag overrides the default.
 
 ### Step 3: Adversarial Lens Fan-Out
 
@@ -150,7 +154,7 @@ Required operations:
    A bare stack-rank with no recomposition and no conditions is a FAIL of the deliverable.
 3. **Premortem** — a distinct "it failed — why?" section for the surviving/recomposed position, tied to that position (not a generic risk list).
 4. **Through-line trace** — a section connecting the surviving position back through the evidence to a learning/product surface. A position that only reaches a buyer/procurement surface without a learning/product through-line is procurement-coherent but product-incoherent — flag it.
-5. **Partition format for every research-driven conclusion** — write each as `Evidence: [lens found X]. Interpretation: [orchestrator concludes Y because Z].` Do not let unambiguous lens evidence overwrite ambiguous strategic interpretation without showing the seam.
+5. **Partition format for every research-driven conclusion** — write each as `Evidence: [lens found X]. Interpretation: [orchestrator concludes Y because Z].`
 6. **Register** — write the whole synthesis against the brief's declared register (audience, shape). If the register block surfaced a missing persona file, say so; do not default to generic.
 7. **Vocabulary-legibility pass** — for any term that requires insider/team context to parse (a metaphor from a specific ticket, an internal codename): define it inline, quote-mark it as a citation, or replace it with plain language.
 
@@ -160,44 +164,37 @@ Required operations:
 
 **Subject-mode:** present the synthesis to the human. Done — nothing is routed into a card.
 
-**Card-mode, one-or-more theses hold (including CONDITIONAL HOLD):** route the surviving position into the card via the develop-synthesis path — do NOT hand-edit the card body.
+**Card-mode, one-or-more theses hold (including CONDITIONAL HOLD):** route the surviving position into the card via the develop-synthesis path — do NOT hand-edit the card body. First present the recomposed/conditional position and its conditions to the human and get confirmation; only then:
 1. Write the surviving-thesis result as synthesis-handoff additions into `Research/{idea}/synthesis-handoff.md` (the thesis-test verdicts + the recomposed/conditional position, in the handoff format `/develop` Step 4.5 uses).
 2. Re-invoke `develop-synthesis` via the Skill tool (idea name) per /develop Step 5 conventions — it re-renders the card from the updated handoff.
 3. Run `/artifact-critic` on the card per /develop Step 6.
 
-**Card-mode, TOTAL BREAK (nothing survives, even conditionally):** do NOT invoke develop-synthesis — it renders confident positions, and a null result is not one. Instead:
+**Card-mode, NO CLEAN SURVIVOR (nothing holds, even conditionally):** do NOT invoke develop-synthesis — it renders confident positions, and a null result is not one. Instead:
 1. Write a **falsification record** at `Research/{idea}/falsification-record-{date}.md`: the theses tested, the break evidence per thesis, and the recomposed reframe if Step 5 produced one.
 2. Add a dated `### Thesis Test Results` section to the card noting the falsification and linking the record. Keep frontmatter valid (the card stays at its current stage; do not silently regress it).
-3. **HALT for the human gate.** Present three options; the human decides — the skill NEVER auto-shelves:
-   - **Shelve** — move to Archive per the stage-model Archive path.
-   - **Adopt the reframe** — the recomposed position becomes a new thesis brief; re-run from Step 3 (the test loop).
-   - **Accept a conditional survivor** — if the human judges a marked-down thesis worth carrying with conditions, route it via the surviving-thesis path above.
+3. **HALT for the human gate.** Lead with: the thesis did not survive — that is a real result, not a failed run; here is the break evidence and the reframe if one emerged. Present the options with their consequences; the human decides — the skill NEVER auto-shelves:
+   - **Shelve** — move to Archive per the stage-model Archive path. Consequence: the idea leaves the active pipeline.
+   - **Adopt the reframe** — the recomposed position becomes a new thesis brief; re-runs Steps 3–5 (≈half a /develop). Consequence: a new brief enters the test loop.
+   - **Accept a marked-down survivor** — offer ONLY when a WEAKENS or CONDITIONAL thesis actually exists. If the human judges it worth carrying with conditions, route it via the surviving-thesis path above. Consequence: a conditioned position, not a clean one, enters the card.
 
-## Stop Rules
+## Stop Rules & Error Handling
 
 | Condition | Action |
 |-----------|--------|
-| No brief and human declines to co-draft | Stop. "A thesis-test needs a committed thesis. Nothing to test without a brief." Exit. |
-| Break-condition coverage incomplete (any thesis × lens cell empty) | Refuse to run the lenses. Name the missing cells; offer to co-draft them. Do not proceed. |
-| Card not at `developing`+ (card-mode) | Stop. Point to `/develop {name}` first (Step 0 gate). |
-| Learning-outcome break condition missing from the brief | Refuse. It is required (config-keyed). Offer to add the row. |
-| A lens fails | Record by name; continue with the rest; mark its break conditions `UNKNOWN-INSUFFICIENT`. Only stop if all three fail. |
-| Audit cap (3 iterations) exhausted with a finding still open | Surface to the human — do NOT loop further. |
-| Total break (card-mode) | Write the falsification record, add the card section, HALT for the human gate. Never auto-shelve. |
-
-## Error Handling Summary
-
-| Condition | Behavior |
-|-----------|----------|
-| Empty argument, no `--subject` | Card-mode: Glob Ideas/, present with stages, ask user to select. |
+| Empty argument, no `--subject` | Card-mode: Glob Ideas/, present titles + stages, ask user to select. |
 | Idea file not found | Report with closest candidates; suggest `--subject`. Exit. |
-| Card-mode idea below `developing` | Report stage, point to /develop. Exit. |
-| Brief present but break-condition coverage partial | Refuse; name missing (thesis × lens) cells. |
+| Card not at `developing`+ (card-mode) | Stop. Report stage; point to `/develop {name}` first (Step 0 gate). Exit. |
+| No brief and human declines to co-draft | Stop. "A thesis-test needs a committed thesis. Nothing to test without a brief." Exit. |
+| Human asks the skill to author the thesis | Decline origination; ask for their conviction in their own words. Surface candidate framings from prior card/research as reaction prompts only. |
+| Break-condition coverage incomplete/partial (any thesis × lens cell empty) | Refuse to run the lenses. Name the missing cells; offer to co-draft them. Do not proceed. |
+| Learning-outcome break condition missing from the brief | Refuse. It is required (config-keyed). Offer to add the row. |
 | `--brief PATH` not found (subject-mode) | Report the path; offer to co-draft. |
 | One or two lenses fail | Record by name; continue; affected break conditions → UNKNOWN-INSUFFICIENT. |
 | All three lenses fail | Stop; report; no synthesis. |
+| Audit cap (3 iterations) exhausted with a finding still open | Surface to the human — do NOT loop further. |
 | artifact-critic fails to run | Note it; best-effort self-audit; flag "independent audit did not run" in the presentation. |
 | develop-synthesis re-invoke fails (card-mode survivor) | Report; leave the falsification/handoff artifacts in place; halt for human. |
+| No clean survivor (card-mode) | Write the falsification record, add the card section, HALT for the human gate. Never auto-shelve. |
 
 ## Scope Boundaries
 
