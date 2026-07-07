@@ -38,7 +38,7 @@ When drafting begins, /draft creates a separate output document (strategy doc or
 Three natural opportunities for grouping related items:
 
 - **Captures → Seed (0→1):** Router identifies related inbox items and proposes grouping into one seed. Human confirms.
-- **Seeds → Developing (1→2):** When development begins, /develop Step 3 scans **all ideas at any stage** — not just seeds — for theme and strategic connection overlap. For each related idea, it compares header fields and recommends merge or keep-separate with rationale. Human decides.
+- **Seeds → Developing (1→2):** Related-ideas matching and merge/keep-separate decisions happen in /refine-seed, before development begins. /develop Step 3 verifies the refinement is present — it checks that the `related-ideas` frontmatter is resolved and stops if it is not. Human decides during /refine-seed.
 - **Output documents (Stage 3+):** Multiple TL;DR cards can feed into a single output document. This is the natural synthesis point — a strategy doc can draw from several related idea cards. The human decides at drafting time which cards to combine.
 
 All follow system-suggests, human-decides. No autonomous merging.

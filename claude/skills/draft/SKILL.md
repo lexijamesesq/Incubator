@@ -73,6 +73,7 @@ This is a FIRST DRAFT, not a finished document. The goal is a complete structura
 - `reference/templates.md` — Output Templates (strategy doc / product brief)
 - `reference/architecture.md` — the rule that drafting does not modify the idea-card body
 - `reference/shared-research.md` — verifying shared competitive claims before asserting them
+- `reference/research-protocol.md` — research-artifact structure incl. Foundation Assessment gate values
 
 ## Execution Flow
 

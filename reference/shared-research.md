@@ -51,6 +51,6 @@ A finding qualifies for shared research when ALL four criteria are met:
 
 Shared findings in the database are NOT linked in the idea frontmatter `research:` array (that stays for per-idea local artifacts). When a shared finding materially influences an idea's Research Summary or impact dimension rating, cite it with the original external source link from the finding's `source_url` — the same format as any other Research Summary citation: `([Source Title](url))`. No internal file paths, no provenance tags. Provenance metadata (origin idea, date created, confidence) stays on the finding row in the database.
 
-### Verification at /draft
+### Verification at /draft and /refine
 
-/draft must verify shared competitive claims before asserting them in stakeholder-facing documents. Shared findings are a dated baseline — treat as starting point for verification, not settled fact, when the output goes to VP/ELT audiences.
+/draft and /refine must verify shared competitive claims before asserting them in stakeholder-facing documents. Shared findings are a dated baseline — treat as starting point for verification, not settled fact, when the output goes to VP/ELT audiences.
