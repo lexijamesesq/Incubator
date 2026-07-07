@@ -157,6 +157,13 @@ incubator.jpd_sidecars_folder_url: "YOUR_DRIVE_FOLDER_URL"
 # free of installation-specific identifiers while the generated sidecar files carry the
 # concrete reference stakeholders need. Example: "Snowflake research database (YOUR_DB.YOUR_SCHEMA)".
 incubator.research_db_label: "YOUR_RESEARCH_DATABASE_LABEL"
+
+# Required learning-outcome break condition injected into every /thesis-test brief — the
+# permanent per-thesis break condition tested by educator-sme's adversarial pass. Product-anchored:
+# does the wedge land on a core-experience surface in your product, or only on a buyer pain through
+# a procurement motion? The public /thesis-test skill and brief template carry only this config key;
+# the real phrasing lives here and is pre-filled into each brief's learning-outcome row.
+incubator.learning_outcome_break_condition: "TODO: your product-anchored break condition — does the wedge land on a core-experience surface in your product, or only on a buyer pain through a procurement motion?"
 ```
 
 ### JPD Integration (Optional)

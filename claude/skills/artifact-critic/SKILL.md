@@ -37,6 +37,10 @@ Read these three files in parallel using `mcp__obsidian__read_multiple_notes` (v
 
 If `mcp__obsidian__read_multiple_notes` is unavailable in the fork context, fall back to three sequential `mcp__obsidian__read_note` calls. Do not use generic `Read` on these paths — the vault hook will block it.
 
+## Artifact-Class Routing
+
+Before applying the checks below, identify the artifact class. When the artifact under review is a **`/thesis-test` lens artifact or synthesis** (passed from `/thesis-test`, or a filename matching `thesis-test-*.md` / `falsification-record-*.md`, or a body carrying a per-break-condition verdict table using the five-value verdict set), ALSO load `thesis-verdict-rubric.md` from this skill's directory and apply it *instead of* the TL;DR-card format spec — those artifacts are verdict records, not cards. For all other artifacts (TL;DR cards, output documents), use the format spec below. The generate path never loads the thesis-verdict rubric.
+
 ## Format Spec (TL;DR Card)
 
 Check structural conformance against this spec:
