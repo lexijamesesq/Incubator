@@ -17,7 +17,7 @@ initiative: null
 source: inbox
 output-file: null
 research: []
-blocked-by: null
+blocked_by: null
 jira-key: null
 jira-pushed-at: null
 ---

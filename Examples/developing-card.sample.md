@@ -20,7 +20,7 @@ source: inbox
 output-file: null
 research:
   - Research/sample-foraging-intelligence/development-research.md
-blocked-by: null
+blocked_by: null
 jira-key: null
 jira-pushed-at: null
 ---

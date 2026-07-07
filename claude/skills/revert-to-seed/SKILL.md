@@ -88,7 +88,7 @@ initiative: {preserved}
 source: {preserved}
 output-file: null
 research: []
-blocked-by: null
+blocked_by: null
 jira-key: {preserved}
 jira-pushed-at: {preserved}
 ```
