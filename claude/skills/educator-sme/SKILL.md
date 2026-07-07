@@ -254,7 +254,7 @@ python3 scripts/research-db.py write-findings --json '{
 
 Note: The impact dimension signals are advisory — they indicate what this evaluation suggests for the `customer-sentiment` and `user-experience` frontmatter fields, but this skill does NOT modify those fields. That's done during the development workflow or manually by the human.
 
-Your impact-dimension signals are advisory. If a signal contradicts the idea card's existing frontmatter ratings, state the contradiction explicitly in your report — do not silently align to the card.
+Your impact-dimension signals are advisory. If a signal contradicts the idea card's existing frontmatter ratings, state the contradiction explicitly in your report — do not silently align to the card. The same applies to factual claims: if your research contradicts a factual claim in the card body, surface the contradiction prominently in your final report — not buried in the artifact — so the orchestrator can reconcile the card.
 
 ## Stop Rules
 
