@@ -235,6 +235,8 @@ When the human indicates the document is ready (says something like "this is don
    - Report: "Marked complete. Output at `{output-file path}`, idea card updated."
 4. If the human identifies final tweaks: iterate (back to Step 4), then re-present for approval
 
+**Output-document frontmatter source:** The completion transition touches only the authoritative minimal keys — `stage: complete` and `updated`. The full output-document frontmatter schema (`type`, `source-idea`, `output-format`, `created`, plus `stage`/`updated`) was established by /draft when the document was created (/draft Step 7); the output templates in `Templates/` carry body structure only, not frontmatter.
+
 **Never mark Stage 5 without explicit human approval.** Asking "should I mark this complete?" is appropriate when the document passes all validation and the human seems satisfied.
 
 ## Stop Rules

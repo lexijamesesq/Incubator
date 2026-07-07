@@ -99,7 +99,7 @@ Load these files in parallel:
 3. **OKRs** — Read the OKRs document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.okrs`)
 4. **Idea index** — Use `Glob` to list all `.md` files in `Ideas/`, then apply tiered reading:
    - **Complete-stage ideas:** Read frontmatter only (first 25 lines or until `---` closes). Extract: stage, themes, domain. These provide theme vocabulary only — complete ideas are excluded from Step 3 matching.
-   - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used for Step 3 matching AND portfolio context in the synthesis handoff.
+   - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used by Step 3 to verify refine-seed's related-ideas resolution AND portfolio context in the synthesis handoff.
    From the loaded index, extract all unique `themes` values across all idea files into a **portfolio theme vocabulary** — the canonical set of themes in use. Used in Step 5e to ensure theme reuse.
 5. **Shared research baseline** — Query the strategy research database for structured competitive intelligence, customer evidence, and market sizing relevant to this idea's capabilities:
    ```bash
@@ -109,7 +109,7 @@ Load these files in parallel:
    ```
    Derive capability slugs from the seed's `themes` and `core insight` using the vocabulary list — themes may map directly or expand (e.g., `ai-capabilities` → `ai-item-generation`, `ai-open-response-scoring`). Entries within TTL are baseline; entries past TTL are directional only and require reverification during Stream A/B research. Gap detection identifies where enrichment agents should focus live web research.
 
-6. **Competitor registry** — Snowflake `competitors` table. Already covered by Step 5's `query-landscape` call (returns name, category, market_tier, pricing_model, matched capabilities filtered by the seed's capability slugs). For competitors central to the seed's competitive frame, follow up with `query-competitor` for the full intelligence body and linked findings.
+6. **Competitor registry** — Snowflake `competitors` table. Already covered by item 5 above's `query-landscape` call (returns name, category, market_tier, pricing_model, matched capabilities filtered by the seed's capability slugs). For competitors central to the seed's competitive frame, follow up with `query-competitor` for the full intelligence body and linked findings.
 
 ### Step 2: Validate the Seed
 
@@ -173,6 +173,8 @@ Execution contract (overrides where the protocol assumes slash-command invocatio
 **Agent failure handling:** The four streams run concurrently, so evaluate their reports as a set once they return rather than one at a time. A failure in any one stream (timeout, stop rule, error, or no report) does not affect the others and no single agent blocks the pipeline — record the failed or empty stream by name with its reason in Phase 1.5 and continue with the successful streams. See the error handling table for per-agent fallback behavior.
 
 **Phase 1.5: Serialized writes-of-record**
+
+**Wait for completion first:** Before beginning Phase 1.5, the orchestrator must wait for all four background agents' completion reports and the /cross-domain return. Proceed on partial results only per the stream-failure rules in item 3 below.
 
 The parallel agents held back every write-of-record; the orchestrator applies them serially here, after all four agents report and /cross-domain returns. Serialization is deliberate — concurrent writes to the shared card frontmatter and to the research database must not happen in-stream.
 
@@ -384,7 +386,7 @@ Tag each competitor as `(registry)` or `(discovered)` to distinguish registry-so
 
 ### Related Ideas (header fields for differentiation)
 
-{For each related idea identified in Step 3:}
+{For each related idea resolved during /refine-seed (verified in Step 3):}
 
 **{idea-name}** ({stage})
 - Core insight: {from their card}
@@ -402,7 +404,7 @@ Invoke the synthesis agent to produce the TL;DR card content.
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `develop-synthesis`, passing the idea name as the argument.
 
-The develop-synthesis skill runs in an isolated agent context with a clean window. It reads the seed file, the synthesis handoff (created in Step 4.5), the persona guide, the format example, and related ideas context. It produces the completed TL;DR card — frontmatter updates (stage, dimensions) and body content (header fields, opportunity assessment, research summary, thought outline, open questions).
+The develop-synthesis skill declares `context: fork`, so it executes in an isolated forked context with a clean window. It reads the seed file, the synthesis handoff (created in Step 4.5), the persona guide, the format example, and related ideas context. It produces the completed TL;DR card — frontmatter updates (stage, dimensions) and body content (header fields, opportunity assessment, research summary, thought outline, open questions).
 
 After the agent returns, read the updated idea file to confirm synthesis completed (stage changed to `developing`, impact dimensions populated).
 
@@ -410,7 +412,7 @@ If the agent reports insufficient research or a stop condition, surface it to th
 
 ### Step 5b: Cross-Domain Signals Section
 
-If /cross-domain succeeded, write a `### Cross-Domain Signals` section to the card after the Research Summary section. The content comes from the /cross-domain skill's Phase 3 formatted output (already in the orchestrator's context from Phase 1 agent invocation) — transfer it directly, no reformatting needed (Phase 3 output uses the card section format).
+If /cross-domain succeeded, write a `### Cross-Domain Signals` section to the card after the Research Summary section. The content comes from the /cross-domain skill's Phase 3 formatted output (already in the orchestrator's context from the /cross-domain Skill-tool invocation during Phase 1) — transfer it directly, no reformatting needed (Phase 3 output uses the card section format).
 
 If the Phase 3 output is no longer in context, re-read the artifact at `Research/{idea-name}/cross-domain-signals.md` and apply the same curation the skill applies in Phase 3: include convergence group members, direct overlap items, and enablers that are specifically load-bearing for this idea's core capability. Maximum 5 signals. Write using the card section format:
 
@@ -431,7 +433,7 @@ After synthesis completes, invoke the buildable surface enrichment agent to chec
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `buildable-surface`, passing the idea name as the argument (e.g., `foraging-intelligence`).
 
-The buildable-surface skill runs in an isolated agent context. It reads the idea card and research artifacts, applies a three-signal detection heuristic, and either:
+The buildable-surface skill declares `context: fork`, so it executes in an isolated forked context. It reads the idea card and research artifacts, applies a three-signal detection heuristic, and either:
 - **No-ops** (feature-shaped) — no section added, proceed to Step 6
 - **Fires** (principle-shaped or borderline) — writes a `### Buildable Surface` section between Thought Outline and Open Questions
 
@@ -491,7 +493,7 @@ After writing the card to file, invoke the artifact critic to check structural a
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `artifact-critic`, passing the completed idea card file path as the argument (e.g., `Ideas/foraging-intelligence.md`).
 
-The artifact-critic skill runs in the artifact-critic agent's isolated context — separate from this session — with read access to vault notes via Obsidian MCP. It returns a deviation report.
+The artifact-critic skill declares `context: fork`, so it runs in an isolated forked context — separate from this session — with read access to vault notes via Obsidian MCP. It returns a deviation report.
 
 **Triage the findings:**
 For each finding the critic returns, either:
