@@ -15,6 +15,8 @@ This skill **tests** theses. It does **not** generate them. Thesis authorship is
 
 **When to reach for it (cost note):** a full run is roughly half a `/develop` — three adversarial lens passes + an audit + orchestrator synthesis. Worth it when a load-bearing decision rests on a thesis that a first-pass `/develop` may have rubber-stamped, or before an EC / JPD push. Not worth it for low-stakes cards.
 
+**Middle rung — single-lens press.** Axis-specific doubt — one soft dimension, not the whole position — takes a single-lens test-mode re-run with a harder question: one agent, not half a run (`/develop`'s backfill pattern is the mechanism). Legitimate only when the other axes carry recorded prior verdicts the human isn't contesting; the pressed lens still keeps the verdict audit and the learning-outcome check.
+
 ## Invocation
 
 ```
@@ -86,11 +88,15 @@ Execute in order. Stop and report at any step rather than continuing with bad da
 
 The brief is the committed position(s) under test. It is **human-owned**. The skill NEVER invents theses.
 
-**Weight gate (before co-drafting).** Confirm acid-test weight: a load-bearing decision with two or more research-formed rival directions in tension. A single obvious direction with no live rival is enrichment wearing a test's clothes — say so and point to `/develop`.
+**Weight gate (before co-drafting).** Confirm the weight before co-drafting: gnarly, net-new, or critical tradeoffs in positioning or approach. A feature within an existing strategic direction doesn't warrant this — a single obvious direction with no live rival is enrichment wearing a test's clothes; say so and point to `/develop`.
 
-**Co-draft posture.** This is a conversation, not a form. Invite the human to state their conviction in their own prose first; reflect it back structured; propose candidate break conditions for them to react to and revise. Never present the template as fields to complete and never offer option-menu selections for a strategic claim. The (thesis × lens) grid is your accounting tool, filled from the dialogue — not a questionnaire you administer.
+**Discovery check.** The contested space needs research behind it before rivals can fight — thesis-testing an unresearched space is opinions fighting. Subject-mode: ask the human whether the contested space has been researched; if not, route to the ad-hoc lenses, then return. Card-mode: the stage gate already guarantees generic research, so check whether it covers THESE rivals specifically — a covered gap routes to a targeted single-lens backfill (`/develop`'s backfill pattern), not a fresh `/develop`.
 
-**Authorship refusal (non-negotiable).** If the human asks you to author the thesis for them to react to: decline the origination — "If I write the position and you react, we've rebuilt the rubber-stamp this test exists to catch. Give me your conviction in your own words, even rough, and I'll structure it." You may surface candidate framings drawn only from their prior card and research as reaction prompts; you may not originate a strategic position.
+**Co-draft posture — place the battlefield.** Open every co-draft by placing the battlefield — **Fixed / Contested / Bar**: what is GIVEN and not under test (a constraint envelope, a decided destination, a validated concept); where the CONTESTED space is (whole position, offering candidates inside an envelope, route/positioning options — rivals form only here); and the BAR the survivor must clear (who it must convince, what it must survive next). Fixed/Contested/Bar is your map of the fight, drawn from her prose as she talks — never three questions you put to her, never three fields she fills. You are not collecting three answers: infer all three from how she frames the situation and reflect them back in one pass for correction. Never offer option-menu selections for a strategic claim; the (thesis × lens) grid is your accounting tool, filled from the dialogue — not a questionnaire you administer.
+
+**Entry recognition.** A human arriving with a committed position collapses the frame naturally — little is given, the position is the contested claim; elicit the Bar explicitly (what this position must survive next), and proceed. When she arrives WITHOUT a held thesis — a mandate-shaped question ("is there a defensible direction here?"), a constraint envelope, or a decided-what with a contested-how — the run's first job is forming rivals worth fighting: draft the rival set — the 2–5 positionings the research makes potentially or loosely defensible, each stated as a conviction citing its source artifact section — then the human attacks the set: tear up, reshape, kill, replace. A drafted candidate enters the brief as a rival only after the human's words touch it — amended, reshaped, or restated — never by a nod at the set. One surviving rival is a single-direction call, not an acid test — point down-ladder (the middle rung in "When to reach for it"). Above five rivals the fight blurs; tighten before testing.
+
+**Authorship refusal (non-negotiable).** Two lines you never cross. You never originate the human's conviction when she has one: if she asks you to write her held position for her to react to, decline — "If I write the position and you react, we've rebuilt the rubber-stamp this test exists to catch. Give me your conviction in your own words, even rough, and I'll structure it." And though the no-held-thesis entry has you draft the rival set from research (above), you never let a drafted or surfaced candidate become a thesis until her words touch it — verbatim adoption of a candidate, or a nod at the set, is the rubber-stamp signal, not authorship.
 
 1. **Locate.** Card-mode: look for `Research/{idea}/thesis-brief.md`. Subject-mode: use `--brief PATH` if given.
 2. **If absent — co-draft interactively.** Load `brief-template.md` (bundled). Walk the human through it: they state the strategic claim(s); you help structure them into the required sections and press for falsifiable break conditions. You assist with structure and phrasing; the human owns every strategic claim. If the human declines to co-draft, STOP (a thesis-test with no thesis is not a run — see Stop Rules).
@@ -123,8 +129,11 @@ Three lenses run in parallel, each charged to **test** the theses — attempt to
 - The lens is in **test mode**, not enrichment mode. Charge: for each thesis, for each of *your* break conditions, attempt to falsify the thesis. Cite specific evidence for and against. The thesis must survive contradiction or be marked down. Do NOT rubber-stamp the thesis back as new seed truth.
 - Supply, in the prompt: the full thesis brief (theses + this lens's break conditions), and the carry-forward context from Step 2 (card-mode). Tell the lens which slices are given (do not re-derive) and which it must re-run under the thesis.
 - **Learning-outcome break condition → educator-sme only.** educator-sme's prompt includes the config-keyed learning-outcome break condition as an additional break condition to test against every thesis.
+- **Givens are declared fixed — probe the frame, don't verdict it.** The brief's Givens are not under test, but spend one pass looking for a break in the frame itself. Evidence that squarely contradicts a given is never suppressed: record a `GIVEN-CONTESTED` flag with the cited evidence. Every per-lens roll-up ends with a mandatory `GIVEN-CONTESTED: {list | none}` line — a forced `none` makes an omission detectable.
 - **Required verdict record.** The lens artifact (`Research/{idea}/thesis-test-{lens}-{date}.md`) must record, per break condition per thesis: a **verdict** from `{HOLDS, WEAKENS, BREAKS, CONDITIONAL HOLD, UNKNOWN-INSUFFICIENT}` + a **free-text qualifier** + **cited evidence**. Then a **per-lens per-thesis roll-up** (one line per thesis: the aggregate verdict + the load-bearing break). `UNKNOWN-INSUFFICIENT` is the honest verdict when evidence is thin — a silent HOLDS on thin evidence is a defect the audit (Step 4) catches.
 - **Hold back writes-of-record** exactly per /develop Phase 1.5: no `research-db.py` write commands, no card frontmatter edits; return payloads verbatim for the orchestrator to serialize.
+
+**Frame check (orchestrator, at fan-out return — before audit and synthesis).** Read every lens's `GIVEN-CONTESTED` line FIRST, before anything else. Any flag halts the run for a disposition: the given stands (record why the contradicting evidence doesn't break the frame), reclassify it as contested and re-scope the affected slices, or halt the run. A broken frame outranks a polite fight inside it — parallel agents can't be recalled, so fan-out return is the earliest practical stop.
 
 **Serialized writes (orchestrator, after all three lenses return).** Apply held-back `research-db.py` writes one at a time from the project root (validate first, per /develop Phase 1.5). Append all new artifact paths (the three lens artifacts + the Step 2 partition table) to the card `research:` array in a SINGLE read-modify-write `update_frontmatter` (card-mode only). A lens that fails or returns no report is recorded by name with its reason; continue with the rest, and treat its theses' break conditions as `UNKNOWN-INSUFFICIENT` for that lens in the synthesis.
 
@@ -134,7 +143,8 @@ Invoke `/artifact-critic` via the Skill tool on each lens artifact (pass the art
 - verdicts match their cited evidence (no verdict stronger than its evidence);
 - `UNKNOWN-INSUFFICIENT` is used where evidence is thin, not a silent HOLDS;
 - the evidence-vs-interpretation partition is present where the lens draws a conclusion;
-- per-lens / per-thesis roll-up arithmetic is sane (the roll-up follows from the cell verdicts).
+- per-lens / per-thesis roll-up arithmetic is sane (the roll-up follows from the cell verdicts);
+- the `GIVEN-CONTESTED: {list | none}` line is present on every lens roll-up and matches the artifact's evidence.
 
 Triage each finding: fix it in the artifact, or override with a stated reason. **Cap at 3 revision iterations**; if a finding persists after 3, surface it to the human — do not loop further. **Auditor confirmations carry reduced weight** than criticisms (eval-isolation methodology). If artifact-critic fails to run, do NOT silently proceed — note the failure and do a best-effort self-audit, flagged as such in Step 5's presentation.
 
@@ -157,6 +167,7 @@ Required operations:
 5. **Partition format for every research-driven conclusion** — write each as `Evidence: [lens found X]. Interpretation: [orchestrator concludes Y because Z].`
 6. **Register** — write the whole synthesis against the brief's declared register (audience, shape). If the register block surfaced a missing persona file, say so; do not default to generic.
 7. **Vocabulary-legibility pass** — for any term that requires insider/team context to parse (a metaphor from a specific ticket, an internal codename): define it inline, quote-mark it as a citation, or replace it with plain language.
+8. **Dispositioned frame flags surface prominently** — if the frame check let a given stand over contradicting evidence, name it up top; a contested frame the run chose to keep outranks the ranking inside it.
 
 "Nothing survives — here's the reframe" is a legitimate primary output. Do not manufacture a survivor to avoid a null result.
 
