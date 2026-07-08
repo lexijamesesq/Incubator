@@ -24,6 +24,7 @@ cp persona.sample.md persona.md
 | `strategic_context.design_strategy` | CLAUDE.md > Configuration | Path and URL to your design strategy document |
 | `strategic_context.okrs` | CLAUDE.md > Configuration | Path to your OKRs / organizational goals |
 | `persona.md` | Project root | Copy from `persona.sample.md`, then make it your own voice and writing style guide |
+| `incubator-approach.md` | Project root | Author your drafting methodology — the structure and quality bar for strategy docs and briefs. Loaded by `/draft` and `/refine`; the core pipeline runs without it |
 
 ### Optional configuration
 
@@ -105,7 +106,6 @@ Without the database, skills work normally — they fall back to web searches. N
 |------|-------------|
 | `incubator-reference.md` | Thin section index mapping each topic to a file under `reference/` — loaded on demand so skills pull one section, not the whole doc |
 | `reference/` | Section-scoped reference files (stage model, two-track architecture, frontmatter schema, templates, workflow, research protocol, shared research, initiative schema, JPD integration, skill conventions) |
-| `incubator-approach.md` | Unified methodology for strategy docs and product briefs (Rumelt, Perri, Torres synthesis) |
 | `persona.md` | Voice and style guide governing all output from Stage 2 onward |
 | `Templates/strategy-document-template.md` | Output template for strategy documents |
 | `Templates/product-brief-template-v2.md` | Output template for product briefs |
@@ -206,7 +206,7 @@ Human decision authority is preserved at every meaningful gate. Seeds develop au
 The system ships with domain knowledge tuned for education technology and assessment products. To adapt it:
 
 - **Different product domain:** Update `persona.md` with your voice, update the agent personas in `claude/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `claude/skills/cross-domain/`.
-- **Different output formats:** Replace or modify the templates in `Templates/` and update `incubator-approach.md` with your methodology.
+- **Different output formats:** Replace or modify the templates in `Templates/` and write your own `incubator-approach.md` methodology.
 - **Without JPD integration:** Skip `jira-config.md` setup. The `/jpd-push` and `/cross-domain` skills are self-contained and can be ignored.
 - **Without the research database:** Skip `scripts/research-db-config.json` setup. Skills fall back to web searches and idea-scoped research artifacts. The database is additive.
 - **Without enrichment agents:** Each enrichment agent is independently invokable. Remove any you don't need from `claude/skills/` and `claude/agents/` without affecting the core pipeline.

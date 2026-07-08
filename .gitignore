@@ -43,3 +43,4 @@ snowflake permissions.csv
 
 # operator PII detection rules (gitignored symlink -> dotty-private)
 .gitleaks-operator-rules.toml
+incubator-approach.md
