@@ -29,6 +29,13 @@ The human's verb for the skeptic agent. Audits whether a developed idea's eviden
 3. **Launch the skeptic agent** (Agent tool, `subagent_type: skeptic`, fresh context) in the chosen mode. Pass the idea name and the mode.
 4. **Present the verdict** the agent returns — verdict line + flags with quoted evidence and proportionate follow-ups.
 
+## Stop Rules
+
+| Condition | Action |
+|-----------|--------|
+| Skeptic agent fails to launch or return | Report the failure; do not self-audit in this context — a same-session audit is the bias this skill exists to avoid. |
+| Handoff-fidelity mode but no `Research/{idea}/synthesis-handoff.md` exists | Report the missing handoff; offer card-decay mode instead. |
+
 ## Scope Boundaries
 
 This skill does NOT modify the card, re-run lenses, or trigger `/thesis-test`. Every follow-up is a recommendation for the human to act on.

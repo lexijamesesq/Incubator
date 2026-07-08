@@ -4,6 +4,7 @@ description: >-
   Fresh-context evidence auditor. Two modes: handoff-fidelity (did /develop's
   curation survive compression) and card-decay (do a developed card's claims
   still hold against current reality). Reports; never modifies files.
+model: opus
 tools: >-
   Glob, WebSearch, WebFetch, Bash(date:*), mcp__obsidian__read_note,
   mcp__obsidian__read_multiple_notes, mcp__obsidian__get_frontmatter,
