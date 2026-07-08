@@ -29,7 +29,7 @@ Compare the lens artifacts in `Research/{idea}/` against `synthesis-handoff.md`.
 
 ### card-decay (invoked ad hoc)
 
-Verify a developed card's load-bearing claims against current reality. Read the card; identify the claims the strategy rests on; run ≤4 web searches to check:
+Verify a developed card's load-bearing claims against current reality. If the card carries **Signposts** (dated retest triggers written by /thesis-test), check them first; re-derive decay from scratch only for claims they don't cover. Read the card; identify the claims the strategy rests on; run ≤4 web searches to check:
 - **mis-dated timing** — a "window closes in {year}" / "before competitors move" claim overtaken by events.
 - **eroded competitive-absence** — a "no competitor does X" claim a competitor now satisfies.
 - **contested wagers** — a load-bearing bet current evidence now disputes.
