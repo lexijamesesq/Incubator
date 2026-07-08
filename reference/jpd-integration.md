@@ -12,7 +12,7 @@ All Jira/JPD connection details, field IDs, option IDs, and organizational taxon
 
 The /jpd-push and /cross-domain skills read from `jira-config.md` at runtime.
 
-**Description body:** Restructure TL;DR into JPD-compatible headings (What/Who/Why + Incubator additions). Content transferred verbatim — no generative rewriting. Exclude Original Capture only. If cross-domain research exists, include as a Cross-Domain Signals section; strip cross-domain bullets from Research Summary to avoid redundancy. See `/jpd-push` skill and INC-015 context doc for full mapping.
+**Description body:** Restructure TL;DR into JPD-compatible headings (What/Who/Why + Incubator additions). Content transferred verbatim — no generative rewriting. Exclude Original Capture only. If cross-domain research exists, include as a Cross-Domain Signals section; strip cross-domain bullets from Research Summary to avoid redundancy. See the `/jpd-push` skill for the full mapping.
 
 ### Standard JPD Idea Template
 
@@ -22,9 +22,9 @@ If your JPD project has an official idea template, align push output with its st
 - **Executive Summary:** Typically a pinned field (configured in `jira-config.md > Dynamic Field Mappings`)
 - **Description sections:** Usually What (problem statements & hypotheses), Who (audiences), Why (why worth solving), plus stage-specific fields
 
-**Alignment with Incubator push:** Our developing-stage push uses What/Who/Why matching this convention, plus Incubator additions (Opportunity Assessment, Research Summary, Cross-Domain Signals, Thought Outline, Open Questions). We exceed what's expected at Opportunity Identification. Success Measure and Cost of Delay are not relevant at developing stage but become required at Experimentation/GTM — see INC-019 for stage-aware push planning.
+**Alignment with Incubator push:** Our developing-stage push uses What/Who/Why matching this convention, plus Incubator additions (Opportunity Assessment, Research Summary, Cross-Domain Signals, Thought Outline, Open Questions). We exceed what's expected at Opportunity Identification. Success Measure and Cost of Delay are not relevant at developing stage but become required at Experimentation/GTM — see the stage-aware push note below.
 
-**Stage-aware push (future, INC-019):** At later PDLC stages (Experimentation, GTM), re-push should add Success Measure and Cost of Delay per the standard template, condense Thought Outline/Open Questions as unknowns resolve, and link to a Google Doc output document rather than carrying full content inline.
+**Stage-aware push (future):** At later PDLC stages (Experimentation, GTM), re-push should add Success Measure and Cost of Delay per the standard template, condense Thought Outline/Open Questions as unknowns resolve, and link to a Google Doc output document rather than carrying full content inline.
 
 ### Push Criteria
 

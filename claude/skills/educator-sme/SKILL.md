@@ -227,7 +227,7 @@ Idea frontmatter updated: research array now includes educator evaluation path.
 
 After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to pain point evidence, adoption patterns, and educator sentiment that would benefit other ideas). Write qualifying findings to the strategy research database. **Source URL requirement:** Every finding MUST have a `source_url` with the most specific available page — not a homepage. Use `source_description` only when no stable URL exists. Do not write findings with neither.
 
-**Claim-content guardrail (added 2026-05-01 after INC-038 cleanup):** A finding's `claim` field must be a **substantive assertion** with content the reader can act on. The following are NOT findings — never write them as `claim`:
+**Claim-content guardrail:** A finding's `claim` field must be a **substantive assertion** with content the reader can act on. The following are NOT findings — never write them as `claim`:
 - Search query strings (e.g., `"teacher experience using AI rubric generator 2025"`) — these are research metadata, not findings
 - Bare citations / titles (e.g., `[Title](URL)`) — a citation without an assertion is a bookmark, not a finding
 - Query-prefixed paragraphs where the leading quoted query is verbatim what you searched — strip the query; submit only the assertion
