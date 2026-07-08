@@ -1,4 +1,4 @@
-> Split verbatim from `incubator-reference.md` on 2026-07-07 — one section of the reference index. See `incubator-reference.md` for the full section map.
+> One section of the `incubator-reference.md` reference index — see it for the full section map.
 
 ## JPD Integration
 
