@@ -8,6 +8,10 @@ Bundled with `/thesis-test`, loaded by Step 1 when a brief must be co-drafted. T
 
 ## Required sections
 
+### 0. Givens (not under test)
+
+Constraints, decided destinations, and validated facts the run treats as fixed — the frame the fight happens inside; rivals form only in the contested space outside them. Each given carries a one-line warrant — `validated-by-{X}` / `decided-by-{Y}` / `out-of-scope-{Z}` — and the co-draft asks of each once: **"why is this fixed, not contested?"** Lenses do not verdict givens, but the flag rule holds: evidence that squarely contradicts one is flagged (`GIVEN-CONTESTED`), never suppressed — a broken frame outranks a polite fight inside it.
+
 ### 1. Strategic Claim(s)
 
 One or more theses (1..N). Each is a **committed position with reasoning — a claim, not a question.** "The premium offering is an integrated evidence platform because the integration gap is the pain" is a thesis. "Should we build an evidence platform?" is not. For each thesis give:
@@ -16,7 +20,7 @@ One or more theses (1..N). Each is a **committed position with reasoning — a c
 - **Why now:** the timing/urgency signals that make it live.
 - (optional) **What it combines:** if the thesis fuses several moves, name them.
 
-Competing theses are encouraged — testing 3–5 rival visions against each other is the strongest use of the skill (see the worked-example skeleton).
+Competing theses are encouraged — testing 2–5 rival visions against each other is the strongest use of the skill (see the worked-example skeleton).
 
 ### 2. Per-(Thesis × Lens) Break-Condition Table
 
@@ -48,6 +52,7 @@ The synthesis is an audience-shaped artifact; declare its register before it is 
 - **Audience:** who reads the output (e.g., "CPO who has already bought the platform play").
 - **Persona file:** the voice/style file for that audience, if one exists. **If none exists, say so here as a gap — do NOT default to a generic register.** Generic register is the failure mode, not the fallback.
 - **Artifact shape:** e.g., narrative-conviction vs. status-report vs. analytical brief; length constraint.
+- **Defensibility bar:** what the surviving position must survive next (leadership pitch, EC submission, JPD push) — the synthesis writes toward it. Check it against the audience: a bar naming a later gate than the audience implies (audience "CPO/EC" but bar "JPD push") is incoherent — reconcile before writing.
 
 ### 5. Reuse / Re-Run Partition Pointer (card-mode)
 

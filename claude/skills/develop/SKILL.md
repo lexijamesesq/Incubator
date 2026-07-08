@@ -606,7 +606,7 @@ next: accept · press harder (targeted re-run) · /thesis-test (≈half a develo
 - Seed capture questions: {N of M survive in Open Questions}
 - Seed dimension ratings: {n/a — seed had none | {K} of {J} unchanged}
 - Mechanical rule: string-level diff (normalized whitespace, substring survival) — never a judgment call.
-{If strategic connection UNCHANGED **and** half or more seed questions survive: "The developed card preserved the seed's strategic spine — research may have confirmed it, or no agent challenged it. A `/thesis-test {idea-name}` tests the spine adversarially while keeping this run's artifacts." Otherwise omit — when the spine moved, say only what moved, one line.}
+{If strategic connection UNCHANGED **and** half or more seed questions survive: "The developed card preserved the seed's strategic spine — research may have confirmed it, or no agent challenged it. A `/thesis-test {idea-name}` tests the spine adversarially while keeping this run's artifacts." Weight self-filter: this offer matters for gnarly, net-new, or critical tradeoffs in positioning or approach — a spine-preserved feature card inside an existing strategic direction can read it and move on. Otherwise omit — when the spine moved, say only what moved, one line.}
 
 **Output format recommendation** (omit if `--format` was supplied): **strategy-doc** (positioning play, narrative framing, multi-product direction, capability shaping how products evolve) or **product-brief** (scoped initiative with features, JTBD, timeline, defined deliverable). State which signals the idea exhibits. The human decides; the skill does NOT set `output-file`.
 
