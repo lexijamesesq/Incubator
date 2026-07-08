@@ -20,11 +20,11 @@ One or more theses (1..N). Each is a **committed position with reasoning — a c
 - **Why now:** the timing/urgency signals that make it live.
 - (optional) **What it combines:** if the thesis fuses several moves, name them.
 
-Competing theses are encouraged — testing 2–5 rival visions against each other is the strongest use of the skill (see the worked-example skeleton).
+Competing theses are encouraged — testing 2–5 rival visions against each other is the strongest use of the skill (see the worked-example skeleton). **Distinguishability:** rivals must differ materially in wedge, buyer, or surface — two variants of one position are one thesis.
 
 ### 2. Per-(Thesis × Lens) Break-Condition Table
 
-The heart of the brief. For EVERY thesis, for EVERY lens, a falsifiable break condition: **"if X, this thesis weakens/breaks."** Not a question, not an enrichment ask — a condition whose truth would mark the thesis down. Coverage is enforced: a missing cell blocks the run.
+The heart of the brief. For EVERY thesis, for EVERY lens, a falsifiable break condition: **"if X, this thesis weakens/breaks."** Not a question, not an enrichment ask — a condition whose truth would mark the thesis down. Conditions are derived per `attack-patterns.md` §C (must-hold conditions → fragility-rank → derive) and cite palette attacks by name where one applies. Coverage is enforced: a missing cell blocks the run.
 
 Repeat this block per thesis:
 
