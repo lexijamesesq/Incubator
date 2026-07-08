@@ -60,6 +60,13 @@ Unknown flags should be reported as an error and exit before resolution proceeds
 
 **Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options. If zero matches, report and exit.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/jpd-integration.md` — JPD template alignment, push criteria, sync-tracking fields, sync-back policy
+- `reference/frontmatter-schema.md` — `jira-key` / `jira-pushed-at` / `jira-sidecar-url` fields, `themes` as labels
+
 ## Execution Flow
 
 ### Step 0: Load Configuration
@@ -153,11 +160,7 @@ Self-heal procedure:
 
 2. Apply the curation cap: 5 signals maximum, 1 convergence group maximum.
    - **If the artifact has ≤5 signals under `## Signals`:** use all of them.
-   - **If the artifact has >5 signals under `## Signals`:** rank and select the top 5 using these criteria from /cross-domain Phase 2.5 (applied as reasoning lenses, not a scoring formula):
-     - **Actionability:** Direct overlap and Convergence rank highest. Enablers rank higher when they represent a specific named integration point than when they're general platform infrastructure.
-     - **Status weight:** Done > 3 - GTM > 2 - Experimentation > 1 - Opportunity Identification > Backlog. Done items represent proven organizational investment; Backlog is weakest.
-     - **Domain breadth:** Prefer signals from different brands/squads/domains over multiple from one team's roadmap.
-     - **Connection specificity:** A named integration point outranks a thematic similarity.
+   - **If the artifact has >5 signals under `## Signals`:** rank candidate signals using the 4-criterion heuristic defined in `claude/skills/cross-domain/SKILL.md` Phase 2.5 (the canonical source) — read that section and apply it to select the top 5.
    - **Convergence:** if the artifact has multiple convergence groups, pick the one that spans the most domains and whose anchor signals remain in the kept-5.
 
 3. Format the curated set into a `### Cross-Domain Signals` section using the canonical card template:
@@ -173,7 +176,7 @@ Self-heal procedure:
 
    For each signal, derive the parenthetical Domain Label using the same priority chain /cross-domain uses: Brand → Product Domain → Squad → omit. If the artifact's `**Domain Label:**` line is populated, use that value directly.
 
-4. Patch the new section into the card body BETWEEN `### Research Summary` (and its content) and `### Thought Outline` using `mcp__obsidian__patch_note`. Replace the boundary string `\n\n### Thought Outline\n` with `\n\n{new section}\n\n### Thought Outline\n`.
+4. Patch the new section into the card body BETWEEN `### Research Summary` (and its content) and `### Thought Outline` using `mcp__obsidian__patch_note`. Replace the boundary string `\n\n### Thought Outline\n` with `\n\n{new section}\n\n### Thought Outline\n`. Before patching, read the card and locate the actual anchor text; if the exact string with expected whitespace isn't found, try single-newline variants. If still ambiguous or not found, halt and report rather than guessing.
 
 5. Re-read the card to confirm the section is present and correctly positioned. If verification fails, halt and report — do not proceed to JPD push with an unconfirmed card edit.
 
@@ -204,7 +207,7 @@ Self-heal procedure:
 
    No link trailer in the card section — that's a JPD-only addition.
 
-4. Patch the new section into the card body BETWEEN `### Thought Outline` (and its content) and the next `### ` heading (which will be `### Buildable Surface` if it exists, otherwise `### Open Questions`) using `mcp__obsidian__patch_note`. Anchor on the next `### ` heading after Thought Outline and insert the new section before it.
+4. Patch the new section into the card body BETWEEN `### Thought Outline` (and its content) and the next `### ` heading (which will be `### Buildable Surface` if it exists, otherwise `### Open Questions`) using `mcp__obsidian__patch_note`. Anchor on the next `### ` heading after Thought Outline and insert the new section before it. Before patching, read the card and locate the actual anchor text; if the exact string with expected whitespace isn't found, try single-newline variants. If still ambiguous or not found, halt and report rather than guessing.
 
 5. Re-read the card to confirm the section is present and correctly positioned. If verification fails, halt and report — do not proceed to JPD push with an unconfirmed card edit.
 

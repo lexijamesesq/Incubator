@@ -42,7 +42,9 @@ description: >-
 ```
 Incubator/
 ├── CLAUDE.md                     <- This file (customize from CLAUDE.sample.md)
-├── incubator-reference.md        <- Stage model, architecture, schemas, templates
+├── incubator-reference.md        <- Thin section index -> reference/ (stage model, schemas, templates, workflow, etc.)
+├── reference/                    <- Section-scoped reference files, loaded on demand
+│   └── {stage-model,architecture,frontmatter-schema,templates,...}.md
 ├── incubator-approach.md         <- Unified methodology (strategy docs + product briefs)
 ├── persona.md                    <- Voice and style guide (Stage 2 onward) — CUSTOMIZE
 ├── (backlog in Linear)           <- Task tracking
@@ -65,7 +67,7 @@ Incubator/
 
 ## Reference Material
 
-For stage model, architecture, frontmatter schema, templates, workflow, and research protocol, see `incubator-reference.md`. Load it when doing /develop, /draft, /refine, or any stage transitions.
+Reference material is split into section-scoped files under `reference/`, indexed by `incubator-reference.md`. Do NOT load the whole set — each pipeline skill names the specific `reference/{section}.md` file(s) it needs in its own "Reference Material" instruction. Consult `incubator-reference.md` only to find which section file maps to a topic (stage model, architecture, frontmatter schema, templates, workflow, research protocol, shared research, initiative schema, JPD integration, skill conventions).
 
 All outputs from Stage 2 onward follow `persona.md`.
 
@@ -76,7 +78,7 @@ All outputs from Stage 2 onward follow `persona.md`.
 **For any incubator work:**
 1. This CLAUDE.md — decision authority, file structure, project state
 2. `persona.md` — Voice and style (applies Stage 2 onward)
-3. `incubator-reference.md` — Stage model, architecture, schemas, templates, workflow, research protocol
+3. `incubator-reference.md` — Thin section index -> `reference/` (stage model, architecture, schemas, templates, workflow, research protocol, shared research, initiative schema, JPD integration). Load only the section file(s) a task needs, not the whole set.
 
 **For Stage 3+ drafting work:**
 4. `incubator-approach.md` — Unified methodology (strategy docs and product briefs)
@@ -155,6 +157,13 @@ incubator.jpd_sidecars_folder_url: "YOUR_DRIVE_FOLDER_URL"
 # free of installation-specific identifiers while the generated sidecar files carry the
 # concrete reference stakeholders need. Example: "Snowflake research database (YOUR_DB.YOUR_SCHEMA)".
 incubator.research_db_label: "YOUR_RESEARCH_DATABASE_LABEL"
+
+# Required learning-outcome break condition injected into every /thesis-test brief — the
+# permanent per-thesis break condition tested by educator-sme's adversarial pass. Product-anchored:
+# does the wedge land on a core-experience surface in your product, or only on a buyer pain through
+# a procurement motion? The public /thesis-test skill and brief template carry only this config key;
+# the real phrasing lives here and is pre-filled into each brief's learning-outcome row.
+incubator.learning_outcome_break_condition: "TODO: your product-anchored break condition — does the wedge land on a core-experience surface in your product, or only on a buyer pain through a procurement motion?"
 ```
 
 ### JPD Integration (Optional)

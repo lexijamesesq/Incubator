@@ -44,6 +44,14 @@ Parse `$ARGUMENTS` to resolve the target idea file.
 
 Fuzzy matching: if exact match fails, try substring match. One match: use it. Multiple: present options. Zero: report and exit.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/stage-model.md` — developing→seed reversion semantics
+- `reference/frontmatter-schema.md` — which identity fields to preserve vs. clear
+- `reference/templates.md` — Seed Template (the state the card is rewritten to)
+
 ## Execution Flow
 
 ### Step 1: Load and Validate
@@ -88,7 +96,7 @@ initiative: {preserved}
 source: {preserved}
 output-file: null
 research: []
-blocked-by: null
+blocked_by: null
 jira-key: {preserved}
 jira-pushed-at: {preserved}
 ```

@@ -1,4 +1,4 @@
-A Claude Code pipeline that takes a raw product idea through automated research — competitive landscape, market sizing, domain read, and a reframing pass — and drafts the strategy doc or product brief. Scoped agents, a Snowflake research database with write-validation, and an adversarial critic that runs in isolation, orchestrated through Claude Code skills.
+A Claude Code pipeline that takes a raw product idea through automated research — competitive landscape, market sizing, domain read, and a reframing pass — drafts the strategy doc or product brief, and adversarially stress-tests strategic positions when the decision carries weight. Research streams run as parallel background agents; a Snowflake research database enforces write-validation; independent critics — a curation-fidelity skeptic, an artifact critic, and a named attack palette for thesis testing — run in isolated contexts, orchestrated through Claude Code skills.
 
 ## Installation
 
@@ -8,10 +8,11 @@ Clone the repo, then set up the Claude Code directory:
 mv claude .claude
 ```
 
-Copy the sample config and fill in your paths:
+Copy the sample configs and fill in your paths and voice:
 
 ```
 cp CLAUDE.sample.md CLAUDE.md
+cp persona.sample.md persona.md
 ```
 
 ### Required configuration
@@ -22,7 +23,7 @@ cp CLAUDE.sample.md CLAUDE.md
 | `strategic_context.product_strategy` | CLAUDE.md > Configuration | Path and URL to your product strategy document |
 | `strategic_context.design_strategy` | CLAUDE.md > Configuration | Path and URL to your design strategy document |
 | `strategic_context.okrs` | CLAUDE.md > Configuration | Path to your OKRs / organizational goals |
-| `persona.md` | Project root | Replace with your own voice and writing style guide |
+| `persona.md` | Project root | Copy from `persona.sample.md`, then make it your own voice and writing style guide |
 
 ### Optional configuration
 
@@ -32,6 +33,7 @@ cp CLAUDE.sample.md CLAUDE.md
 | `jira-config.md` | Project root | Copy from `jira-config.sample.md`, fill in your Atlassian cloud ID, project key, field IDs, and option IDs for JPD integration |
 | `claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
 | `scripts/research-db-config.json` | Scripts directory | Copy from `research-db-config.sample.json`, fill in your database connection details for the research database integration (see below) |
+| `incubator.learning_outcome_break_condition` | CLAUDE.md > Configuration | Your product-anchored break condition, tested against every thesis in `/thesis-test` — see `CLAUDE.sample.md` for the shape |
 
 ## What's Included
 
@@ -42,7 +44,7 @@ Stage transitions — the main path an idea takes from raw seed to finished docu
 | Artifact | Type | What it does |
 |----------|------|-------------|
 | `/refine-seed` | Skill | Interprets a raw seed's intent, drafts header fields, classifies capability-vs-experience framing, surfaces related ideas, and aligns with you before development |
-| `/develop` | Skill | Orchestrates research across five streams — internal strategy context (orchestrator), competitive positioning (edtech-sme), market sizing (tam-estimate), educator perspective (educator-sme), divergent reframing (divergent-thinking), and cross-domain discovery — then dispatches to the synthesis agent to produce a TL;DR card (Stage 1 to 2) |
+| `/develop` | Skill | Orchestrates research across five streams — internal strategy context (orchestrator), competitive positioning (edtech-sme), market sizing (tam-estimate), educator perspective (educator-sme), divergent reframing (divergent-thinking), and cross-domain discovery — with the four research agents running in parallel, a skeptic auditing handoff fidelity before synthesis, and a mechanical spine check that flags rubber-stamped seeds in the final verdict (Stage 1 to 2) |
 | `/develop-synthesis` | Skill + Agent | Strategic synthesis engine dispatched by `/develop` — transforms a seed + research handoff into a TL;DR card with opportunity assessment, research summary, and thought outline (runs on Opus) |
 | `/draft` | Skill | Creates a first template-aligned output document (strategy doc or product brief) from a developed idea card (Stage 2 to 3) |
 | `/refine` | Skill | Iteratively refines an output document through section-by-section collaboration, voice alignment, and strategic realism checks (Stage 3 to 4 to 5) |
@@ -66,11 +68,18 @@ Add research artifacts to an idea without changing its stage. Invokable standalo
 | `/divergent-thinking` | Skill + Agent | Generates 3-5 unexpected, nonlinear connections by following structural pattern similarity across domains |
 | `/buildable-surface` | Skill + Agent | Detects principle-shaped ideas and generates distinct product approach candidates; no-ops on feature-shaped ideas |
 
+### Adversarial testing
+
+| Artifact | Type | What it does |
+|----------|------|-------------|
+| `/thesis-test` | Skill | Stress-tests 2–5 rival strategic positions against per-lens break conditions — generated by "what would have to be true" fragility ranking plus a named attack palette (`attack-patterns.md`) — then synthesizes stack-rank, component recomposition, conditions-for-survivor, premortem, and dated retest signposts. Card-mode and arbitrary-subject mode |
+| `/skeptic` | Skill + Agent | Fresh-context evidence auditor with two modes: handoff fidelity (did curation drop counter-signals — runs inside `/develop` before synthesis) and card decay (do a card's claims still hold against current reality — ad hoc, reads signposts first) |
+
 ### Quality
 
 | Artifact | Type | What it does |
 |----------|------|-------------|
-| `artifact-critic` | Agent | Checks TL;DR cards and output documents for structural conformance, voice conformance, and rating calibration (runs on Sonnet) |
+| `artifact-critic` | Agent | Checks TL;DR cards and output documents for structural conformance, voice conformance, and rating calibration in a fresh forked context; loads a bundled thesis-verdict rubric when auditing thesis-test artifacts |
 
 ### Publishing
 
@@ -94,7 +103,8 @@ Without the database, skills work normally — they fall back to web searches. N
 
 | File | What it does |
 |------|-------------|
-| `incubator-reference.md` | Stage model, two-track architecture, frontmatter schema, templates, workflow, research protocol, initiative schema, JPD integration |
+| `incubator-reference.md` | Thin section index mapping each topic to a file under `reference/` — loaded on demand so skills pull one section, not the whole doc |
+| `reference/` | Section-scoped reference files (stage model, two-track architecture, frontmatter schema, templates, workflow, research protocol, shared research, initiative schema, JPD integration, skill conventions) |
 | `incubator-approach.md` | Unified methodology for strategy docs and product briefs (Rumelt, Perri, Torres synthesis) |
 | `persona.md` | Voice and style guide governing all output from Stage 2 onward |
 | `Templates/strategy-document-template.md` | Output template for strategy documents |
@@ -158,6 +168,21 @@ Run independently at any time to add research without changing stage:
 /buildable-surface foraging-intelligence
 ```
 
+### Adversarial testing
+
+Stress-test a developed card whose direction is contested, or an arbitrary subject:
+
+```
+/thesis-test foraging-intelligence
+/thesis-test --subject "premium offering direction" --brief path/to/brief.md
+```
+
+Audit whether a developed card's claims still hold months later:
+
+```
+/skeptic foraging-intelligence
+```
+
 ### Publishing
 
 Push to Jira Product Discovery when the idea is mature:
@@ -172,7 +197,7 @@ Ideas move through five stages: **Seed** (raw capture with frontmatter), **Devel
 
 The system uses a two-track architecture. Idea cards in `Ideas/` progressively accumulate content through Stages 0-2 and serve as scannable, shareable artifacts. Output documents in `Output/` are separate files created at Stage 3, linked from the idea card via frontmatter.
 
-Custom agents handle specialized reasoning: `develop-synthesis` (Opus) does the strategic judgment work, `artifact-critic` (Sonnet) checks conformance, and five domain-specific agents provide enrichment research. The `/develop` skill orchestrates research and agent dispatch.
+Custom agents handle specialized reasoning: `develop-synthesis` does the strategic judgment work, `artifact-critic` and the `skeptic` audit conformance and evidence fidelity from fresh contexts, and five domain-specific agents provide enrichment research — the research streams running as parallel background agents with all writes-of-record serialized by the orchestrator. When a decision is heavy — net-new territory, gnarly, or critical positioning tradeoffs — `/thesis-test` stress-tests rival positions adversarially; a mechanical spine check at the end of every `/develop` run flags when enrichment merely confirmed the seed.
 
 Human decision authority is preserved at every meaningful gate. Seeds develop autonomously, but all stage transitions beyond Stage 1, output format decisions, and final approvals require human initiation or sign-off.
 

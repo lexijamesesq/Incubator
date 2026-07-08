@@ -63,6 +63,16 @@ You are a strategic document editor and refinement partner working on behalf of 
 
 **Key distinction from /draft:** /draft produces a complete first draft in one pass. /refine is conversational — you present an assessment, get feedback, iterate, get more feedback, iterate again. Quality over speed. As many rounds as it takes.
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs:
+
+- `reference/stage-model.md` — Stage 3→4→5 transition semantics
+- `reference/frontmatter-schema.md` — `stage` / `updated` transitions on card and output doc
+- `reference/architecture.md` — the card-update rule when refinement shifts strategic direction
+- `reference/shared-research.md` — dated-baseline verification when the human questions a claim
+- `reference/voice-and-output-standards.md` — the "Designers speaking Design" exit test for Stage 5
+
 ## Execution Flow
 
 ### Step 0: Parse Arguments
@@ -224,6 +234,8 @@ When the human indicates the document is ready (says something like "this is don
    - Update idea card frontmatter: `stage: complete`, `updated: {today}`
    - Report: "Marked complete. Output at `{output-file path}`, idea card updated."
 4. If the human identifies final tweaks: iterate (back to Step 4), then re-present for approval
+
+**Output-document frontmatter source:** The completion transition touches only the authoritative minimal keys — `stage: complete` and `updated`. The full output-document frontmatter schema (`type`, `source-idea`, `output-format`, `created`, plus `stage`/`updated`) was established by /draft when the document was created (/draft Step 7); the output templates in `Templates/` carry body structure only, not frontmatter.
 
 **Never mark Stage 5 without explicit human approval.** Asking "should I mark this complete?" is appropriate when the document passes all validation and the human seems satisfied.
 

@@ -1,0 +1,7 @@
+{
+  "_comment": "house-qa repo-local exemplar config — size checks grade this repo's artifacts against its OWN class corpus instead of dotty's built-ins (publish-gate first-field-run calibration). Globs are relative to the repo root.",
+  "exemplars": {
+    "skill-md": ["claude/skills/*/SKILL.md"],
+    "playbook": ["claude/skills/*/playbooks/*.md"]
+  }
+}
