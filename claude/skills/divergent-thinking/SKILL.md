@@ -59,6 +59,8 @@ Parse `$ARGUMENTS` to determine mode:
 
 This skill runs in the divergent-thinking agent's context. The agent carries the nonlinear thinker persona, quality gate, coverage checks, and voice requirements. See `.claude/agents/divergent-thinking.md`.
 
+**Invocation note:** When executed by a pointer-invoked agent rather than the Skill tool: generic Read/Write/Edit on vault .md files may be redirected — use the Obsidian MCP equivalents.
+
 ## Execution Flow
 
 Execute these steps in order. Stop and report errors at any step rather than continuing with bad data.
@@ -226,4 +228,3 @@ Divergent thinking complete: {idea-name}
 This skill does NOT:
 - Change the idea's stage
 - Modify the idea body content (only updates frontmatter `research:` and `updated:` fields)
-

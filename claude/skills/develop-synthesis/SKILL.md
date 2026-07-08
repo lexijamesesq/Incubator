@@ -11,6 +11,9 @@ allowed-tools:
   - Glob
   - Grep
   - Bash(date:*)
+  - mcp__obsidian__read_note
+  - mcp__obsidian__patch_note
+  - mcp__obsidian__update_frontmatter
 ---
 
 # /develop-synthesis — Strategic Synthesis Step

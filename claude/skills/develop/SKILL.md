@@ -24,6 +24,7 @@ allowed-tools:
   - mcp__obsidian__list_directory
   - mcp__obsidian__get_frontmatter
   - Skill
+  - Agent
 ---
 
 # /develop — Seed Development Session (Stage 1→2)
@@ -51,6 +52,7 @@ Parse `$ARGUMENTS` to resolve the target idea file.
 | Empty | List all seed-stage ideas in Ideas/, ask user to select |
 | `idea-name` | Resolve to `Ideas/{idea-name}.md` |
 | `idea-name.md` | Strip `.md`, resolve as above |
+| `--format strategy-doc\|product-brief` | Optional flag — sets the Step 9 verdict format rec and skips the format-recommendation prompt |
 
 **Fuzzy matching:** If exact match fails, list all `.md` files in Ideas/ and find filenames containing the argument as a substring (case-insensitive). If exactly one match, use it. If multiple matches, present options and ask user to pick. If zero matches, report and exit.
 
@@ -62,13 +64,25 @@ You are working on behalf of the role specified in CLAUDE.md (Configuration > Ro
 - **Internal:** The user uses TL;DR nuggets to prioritize which ideas to develop further
 - **External:** TL;DR nuggets may be pushed to JPD for stakeholder visibility via /jpd-push
 
+## Reference Material
+
+`incubator-reference.md` is a thin section index. Load only the `reference/` section files this skill needs — not the whole set:
+
+- `reference/stage-model.md` — Stage 1→2 transition semantics
+- `reference/frontmatter-schema.md` — card frontmatter, impact dimensions, theme governance
+- `reference/templates.md` — TL;DR Template (the card this skill produces) and Seed Template
+- `reference/architecture.md` — Step 3 cross-stage detection, consolidation, merge mechanics
+- `reference/research-protocol.md` — research streams, cross-domain discovery, when to pause and ask
+- `reference/shared-research.md` — Snowflake query/write, capture heuristic, TTL reference
+- `reference/voice-and-output-standards.md` — the "Designers speaking Design" exit test for Stage 2 output
+
 ## Execution Flow
 
 Execute these steps in order. Stop and report errors at any step rather than continuing with bad data.
 
 ### Step 0: Parse Arguments
 
-1. Read `$ARGUMENTS`
+1. Read `$ARGUMENTS`. Also parse an optional `--format strategy-doc|product-brief` flag — record it for the Step 9 verdict format rec.
 2. If empty: use `Glob` to list all `.md` files in `Ideas/`. Read each file until the first `###` heading or 40 lines (whichever comes first) to check frontmatter for `stage: seed`. Present seed-stage ideas to the user and ask them to select one. If no seed-stage ideas exist, report "No seed-stage ideas found in Ideas/" and exit.
 3. If provided: attempt to resolve `Ideas/{argument}.md`
    - Try exact match first (with and without `.md` extension)
@@ -76,6 +90,13 @@ Execute these steps in order. Stop and report errors at any step rather than con
    - If exactly one fuzzy match, use it
    - If multiple fuzzy matches, present options and ask user to pick
    - If zero matches, report "Idea file not found: {argument}. Available files in Ideas/: {list}" and exit
+
+### Step 0.5: Pre-Flight
+
+Before the ~8-minute research spend, verify the ground:
+- **cwd is project root:** `ls scripts/research-db.py`. If absent, halt: "Run /develop from the Incubator project root."
+- **research-db reachable:** run `python3 scripts/research-db.py lookup-capabilities --json '{}'` (this is also Step 1's baseline probe). On failure, emit the reauth/cd fix from the Error Handling table and halt before fan-out.
+- **MCP state:** if Atlassian MCP is disconnected, tell the human NOW that /cross-domain (Step 4 Stream C) is skipped unless they reconnect. In-session auth has required a full session exit-and-resume to clear — surface that rather than burn the spend first.
 
 ### Step 1: Load Context
 
@@ -86,7 +107,7 @@ Load these files in parallel:
 3. **OKRs** — Read the OKRs document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.okrs`)
 4. **Idea index** — Use `Glob` to list all `.md` files in `Ideas/`, then apply tiered reading:
    - **Complete-stage ideas:** Read frontmatter only (first 25 lines or until `---` closes). Extract: stage, themes, domain. These provide theme vocabulary only — complete ideas are excluded from Step 3 matching.
-   - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used for Step 3 matching AND portfolio context in the synthesis handoff.
+   - **All other ideas (seed, developing, drafting, refining):** Read until first `###` heading or 40 lines. Extract: frontmatter + header fields (Core insight, Problem, Who cares, Strategic connection). Used by Step 3 to verify refine-seed's related-ideas resolution AND portfolio context in the synthesis handoff.
    From the loaded index, extract all unique `themes` values across all idea files into a **portfolio theme vocabulary** — the canonical set of themes in use. Used in Step 5e to ensure theme reuse.
 5. **Shared research baseline** — Query the strategy research database for structured competitive intelligence, customer evidence, and market sizing relevant to this idea's capabilities:
    ```bash
@@ -96,7 +117,7 @@ Load these files in parallel:
    ```
    Derive capability slugs from the seed's `themes` and `core insight` using the vocabulary list — themes may map directly or expand (e.g., `ai-capabilities` → `ai-item-generation`, `ai-open-response-scoring`). Entries within TTL are baseline; entries past TTL are directional only and require reverification during Stream A/B research. Gap detection identifies where enrichment agents should focus live web research.
 
-6. **Competitor registry** — Snowflake `competitors` table. Already covered by Step 5's `query-landscape` call (returns name, category, market_tier, pricing_model, matched capabilities filtered by the seed's capability slugs). For competitors central to the seed's competitive frame, follow up with `query-competitor` for the full intelligence body and linked findings.
+6. **Competitor registry** — Snowflake `competitors` table. Already covered by item 5 above's `query-landscape` call (returns name, category, market_tier, pricing_model, matched capabilities filtered by the seed's capability slugs). For competitors central to the seed's competitive frame, follow up with `query-competitor` for the full intelligence body and linked findings.
 
 ### Step 2: Validate the Seed
 
@@ -129,33 +150,65 @@ Check the seed file for refinement indicators:
 
 Conduct five research streams. Streams B-E invoke specialized agents; Stream A is orchestrator-executed. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
 
-**Phase 1: Agent Research (sequential — platform constraint)**
+**Phase 1: Agent Research (parallel fan-out)**
 
-Invoke these five skills in order. Each runs in a forked context, produces a research artifact at `Research/{idea-name}/`, and may write qualifying findings to shared research files. No agent depends on another's output.
+Launch FOUR research agents — divergent-thinking, educator-sme, edtech-sme, tam-estimate — as parallel background subagents in a SINGLE message via the Agent tool: one `Agent` call per stream, all in the same message, with `subagent_type` set to the matching agent name. They run concurrently in isolated contexts; no agent depends on another's output. Each produces a research artifact at `Research/{idea-name}/` and returns its held-back writes-of-record as payloads for the orchestrator to apply in Phase 1.5.
 
-1. **`/divergent-thinking {idea-name}`** (Stream E: Divergent Discovery)
-   Produces structural analogies and identifies "the disruptive one." Reads ONLY the idea file — deliberately context-starved. Fastest agent (no web searches). Produces `Research/{idea-name}/divergent-angles.md`.
+**Status ping:** immediately post one line to the human — "4 research streams launched (divergent, educator, edtech, tam), ~5–8 min in background; next human touchpoint is Step 9." Post a second one-liner when synthesis returns (Step 5).
 
-2. **`/educator-sme {idea-name}`** (Stream D: Educator Perspective)
-   Evaluates adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Queries the research database for customer evidence as baseline. May write qualifying findings to the database. Produces `Research/{idea-name}/educator-evaluation.md`.
+- **`divergent-thinking`** (Stream E: Divergent Discovery) — structural analogies and "the disruptive one." Reads ONLY the idea file; no web or DB access, so it is the fastest stream. Produces `Research/{idea-name}/divergent-angles.md`.
+- **`educator-sme`** (Stream D: Educator Perspective) — adoption realism, pain point validity, classroom barriers, skeptic/champion scenarios. Produces `Research/{idea-name}/educator-evaluation.md`.
+- **`edtech-sme`** (Stream B: Market Intelligence — Competitive) — positioning, market fit, technology risk, go-to-market, strategic timing. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+- **`tam-estimate`** (Stream B: Market Intelligence — Sizing) — TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Produces `Research/{idea-name}/tam-estimate.md`.
 
-3. **`/edtech-sme {idea-name}`** (Stream B: Market Intelligence — Competitive)
-   Competitive positioning, market fit, technology risk, go-to-market, strategic timing. Queries the research database for competitive landscape as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/edtech-market-analysis.md`.
+Each subagent's SKILL.md assumes slash-command invocation — a parsed `$ARGUMENTS`, a cwd-relative `research-db.py`, generic file tools. None of that holds under a pointer-invoked Agent call, so the prompt supplies the argument explicitly and overrides those assumptions with an execution contract. Use this pointer-prompt template per agent, substituting `{idea-name}` and `{skill}` (the agent's skill directory name, e.g. `educator-sme`):
 
-4. **`/tam-estimate {idea-name}`** (Stream B: Market Intelligence — Sizing)
-   TAM/SAM/SOM with top-down/bottom-up reconciliation and sensitivity analysis. Queries the research database for market-sizing findings as baseline. Writes qualifying findings to the database. Produces `Research/{idea-name}/tam-estimate.md`.
+```
+Read your operational protocol at claude/skills/{skill}/SKILL.md (via Obsidian MCP read_note if generic Read is redirected) and execute it in idea-mode for the idea: {idea-name}.
+Execution contract (overrides where the protocol assumes slash-command invocation):
+- Treat {idea-name} as the parsed argument; you are in idea-mode.
+- Write your research artifact to Research/{idea-name}/ exactly per your protocol's artifact template (Obsidian MCP write_note for .md files).
+- HOLD BACK writes-of-record: do NOT run research-db.py write commands (write-findings, upsert-competitor) and do NOT modify the idea card or its frontmatter. Return these as exact executable payloads in your final report (full command JSON; the research-array entry) for the orchestrator to apply.
+- research-db.py READ queries (lookup-*, query-*) are allowed; run them from the project root.
+- Bound your web research: 3-6 targeted searches; stop when your artifact template's fields are covered.
+- Final report: artifact path written, held-back payloads verbatim, advisory impact-dimension signals, any blocker encountered.
+```
 
-5. **`/cross-domain {idea-name}`** (Stream C: Cross-Domain Discovery)
-   Queries JPD for ideas from other product domains with functional overlap. Classifies signals as Direct overlap, Enabler/dependency, or Convergence. Writes `Research/{idea-name}/cross-domain-signals.md`.
+**divergent-thinking variant:** divergent-thinking does no web research and no DB access by design, so omit the two contract lines about research-db.py READ queries and bounded web research. It still holds back frontmatter writes — its HOLD BACK line reduces to "do NOT modify the idea card or its frontmatter; return your research-array entry in your final report for the orchestrator to apply."
 
-**Agent failure handling:** If any agent fails (timeout, stop rule, error), note the failure reason and continue to the next agent. No single agent blocks the pipeline. See error handling table for per-agent fallback behavior.
+**Model overrides:**
+
+| Agent | Model |
+|-------|-------|
+| edtech-sme | Sonnet-class |
+| tam-estimate | Sonnet-class |
+| educator-sme | session model |
+| divergent-thinking | session model |
+
+Overrides are persona-rubric-gated; a lens that fails its rubric reverts to session model. Gate records: `Eval/Suites/enrichment-skills/Runs/`.
+
+**/cross-domain (Stream C) — immediately after the parallel block:** Invoke `/cross-domain {idea-name}` via the Skill tool exactly as before — it overlaps the background agents. It queries JPD for ideas from other product domains with functional overlap, classifies signals as Direct overlap, Enabler/dependency, or Convergence, and writes `Research/{idea-name}/cross-domain-signals.md`. Its existing behavior, output handling, and Step 5b are unchanged.
+
+**Agent failure handling:** The four streams run concurrently, so evaluate their reports as a set once they return rather than one at a time. A failure in any one stream (timeout, stop rule, error, or no report) does not affect the others and no single agent blocks the pipeline — record the failed or empty stream by name with its reason in Phase 1.5 and continue with the successful streams. See the error handling table for per-agent fallback behavior.
+
+**Phase 1.5: Serialized writes-of-record**
+
+**Resume after interruption/restart:** list `Research/{idea-name}/` first — a stream whose artifact file exists is complete (its held-back payload is in its report if recoverable, else re-derivable from the artifact); relaunch ONLY missing streams. After applying writes-of-record, immediately create `Research/{idea-name}/development-research.md` as a one-line stub "Phase 1.5 writes-of-record applied {date}" (Step 8 expands it). This stub is the duplicate-write guard: if it exists, do NOT re-apply DB writes.
+
+**Wait for completion first:** Before beginning Phase 1.5, the orchestrator must wait for all four background agents' completion reports and the /cross-domain return. Proceed on partial results only per the stream-failure rules in item 3 below.
+
+The parallel agents held back every write-of-record; the orchestrator applies them serially here, after all four agents report and /cross-domain returns. Serialization is deliberate — concurrent writes to the shared card frontmatter and to the research database must not happen in-stream.
+
+1. **Validate and apply database payloads.** For each held-back `research-db.py` write payload (`write-findings`, `upsert-competitor`), validate before executing: capability slugs resolve via `lookup-capabilities`, `source_url` is present, and the `claim` is a substantive assertion (not a search query, bare citation, or bookmark). Execute the passing write commands one at a time from the project root. A payload that fails validation is surfaced to the human with the specific failure reason — never silently dropped.
+2. **Append artifact paths in one write.** Collect ALL new artifact paths returned by the successful agents and append them to the idea card's `research:` frontmatter array in a SINGLE read-modify-write operation: read the current array, append the new paths, and write once via `update_frontmatter`. Do not issue per-agent frontmatter writes — the agents held these back precisely so the orchestrator serializes them.
+3. **Record stream outcomes.** A stream that failed or returned no report is recorded by name with its failure reason; continue with the successful streams. The existing per-agent failure rules (error handling table) apply, and Phase 4's EdTech WebSearch fallback is unchanged.
 
 **Phase 2: Refresh Shared Research Baseline**
 
-After all agents complete, re-query the research database to pick up any findings or competitor entries agents wrote during Phase 1:
+After Phase 1.5 applies the held-back writes, re-query the research database to pick up the findings and competitor entries just written:
 - `python3 scripts/research-db.py query-landscape --json '{"capabilities": ["slug-1", "slug-2"]}'` — refreshed findings + competitor metadata
 
-Agents may have called `upsert-competitor` for new/updated competitors and `write-findings` for new findings. This refresh ensures Phase 3 works from the latest state.
+Phase 1.5 applied `upsert-competitor` for new/updated competitors and `write-findings` for new findings from the agents' held-back payloads. This refresh ensures Phase 3 works from the latest state.
 
 **Phase 3: Stream A — Internal Strategic Context (orchestrator)**
 
@@ -176,7 +229,7 @@ No agent covers this — strategy docs, NPS, and OKRs require internal file acce
   - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
 
   NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
-- **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings agents wrote during Phase 1.
+- **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings applied in Phase 1.5 from the agents' held-back payloads.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 - **Database enrichment:** When specific competitors surface during Stream A research, use the database for targeted deep-dives:
   ```bash
@@ -354,7 +407,7 @@ Tag each competitor as `(registry)` or `(discovered)` to distinguish registry-so
 
 ### Related Ideas (header fields for differentiation)
 
-{For each related idea identified in Step 3:}
+{For each related idea resolved during /refine-seed (verified in Step 3):}
 
 **{idea-name}** ({stage})
 - Core insight: {from their card}
@@ -365,14 +418,20 @@ Tag each competitor as `(registry)` or `(discovered)` to distinguish registry-so
 
 Populate from Step 4 research findings. Sections with no findings should note the absence explicitly (e.g., "Zero mentions of {topic} in NPS data" or "Cross-domain discovery unavailable — MCP timeout"). Agent sections that failed should include the failure note per the template above.
 
+### Step 4.6: Handoff Fidelity Check (skeptic)
+
+Always runs. Launch the `skeptic` agent (Agent tool, fresh context) in handoff-fidelity mode: it reads the lens artifacts and `synthesis-handoff.md` and reports whether curation dropped counter-signals, softened hedges or confidence levels, or lost artifact-self-flagged warnings ("candidate, not evidence"; "do not average"; break-condition-grade objections). Fix the handoff per its findings — or override a finding with a stated reason — BEFORE invoking synthesis. The curator cannot audit its own compression.
+
 ### Step 5: Strategic Synthesis
 
 Invoke the synthesis agent to produce the TL;DR card content.
 
+**Spine snapshot (before invoking synthesis):** record three things from the seed as it exists right now — (1) the exact text of its `Initial strategic connection` line, (2) every interrogative sentence in its `### Original Capture` section, and (3) any non-null impact-dimension ratings in frontmatter. Write them as a `## Spine Snapshot` section appended to the END of `synthesis-handoff.md` (connection line verbatim; interrogative sentences; non-null ratings) — Step 9's spine check reads it from there, never from memory. The synthesis overwrites the card; this snapshot is the only diff source against seed state. Skip the snapshot (and the Step 9 spine check) when the Original Capture is under ~80 words — a seed that thin has no spine to rubber-stamp.
+
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `develop-synthesis`, passing the idea name as the argument.
 
-The develop-synthesis skill runs in an isolated agent context with a clean window. It reads the seed file, the synthesis handoff (created in Step 4.5), the persona guide, the format example, and related ideas context. It produces the completed TL;DR card — frontmatter updates (stage, dimensions) and body content (header fields, opportunity assessment, research summary, thought outline, open questions).
+The develop-synthesis skill declares `context: fork`, so it executes in an isolated forked context with a clean window. It reads the seed file, the synthesis handoff (created in Step 4.5), the persona guide, the format example, and related ideas context. It produces the completed TL;DR card — frontmatter updates (stage, dimensions) and body content (header fields, opportunity assessment, research summary, thought outline, open questions).
 
 After the agent returns, read the updated idea file to confirm synthesis completed (stage changed to `developing`, impact dimensions populated).
 
@@ -380,7 +439,7 @@ If the agent reports insufficient research or a stop condition, surface it to th
 
 ### Step 5b: Cross-Domain Signals Section
 
-If /cross-domain succeeded, write a `### Cross-Domain Signals` section to the card after the Research Summary section. The content comes from the /cross-domain skill's Phase 3 formatted output (already in the orchestrator's context from Phase 1 agent invocation) — transfer it directly, no reformatting needed (Phase 3 output uses the card section format).
+If /cross-domain succeeded, write a `### Cross-Domain Signals` section to the card after the Research Summary section. The content comes from the /cross-domain skill's Phase 3 formatted output (already in the orchestrator's context from the /cross-domain Skill-tool invocation during Phase 1) — transfer it directly, no reformatting needed (Phase 3 output uses the card section format).
 
 If the Phase 3 output is no longer in context, re-read the artifact at `Research/{idea-name}/cross-domain-signals.md` and apply the same curation the skill applies in Phase 3: include convergence group members, direct overlap items, and enablers that are specifically load-bearing for this idea's core capability. Maximum 5 signals. Write using the card section format:
 
@@ -401,7 +460,7 @@ After synthesis completes, invoke the buildable surface enrichment agent to chec
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `buildable-surface`, passing the idea name as the argument (e.g., `foraging-intelligence`).
 
-The buildable-surface skill runs in an isolated agent context. It reads the idea card and research artifacts, applies a three-signal detection heuristic, and either:
+The buildable-surface skill declares `context: fork`, so it executes in an isolated forked context. It reads the idea card and research artifacts, applies a three-signal detection heuristic, and either:
 - **No-ops** (feature-shaped) — no section added, proceed to Step 6
 - **Fires** (principle-shaped or borderline) — writes a `### Buildable Surface` section between Thought Outline and Open Questions
 
@@ -461,7 +520,7 @@ After writing the card to file, invoke the artifact critic to check structural a
 **Invoke via Skill tool:**
 Use the Skill tool with skill name `artifact-critic`, passing the completed idea card file path as the argument (e.g., `Ideas/foraging-intelligence.md`).
 
-The artifact-critic skill runs in the artifact-critic agent's isolated context — separate from this session — with read access to vault notes via Obsidian MCP. It returns a deviation report.
+The artifact-critic skill declares `context: fork`, so it runs in an isolated forked context — separate from this session — with read access to vault notes via Obsidian MCP. It returns a deviation report.
 
 **Triage the findings:**
 For each finding the critic returns, either:
@@ -504,7 +563,7 @@ The synthesis handoff was created in Step 4.5. This step creates the full persis
    - Synthesis notes connecting findings to the idea
    - Date of research
    Both files persist — `synthesis-handoff.md` is the curated input to the synthesis agent, `development-research.md` is the full research trail for downstream stages.
-3. **Frontmatter verification:** Read the idea file's `research:` array. Each agent that succeeded should have already appended its artifact path during its run. Verify all expected paths are present and add any that are missing:
+3. **Frontmatter verification:** Read the idea file's `research:` array. Phase 1.5 appended each successful agent's artifact path (the agents hold back frontmatter writes so the orchestrator can serialize them in one read-modify-write). Verify all expected paths are present and add any that are missing:
    - `Research/{idea-name}/synthesis-handoff.md` (orchestrator — always)
    - `Research/{idea-name}/development-research.md` (orchestrator — always)
    - `Research/{idea-name}/edtech-market-analysis.md` (if edtech-sme succeeded)
@@ -515,45 +574,43 @@ The synthesis handoff was created in Step 4.5. This step creates the full persis
 
 ### Step 9: Present for Review
 
-Present the completed development to the user with:
+Lead with the verdict block; then details. Do NOT dump the full card inline — link it, show on request.
 
 ```
-Development complete: {idea-name}
+{idea} → developed · confidence: {level} · spine: {moved|unchanged|skipped-thin} · format rec: {strategy-doc|product-brief}
+credibility: {clean | amber ({n}): {signals}}
+next: accept · press harder (targeted re-run) · /thesis-test (≈half a develop) · /draft · revise
+```
+
+- **confidence:** High (strong connection + market validation + clear impact path) / Medium (gaps in market data or impact clarity) / Low (weak connections, thin research, open questions).
+- **spine:** from the spine check below. **format rec:** the `--format` value if supplied (Step 0), else the recommendation derived below.
+- **credibility token — computed mechanically.** `clean` unless any fire → `amber ({n}): {named signals}`: spine diff unchanged-and-rubber-stamp-suspect (when run), any lens fell back or failed, thin research array, zero genuine Open Questions on a complex idea, flat rating variance. Thin-seed branch (spine check skipped): token uses confidence + lens count only. Name any unresolved Step 4.6 skeptic flags here.
 
 **Research summary:**
-- Stream A (Internal): {N} strategic connections found ({direct/adjacent/indirect breakdown})
-- Stream B (EdTech SME): {succeeded — market fit {verdict}, {N} competitors positioned | failed — fallback web searches used}
-- Stream B (TAM): {succeeded — TAM ${X} moderate, confidence {level} | failed — market sizing unavailable}
+- Stream A (Internal): {N} connections ({direct/adjacent/indirect})
+- Stream B (EdTech SME): {market fit {verdict}, {N} competitors | fallback web searches}
+- Stream B (TAM): {TAM ${X}, confidence {level} | unavailable}
 - Stream C (Cross-domain): {N signals | unavailable — {reason}}
-- Stream D (Educator): {succeeded — adoption {verdict} | failed — {reason}}
-- Stream E (Divergent): {succeeded — disruptive angle: {title} | failed — {reason}}
+- Stream D (Educator): {adoption {verdict} | failed — {reason}}
+- Stream E (Divergent): {disruptive angle: {title} | failed — {reason}}
 
 **Related seeds:** {list or "none found"}
 
 **Classification updates:**
-- Title: {unchanged | "Old Title" → "New Title"}
-- Themes: {unchanged | added: [x, y], removed: [z] — rationale per change}
-- AI Feature (JPD): {Yes — AI is load-bearing | No — core value stands without AI}
+- Title: {unchanged | "Old" → "New"}
+- Themes: {unchanged | added: [x], removed: [z] — rationale per change}
+- AI Feature (JPD): {Yes — load-bearing | No — value stands without AI}
 
-**Confidence level:** {High/Medium/Low}
-- High: Strong strategic connection + market validation + clear impact path
-- Medium: Decent strategic connection but gaps in market data or impact clarity
-- Low: Weak connections, thin research, or significant open questions
+**Spine check (rubber-stamp detector):** {Skipped — seed too thin | results below}. Read the `## Spine Snapshot` section from `synthesis-handoff.md` — never from memory:
+- Strategic connection: {moved — seed text replaced | UNCHANGED from seed}
+- Seed capture questions: {N of M survive in Open Questions}
+- Seed dimension ratings: {n/a — seed had none | {K} of {J} unchanged}
+- Mechanical rule: string-level diff (normalized whitespace, substring survival) — never a judgment call.
+{If strategic connection UNCHANGED **and** half or more seed questions survive: "The developed card preserved the seed's strategic spine — research may have confirmed it, or no agent challenged it. A `/thesis-test {idea-name}` tests the spine adversarially while keeping this run's artifacts." Weight self-filter: this offer matters for gnarly, net-new, or critical tradeoffs in positioning or approach — a spine-preserved feature card inside an existing strategic direction can read it and move on. Otherwise omit — when the spine moved, say only what moved, one line.}
 
-**Completed TL;DR:**
-{Show the full updated file content}
+**Output format recommendation** (omit if `--format` was supplied): **strategy-doc** (positioning play, narrative framing, multi-product direction, capability shaping how products evolve) or **product-brief** (scoped initiative with features, JTBD, timeline, defined deliverable). State which signals the idea exhibits. The human decides; the skill does NOT set `output-file`.
 
-**Recommended next steps:**
-- {Contextual recommendations based on confidence level and findings}
-- {e.g., "Share TL;DR with leadership for strategic alignment feedback" or "Research gap: need customer data before impact dimensions are credible"}
-
-**Output format recommendation:**
-Based on the idea's nature, recommend one of:
-- **strategy-doc** — if the idea is a positioning play, narrative framing, multi-product strategic direction, or capability that shapes how multiple products evolve
-- **product-brief** — if the idea is a scoped product initiative with specific features, JTBD, timeline dependencies, and a defined deliverable
-
-Present the recommendation with rationale: which signals does this idea exhibit? This is a recommendation — the human decides. The skill does NOT set `output-file` in frontmatter.
-```
+**Full card:** `Ideas/{idea-name}.md` — shown on request, not dumped inline.
 
 **Database write-back:**
 
@@ -642,6 +699,8 @@ When stopping, state explicitly: what was found, what is missing, and what would
 | Related seed has malformed frontmatter | Log under "Index Issues", continue matching other seeds |
 | Synthesis agent reports insufficient research | Surface the agent's assessment to the user, halt |
 | Synthesis handoff creation fails | Report the error and halt |
+| research-db.py fails at Step 0.5/1 | Surface the auth/cwd fix (reauth, or cd to project root); halt before fan-out |
+| Single stream needs backfill later | Re-run just that lens via its pointer-prompt; then follow the /thesis-test Step 6 pattern — append results to synthesis-handoff.md, re-invoke develop-synthesis |
 
 ## Scope Boundaries
 
@@ -651,7 +710,7 @@ This skill does NOT:
 - Create seed files (that is the router's job via `/process-inbox`)
 - Decide output format — strategy doc vs. product brief (that is a human decision at Stage 2→3)
 - Draft the full document (that is the `/draft` skill, Stage 2→3)
-- Run the Sufficiency Evaluator (that is an MLP-phase agent)
+- Run the Sufficiency Evaluator (planned MLP-phase agent — not yet built)
 - Process inbox items (that is `/process-inbox`)
 - Merge or consolidate ideas (that is `/refine-seed`'s job)
 - Load full strategy docs into context (Grep only — paths configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy` and `strategic_context.design_strategy`)

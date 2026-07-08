@@ -60,6 +60,8 @@ Parse `$ARGUMENTS` to determine mode:
 
 This skill runs in the tam-estimate agent's context. The agent carries the full market sizing analyst persona, domain knowledge (products, segments, geography, business model), SOM cap rules, divergent analyst mode, and quality standards. See `.claude/agents/tam-estimate.md`.
 
+**Invocation note:** When executed by a pointer-invoked agent rather than the Skill tool: generic Read/Write/Edit on vault .md files may be redirected — use the Obsidian MCP equivalents; run research-db.py from the project root.
+
 Output feeds into the `revenue-potential` impact dimension and supports investment prioritization conversations with VPs and ELT.
 
 ## Execution Flow
@@ -355,6 +357,8 @@ TAM estimation complete: {idea-name}
 **Idea frontmatter updated:** research array now includes tam-estimate path.
 ```
 
+Your impact-dimension signals are advisory. If a signal contradicts the idea card's existing frontmatter ratings, state the contradiction explicitly in your report — do not silently align to the card. The same applies to factual claims: if your research contradicts a factual claim in the card body, surface the contradiction prominently in your final report — not buried in the artifact — so the orchestrator can reconcile the card.
+
 After presenting the above, review your findings against the shared research capture heuristic: **Sourced + Durable + Decision-relevant + Shared** (applies to TAM figures, growth rates, buyer counts, and market benchmarks that would benefit other ideas). Write qualifying findings to the strategy research database:
 ```bash
 python3 scripts/research-db.py write-findings --json '{
@@ -406,4 +410,3 @@ This skill does NOT:
 - Change the idea's stage
 - Modify the idea body content
 - Create or modify the idea file beyond the `research:` frontmatter array
-
