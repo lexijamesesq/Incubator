@@ -1,4 +1,4 @@
-> Split verbatim from `incubator-reference.md` on 2026-07-07 — one section of the reference index. See `incubator-reference.md` for the full section map.
+> One section of the `incubator-reference.md` reference index — see it for the full section map.
 
 ## Architecture: Idea Cards + Output Documents
 
@@ -45,7 +45,7 @@ All follow system-suggests, human-decides. No autonomous merging.
 
 #### Cross-Stage Detection
 
-/develop Step 3 surfaces related ideas regardless of stage. What you can do depends on where the related idea is:
+Related ideas are resolved during /refine-seed regardless of stage; /develop Step 3 verifies that resolution. What you can do depends on where the related idea is:
 
 | Related idea stage | Available actions |
 |---|---|
@@ -82,4 +82,4 @@ Completed idea cards stay in `Ideas/` with `stage: complete`. Completed output d
 - **Merged items:** `stage: archived`, `archived-reason: merged-into-{primary-name}`
 - **Shelved items:** `stage: archived`, `archived-reason: {reason}` (human decision to park an idea)
 
-Archive files retain their full frontmatter and body for provenance. They are included in /develop Step 3 scans at the `complete` stage level (reference only).
+Archive files retain their full frontmatter and body for provenance. /refine-seed's related-ideas matching includes them at the `complete` stage level (reference only).
