@@ -8,10 +8,11 @@ Clone the repo, then set up the Claude Code directory:
 mv claude .claude
 ```
 
-Copy the sample config and fill in your paths:
+Copy the sample configs and fill in your paths and voice:
 
 ```
 cp CLAUDE.sample.md CLAUDE.md
+cp persona.sample.md persona.md
 ```
 
 ### Required configuration
@@ -22,7 +23,7 @@ cp CLAUDE.sample.md CLAUDE.md
 | `strategic_context.product_strategy` | CLAUDE.md > Configuration | Path and URL to your product strategy document |
 | `strategic_context.design_strategy` | CLAUDE.md > Configuration | Path and URL to your design strategy document |
 | `strategic_context.okrs` | CLAUDE.md > Configuration | Path to your OKRs / organizational goals |
-| `persona.md` | Project root | Replace with your own voice and writing style guide |
+| `persona.md` | Project root | Copy from `persona.sample.md`, then make it your own voice and writing style guide |
 
 ### Optional configuration
 
