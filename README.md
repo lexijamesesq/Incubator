@@ -115,10 +115,10 @@ Without the database, skills work normally — they fall back to web searches. N
 The system separates what you configure from what skills handle.
 
 **You configure:**
-- `CLAUDE.md` -- your role, paths to external strategy documents, OKRs, NPS directories
-- `persona.md` -- your writing voice and style
-- `jira-config.md` -- your Atlassian connection details (optional, for JPD integration)
-- `Templates/` -- your organization's output document conventions
+- `CLAUDE.md` — your role, paths to external strategy documents, OKRs, NPS directories
+- `persona.md` — your writing voice and style
+- `jira-config.md` — your Atlassian connection details (optional, for JPD integration)
+- `Templates/` — your organization's output document conventions
 
 **Skills handle:**
 - Stage transitions and frontmatter updates
