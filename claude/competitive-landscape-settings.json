@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/research-db.py query-*)",
+      "Bash(python3 scripts/research-db.py lookup-*)",
+      "Bash(python3 scripts/research-db.py stats*)",
+      "Bash(python3 scripts/research-db.py health*)",
+      "Bash(which snow*)",
+      "Bash(snow --version*)",
+      "Bash(date:*)"
+    ]
+  }
+}

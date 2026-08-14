@@ -37,18 +37,41 @@ import uuid
 # ---------------------------------------------------------------------------
 
 def _load_config():
-    """Load connection config from the gitignored config file."""
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "research-db-config.json")
+    """Load connection config from the gitignored config file, or
+    RESEARCH_DB_CONFIG if set. The env override lets callers (e.g. the eval
+    suite) point at a fixture config without swapping the real file."""
+    config_path = os.environ.get("RESEARCH_DB_CONFIG") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "research-db-config.json"
+    )
     if not os.path.exists(config_path):
         print(json.dumps({"error": f"Config file not found: {config_path}. Copy research-db-config.sample.json to research-db-config.json and fill in your connection details."}))
         sys.exit(1)
     with open(config_path) as f:
         return json.load(f)
 
+def _validate_config(sf):
+    """Guard against config states this script must never operate under: an
+    unconfigured domain (would silently fall back to another consumer's live
+    domain) or an unfilled-in TODO: placeholder in any field (would write
+    placeholder text into real SQL). Runs once at module load — before any
+    command dispatches — so no call site can be added later that bypasses it.
+    """
+    errors = []
+    if "domain" not in sf or sf.get("domain") is None:
+        errors.append("snowflake.domain is not set — copy research-db-config.sample.json and fill in your domain")
+    for field in ("role", "database", "schema", "domain"):
+        value = sf.get(field)
+        if isinstance(value, str) and value.startswith("TODO:"):
+            errors.append(f"snowflake.{field} is still a placeholder ({value!r}) — fill in your real value")
+    if errors:
+        print(json.dumps({"error": "config_invalid", "errors": errors}))
+        sys.exit(1)
+
 _CONFIG = _load_config()
 _sf = _CONFIG.get("snowflake", {})
+_validate_config(_sf)
 SF_CMD = _sf.get("cli_command", "snow sql --enable-templating NONE")
-DOMAIN = _sf.get("domain", "mastery")
+DOMAIN = _sf["domain"]
 
 # ---------------------------------------------------------------------------
 # SQL helpers (Snowflake dialect)
@@ -58,7 +81,11 @@ def sql_preamble():
     role = _sf.get("role", "YOUR_ROLE")
     db = _sf.get("database", "YOUR_DB")
     schema = _sf.get("schema", "YOUR_SCHEMA")
-    return f"USE ROLE {role};\nUSE DATABASE {db};\nUSE SCHEMA {schema};\n"
+    preamble = f"USE ROLE {role};\nUSE DATABASE {db};\nUSE SCHEMA {schema};\n"
+    warehouse = _sf.get("warehouse")
+    if warehouse:
+        preamble += f"USE WAREHOUSE {warehouse};\n"
+    return preamble
 
 def sql_dateadd_months(n, date_col):
     return f"DATEADD('month', {n}, {date_col})"
@@ -70,14 +97,33 @@ def sql_gen_uuid():
     return str(uuid.uuid4())
 
 def esc(s):
-    """Escape single quotes for SQL."""
+    """Escape backslashes and single quotes for a Snowflake SQL string literal.
+    Backslash replacement MUST run first — Snowflake honors backslash as the
+    default string-literal escape character, so a value ending in a lone
+    backslash can escape a closing quote that only-quote-doubling wouldn't
+    catch; escaping backslashes after quotes would double-escape the ones
+    quote-doubling just inserted.
+    """
     if s is None:
         return None
-    return str(s).replace("'", "''")
+    return str(s).replace("\\", "\\\\").replace("'", "''")
 
 # ---------------------------------------------------------------------------
 # Execution
 # ---------------------------------------------------------------------------
+
+# Substrings that show up in `snow sql` stderr for auth/session failures —
+# checked against a FAILED command's stderr only, never a success path, so
+# false-positive risk is limited to misclassifying the failure's category.
+_AUTH_ERROR_PATTERNS = (
+    "authentication failed",
+    "incorrect username or password",
+    "token has expired",
+    "token is invalid",
+    "browser response timed out",
+    "reauthentication required",
+    "oauth",
+)
 
 def execute_sql(sql, output_format="default"):
     """Execute SQL against Snowflake. Returns stdout.
@@ -85,6 +131,11 @@ def execute_sql(sql, output_format="default"):
     output_format:
         "default" — raw CLI output (table-formatted, for LLM consumption)
         "json"    — JSON-parseable output (for programmatic parsing)
+
+    On failure, exits non-zero with a JSON error on stderr whose "error"
+    field distinguishes cli_not_installed / not_authenticated / sql_failure
+    — the caller (agent) translates each differently rather than treating
+    every failure as an opaque database error.
     """
     fd, tmp = tempfile.mkstemp(prefix="research-db-query-", suffix=".sql")
     try:
@@ -96,10 +147,25 @@ def execute_sql(sql, output_format="default"):
         else:
             cmd = f"{SF_CMD} -f {tmp}"
 
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+        except OSError as e:
+            # shell=True normally surfaces a missing command as a nonzero
+            # exit from the shell (see the returncode==127 branch below),
+            # not a Python exception — this catches the rarer case where
+            # subprocess itself can't launch the shell (e.g. E2BIG).
+            print(json.dumps({"error": "cli_not_installed", "message": f"Could not launch the Snowflake CLI: {e}. Check cli_command in research-db-config.json."}), file=sys.stderr)
+            sys.exit(1)
 
         if result.returncode != 0:
-            print(json.dumps({"error": result.stderr.strip()}), file=sys.stderr)
+            stderr = result.stderr.strip()
+            stderr_lower = stderr.lower()
+            if result.returncode == 127 or "command not found" in stderr_lower or "no such file or directory" in stderr_lower:
+                print(json.dumps({"error": "cli_not_installed", "message": stderr or "Snowflake CLI not found on PATH. Check cli_command in research-db-config.json."}), file=sys.stderr)
+            elif any(p in stderr_lower for p in _AUTH_ERROR_PATTERNS):
+                print(json.dumps({"error": "not_authenticated", "message": stderr}), file=sys.stderr)
+            else:
+                print(json.dumps({"error": "sql_failure", "message": stderr}), file=sys.stderr)
             sys.exit(1)
 
         return result.stdout.strip()
@@ -144,7 +210,7 @@ def cmd_query_landscape(args):
         print(json.dumps({"error": "capabilities list required"}))
         sys.exit(1)
 
-    cap_list = ",".join(f"'{c}'" for c in caps)
+    cap_list = ",".join(f"'{esc(c)}'" for c in caps)
     ttl_filter = sql_dateadd_months("rf.ttl_months", "rf.created_at")
 
     sql = f"""{sql_preamble()}
@@ -227,7 +293,7 @@ def cmd_query_gaps(args):
         print(json.dumps({"error": "capabilities list required"}))
         sys.exit(1)
 
-    cap_list = ",".join(f"'{c}'" for c in caps)
+    cap_list = ",".join(f"'{esc(c)}'" for c in caps)
 
     sql = f"""{sql_preamble()}
 SELECT c.name, c.category, c.market_tier, cap.slug AS capability,
@@ -272,6 +338,14 @@ def _validate_finding(f, idx=None):
         errors.append(f"{prefix}claim looks like a search query string — claims must be assertions, not research metadata")
     if not f.get("source_url") and not f.get("source_description"):
         errors.append(f"{prefix}source_url OR source_description required (capture heuristic: Sourced is a gate)")
+    if "ttl_months" in f and f["ttl_months"] is not None:
+        try:
+            # Normalize in place so every downstream SQL interpolation site
+            # uses a real int — never a string an attacker could shape into
+            # a raw-SQL breakout (ttl_months is interpolated unquoted).
+            f["ttl_months"] = int(f["ttl_months"])
+        except (ValueError, TypeError):
+            errors.append(f"{prefix}ttl_months must be a numeric value")
     return errors
 
 
@@ -292,7 +366,7 @@ def cmd_write_finding(args):
 
     url_val = f"'{esc(source_url)}'" if source_url else "NULL"
     desc_val = f"'{esc(source_desc)}'" if source_desc else "NULL"
-    comp_val = f"'{competitor_id}'" if competitor_id else "NULL"
+    comp_val = f"'{esc(competitor_id)}'" if competitor_id else "NULL"
 
     lines.append(f"""
 INSERT INTO research_findings (id, domain, topic, category, agent_type, claim, evidence,
@@ -305,7 +379,7 @@ VALUES ('{finding_id}', '{DOMAIN}', '{esc(args["topic"])}', '{esc(args["category
     for slug in cap_slugs:
         lines.append(f"""
 INSERT INTO finding_capabilities (finding_id, capability_id)
-SELECT '{finding_id}', id FROM capabilities WHERE slug = '{slug}';
+SELECT '{finding_id}', id FROM capabilities WHERE slug = '{esc(slug)}';
 """)
 
     sql = "\n".join(lines)
@@ -340,7 +414,7 @@ def cmd_write_findings(args):
         prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
         url = f"'{esc(f.get('source_url'))}'" if f.get("source_url") else "NULL"
         desc = f"'{esc(f.get('source_description'))}'" if f.get("source_description") else "NULL"
-        comp = f"'{f['competitor_id']}'" if f.get("competitor_id") else "NULL"
+        comp = f"'{esc(f['competitor_id'])}'" if f.get("competitor_id") else "NULL"
         lines.append(f"{prefix}'{f['_id']}', '{DOMAIN}', '{esc(f['topic'])}', '{esc(f['category'])}', NULL, '{esc(f['claim'])}', '{esc(f['evidence'])}', {url}, {desc}, '{esc(f['confidence'])}', {f['ttl_months']}, {comp}")
     lines.append(");")
 
@@ -354,7 +428,7 @@ def cmd_write_findings(args):
         lines.append("SELECT fc.fid, c.id FROM (")
         for i, (fid, slug) in enumerate(junction_rows):
             prefix = "    SELECT " if i == 0 else "    UNION ALL SELECT "
-            lines.append(f"{prefix}'{fid}' AS fid, '{slug}' AS slug")
+            lines.append(f"{prefix}'{fid}' AS fid, '{esc(slug)}' AS slug")
         lines.append(") fc JOIN capabilities c ON fc.slug = c.slug;")
 
     sql = "\n".join(lines)
@@ -385,7 +459,7 @@ def cmd_lookup_capabilities(args):
     if not slugs:
         sql = f"{sql_preamble()}\nSELECT slug, id FROM capabilities ORDER BY slug;"
     else:
-        slug_list = ",".join(f"'{s}'" for s in slugs)
+        slug_list = ",".join(f"'{esc(s)}'" for s in slugs)
         sql = f"{sql_preamble()}\nSELECT slug, id FROM capabilities WHERE slug IN ({slug_list}) ORDER BY slug;"
 
     output = execute_sql(sql, output_format="json")
@@ -498,7 +572,7 @@ LIMIT 1;
 
     # 3. Validate capability slugs exist
     if capabilities:
-        cap_list = ",".join(f"'{s}'" for s in capabilities)
+        cap_list = ",".join(f"'{esc(s)}'" for s in capabilities)
         sql_caps = f"{sql_preamble()}\nSELECT id, slug FROM capabilities WHERE slug IN ({cap_list});"
         cap_rows = parse_json_result(execute_sql(sql_caps, output_format="json"))
         found_slugs = {r["SLUG"] for r in cap_rows}
@@ -529,10 +603,10 @@ LIMIT 5;
             sys.exit(1)
 
         new_id = sql_gen_uuid()
-        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{s}'" for s in segments) + ")"
+        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{esc(s)}'" for s in segments) + ")"
         ip_array = "NULL"
         if args.get("integration_posture"):
-            ip_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{p}'" for p in args["integration_posture"]) + ")"
+            ip_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{esc(p)}'" for p in args["integration_posture"]) + ")"
         intel_json = json.dumps({
             "body": intelligence_body,
             "source_url": args.get("source_url"),
@@ -579,7 +653,7 @@ SELECT '{new_id}', '{DOMAIN}', '{esc(name)}', '{category}', {seg_array}, {pricin
     if category and category != row["CATEGORY"] and force_category_change:
         set_clauses.append(f"category = '{category}'")
     if segments:
-        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{s}'" for s in segments) + ")"
+        seg_array = "ARRAY_CONSTRUCT(" + ",".join(f"'{esc(s)}'" for s in segments) + ")"
         set_clauses.append(f"segments = {seg_array}")
     if market_tier and market_tier != row["MARKET_TIER"]:
         set_clauses.append(f"market_tier = '{market_tier}'")
@@ -590,7 +664,7 @@ SELECT '{new_id}', '{DOMAIN}', '{esc(name)}', '{category}', {seg_array}, {pricin
     if "integration_posture" in args:
         ip = args["integration_posture"]
         if ip:
-            iv = "ARRAY_CONSTRUCT(" + ",".join(f"'{p}'" for p in ip) + ")"
+            iv = "ARRAY_CONSTRUCT(" + ",".join(f"'{esc(p)}'" for p in ip) + ")"
         else:
             iv = "NULL"
         set_clauses.append(f"integration_posture = {iv}")

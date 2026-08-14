@@ -148,7 +148,7 @@ Check the seed file for refinement indicators:
 
 ### Step 4: Research
 
-Conduct five research streams. Streams B-E invoke specialized agents; Stream A is orchestrator-executed. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
+Conduct five research streams. Streams B-E invoke specialized agents; Stream A is orchestrator-executed and splits across two phases — its internal-context half (Phase 1b) runs concurrently with the agent fan-out, its shared-research half (Phase 3) after the database refresh. Prioritize depth over breadth — 3 strong findings beat 10 shallow ones.
 
 **Phase 1: Agent Research (parallel fan-out)**
 
@@ -182,7 +182,7 @@ Execution contract (overrides where the protocol assumes slash-command invocatio
 |-------|-------|
 | edtech-sme | Sonnet-class |
 | tam-estimate | Sonnet-class |
-| educator-sme | session model |
+| educator-sme | Sonnet-class |
 | divergent-thinking | session model |
 
 Overrides are persona-rubric-gated; a lens that fails its rubric reverts to session model. Gate records: `Eval/Suites/enrichment-skills/Runs/`.
@@ -190,6 +190,28 @@ Overrides are persona-rubric-gated; a lens that fails its rubric reverts to sess
 **/cross-domain (Stream C) — immediately after the parallel block:** Invoke `/cross-domain {idea-name}` via the Skill tool exactly as before — it overlaps the background agents. It queries JPD for ideas from other product domains with functional overlap, classifies signals as Direct overlap, Enabler/dependency, or Convergence, and writes `Research/{idea-name}/cross-domain-signals.md`. Its existing behavior, output handling, and Step 5b are unchanged.
 
 **Agent failure handling:** The four streams run concurrently, so evaluate their reports as a set once they return rather than one at a time. A failure in any one stream (timeout, stop rule, error, or no report) does not affect the others and no single agent blocks the pipeline — record the failed or empty stream by name with its reason in Phase 1.5 and continue with the successful streams. See the error handling table for per-agent fallback behavior.
+
+**Phase 1b: Stream A part 1 — Internal Strategic Context (orchestrator, concurrent with the fan-out)**
+
+No agent covers this — strategy docs, NPS, and OKRs require internal file access. **Start it as soon as the four agents are launched and run it while they are in flight.** It reads internal vault files only and depends on nothing the agents produce or write, so holding it until after the fan-out leaves the orchestrator idle across the entire research window for no gain. It must finish before Phase 1.5 begins.
+
+Stream A's remaining half — the shared-research reconciliation — genuinely depends on Phase 1.5's writes and the Phase 2 refresh, and stays where it is as Phase 3. Do not pull it forward.
+
+- Grep the product strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy`) for the seed's theme keywords and domain terms. Extract relevant passages. Never load the full file.
+- Scan the seed file's `### Original Capture` section for strategic signals, connections, or context that didn't make it into the seed's structured fields. Raw captures often contain intuitive connections and half-formed insights that inform research direction.
+- Grep the design strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.design_strategy`) for relevant design priorities.
+- Reference the OKRs loaded in Step 1 — identify which 2026 goals this idea would advance.
+- **NPS customer signal check (two-pass):** For the relevant product(s), scan NPS analysis files in the directories configured under `metrics.nps_product_a` and `metrics.nps_product_b`. Cap the scan to files from the past 12 months.
+
+  **Pass 1 — Longitudinal keyword scan (all months within 12-month window):**
+  Derive 3-5 search terms from the seed's themes, core insight, and domain terms. Grep ALL `.md` files in each NPS directory for those terms. Record which files (months) contain matches and which do not. If zero files match across all months for a product, record: "Zero mentions of {topic} across {N} months of {product} NPS data ({date range})" — this distinguishes latent demand (observable in behavior, not voiced in feedback) from articulated demand, and directly informs the Customer Sentiment dimension.
+
+  **Pass 2 — Targeted section reads:**
+  - **Always:** Read the **Top Pain Points** and **The Signal** sections from the **3 most recent** files per product (6 files total). These sections are small (~10-16 lines each) — use the Read tool with offset/limit to target them directly rather than grepping then conditionally reading.
+  - **If Pass 1 matched older files:** Also read **Top Pain Points**, **The Signal**, and **3 Things That Matter** from each matched file for verbatim quotes and trend context.
+  - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
+
+  NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
 
 **Phase 1.5: Serialized writes-of-record**
 
@@ -210,25 +232,10 @@ After Phase 1.5 applies the held-back writes, re-query the research database to 
 
 Phase 1.5 applied `upsert-competitor` for new/updated competitors and `write-findings` for new findings from the agents' held-back payloads. This refresh ensures Phase 3 works from the latest state.
 
-**Phase 3: Stream A — Internal Strategic Context (orchestrator)**
+**Phase 3: Stream A part 2 — Shared-Research Reconciliation (orchestrator)**
 
-No agent covers this — strategy docs, NPS, and OKRs require internal file access.
+Stream A's internal-context half already ran during the fan-out (Phase 1b). What remains is the part that genuinely depends on Phase 1.5's applied writes and the Phase 2 refresh — it cannot move earlier.
 
-- Grep the product strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.product_strategy`) for the seed's theme keywords and domain terms. Extract relevant passages. Never load the full file.
-- Scan the seed file's `### Original Capture` section for strategic signals, connections, or context that didn't make it into the seed's structured fields. Raw captures often contain intuitive connections and half-formed insights that inform research direction.
-- Grep the design strategy document (path configured in CLAUDE.md under Configuration > External References > `strategic_context.design_strategy`) for relevant design priorities.
-- Reference the OKRs loaded in Step 1 — identify which 2026 goals this idea would advance.
-- **NPS customer signal check (two-phase):** For the relevant product(s), scan NPS analysis files in the directories configured under `metrics.nps_product_a` and `metrics.nps_product_b`. Cap the scan to files from the past 12 months.
-
-  **Phase 1 — Longitudinal keyword scan (all months within 12-month window):**
-  Derive 3-5 search terms from the seed's themes, core insight, and domain terms. Grep ALL `.md` files in each NPS directory for those terms. Record which files (months) contain matches and which do not. If zero files match across all months for a product, record: "Zero mentions of {topic} across {N} months of {product} NPS data ({date range})" — this distinguishes latent demand (observable in behavior, not voiced in feedback) from articulated demand, and directly informs the Customer Sentiment dimension.
-
-  **Phase 2 — Targeted section reads:**
-  - **Always:** Read the **Top Pain Points** and **The Signal** sections from the **3 most recent** files per product (6 files total). These sections are small (~10-16 lines each) — use the Read tool with offset/limit to target them directly rather than grepping then conditionally reading.
-  - **If Phase 1 matched older files:** Also read **Top Pain Points**, **The Signal**, and **3 Things That Matter** from each matched file for verbatim quotes and trend context.
-  - Do not read Summary, What's Working, or Document Links sections. Do not read raw CSV data or full analysis files.
-
-  NPS findings directly inform the Customer Sentiment dimension rating. Absence of signal across the full window is itself evidence — note it explicitly in the handoff.
 - **Shared research check:** Review the refreshed database query results for findings relevant to this idea's problem space. Note which entries are within TTL (usable as baseline) versus past TTL (directional only — reverify). This now includes any findings applied in Phase 1.5 from the agents' held-back payloads.
 - For each finding, note connection strength: **direct** (explicitly named), **adjacent** (related priority, plausible mechanism), or **indirect** (thematic only).
 - **Database enrichment:** When specific competitors surface during Stream A research, use the database for targeted deep-dives:
