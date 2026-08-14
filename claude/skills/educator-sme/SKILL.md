@@ -159,6 +159,9 @@ domain-calibration: {k12 | higher-ed | both | platform-downstream}
 ## Pain Point Analysis
 {2-3 sentences on problem reality and severity from an educator's daily experience.}
 
+## Pedagogical Soundness / Student-Outcome Judgment
+{Required — make the call explicitly, do not leave it implied. Does this reach the student, and how? Trace the path from the idea to a change in what a student experiences or learns. If the benefit lands on the institution — admin visibility, reporting, compliance, staff efficiency — and reaches the student only indirectly or not at all, say so plainly and name the gap. "Great for admin dashboards, invisible to the kid struggling with fractions" is a complete and acceptable verdict. Institutional benefit is not student benefit until the path is shown.}
+
 ## Adoption Barriers
 {Specific friction points — concrete workflow realities, not abstractions. What specifically makes this hard to adopt?}
 
