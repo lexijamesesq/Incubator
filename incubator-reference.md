@@ -1,6 +1,6 @@
 # Incubator Reference — Section Index
 
-Reference material for Incubator stage work, split into section-scoped files under `reference/` so skills load only the section they need instead of the whole document. Each row below maps a section to its file. For project state, intake, session protocol, and system overview, see `CLAUDE.md`. On 2026-07-07 this document was reduced from a ~31K-char monolith to this index; the section files carry the content verbatim.
+Reference material for Incubator stage work, split into section-scoped files under `reference/` so skills load only the section they need instead of the whole document. Each row below maps a section to its file. For project state, intake, session protocol, and system overview, see `.claude/instance.md`. On 2026-07-07 this document was reduced from a ~31K-char monolith to this index; the section files carry the content verbatim.
 
 **How to use:** Load the specific `reference/{file}.md` your task needs — do not load this whole set. Each pipeline skill names the sections it requires in its own instructions.
 

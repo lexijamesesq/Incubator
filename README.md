@@ -11,7 +11,7 @@ mv claude .claude
 Copy the sample configs and fill in your paths and voice:
 
 ```
-cp CLAUDE.sample.md CLAUDE.md
+cp .claude/instance.sample.md .claude/instance.md
 cp persona.sample.md persona.md
 ```
 
@@ -19,10 +19,10 @@ cp persona.sample.md persona.md
 
 | Field | Location | What to set |
 |-------|----------|-------------|
-| `role` | CLAUDE.md > Configuration | Your title and domain, e.g. "Director of Product Design (Assessments)" |
-| `strategic_context.product_strategy` | CLAUDE.md > Configuration | Path and URL to your product strategy document |
-| `strategic_context.design_strategy` | CLAUDE.md > Configuration | Path and URL to your design strategy document |
-| `strategic_context.okrs` | CLAUDE.md > Configuration | Path to your OKRs / organizational goals |
+| `role` | .claude/instance.md > Configuration | Your title and domain, e.g. "Director of Product Design (Assessments)" |
+| `strategic_context.product_strategy` | .claude/instance.md > Configuration | Path and URL to your product strategy document |
+| `strategic_context.design_strategy` | .claude/instance.md > Configuration | Path and URL to your design strategy document |
+| `strategic_context.okrs` | .claude/instance.md > Configuration | Path to your OKRs / organizational goals |
 | `persona.md` | Project root | Copy from `persona.sample.md`, then make it your own voice and writing style guide |
 | `incubator-approach.md` | Project root | Author your drafting methodology — the structure and quality bar for strategy docs and briefs. Loaded by `/draft` and `/refine`; the core pipeline runs without it |
 
@@ -30,11 +30,11 @@ cp persona.sample.md persona.md
 
 | Field | Location | What to set |
 |-------|----------|-------------|
-| `metrics.nps_product_a`, `metrics.nps_product_b` | CLAUDE.md > Configuration | Paths to NPS analysis directories for your products |
+| `metrics.nps_product_a`, `metrics.nps_product_b` | .claude/instance.md > Configuration | Paths to NPS analysis directories for your products |
 | `jira-config.md` | Project root | Copy from `jira-config.sample.md`, fill in your Atlassian cloud ID, project key, field IDs, and option IDs for JPD integration |
-| `claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
+| `.claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
 | `scripts/research-db-config.json` | Scripts directory | Copy from `research-db-config.sample.json`, fill in your database connection details for the research database integration (see below) |
-| `incubator.learning_outcome_break_condition` | CLAUDE.md > Configuration | Your product-anchored break condition, tested against every thesis in `/thesis-test` — see `CLAUDE.sample.md` for the shape |
+| `incubator.learning_outcome_break_condition` | .claude/instance.md > Configuration | Your product-anchored break condition, tested against every thesis in `/thesis-test` — see `.claude/instance.sample.md` for the shape |
 
 ## What's Included
 
@@ -115,7 +115,7 @@ Without the database, skills work normally — they fall back to web searches. N
 The system separates what you configure from what skills handle.
 
 **You configure:**
-- `CLAUDE.md` -- your role, paths to external strategy documents, OKRs, NPS directories
+- `.claude/instance.md` -- your role, paths to external strategy documents, OKRs, NPS directories
 - `persona.md` -- your writing voice and style
 - `jira-config.md` -- your Atlassian connection details (optional, for JPD integration)
 - `Templates/` -- your organization's output document conventions
@@ -127,7 +127,7 @@ The system separates what you configure from what skills handle.
 - Artifact generation following your templates and voice
 - JPD push formatting and field mapping
 
-See `CLAUDE.sample.md` for the full configuration contract with placeholder values.
+See `.claude/instance.sample.md` for the full configuration contract with placeholder values.
 
 ## Usage
 
@@ -205,15 +205,15 @@ Human decision authority is preserved at every meaningful gate. Seeds develop au
 
 The system ships with domain knowledge tuned for education technology and assessment products. To adapt it:
 
-- **Different product domain:** Update `persona.md` with your voice, update the agent personas in `claude/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `claude/skills/cross-domain/`.
+- **Different product domain:** Update `persona.md` with your voice, update the agent personas in `.claude/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `.claude/skills/cross-domain/`.
 - **Different output formats:** Replace or modify the templates in `Templates/` and write your own `incubator-approach.md` methodology.
 - **Without JPD integration:** Skip `jira-config.md` setup. The `/jpd-push` and `/cross-domain` skills are self-contained and can be ignored.
 - **Without the research database:** Skip `scripts/research-db-config.json` setup. Skills fall back to web searches and idea-scoped research artifacts. The database is additive.
-- **Without enrichment agents:** Each enrichment agent is independently invokable. Remove any you don't need from `claude/skills/` and `claude/agents/` without affecting the core pipeline.
+- **Without enrichment agents:** Each enrichment agent is independently invokable. Remove any you don't need from `.claude/skills/` and `.claude/agents/` without affecting the core pipeline.
 
 ## Security
 
-Review skills before installing. They load into Claude's context and execute with your permissions. Audit the contents of `claude/skills/` and `claude/agents/` before use.
+Review skills before installing. They load into Claude's context and execute with your permissions. Audit the contents of `.claude/skills/` and `.claude/agents/` before use.
 
 ## License
 

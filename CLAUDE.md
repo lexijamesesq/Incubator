@@ -1,0 +1,59 @@
+---
+tags:
+  - type/claude-repo
+description: "Claude Code skills for a strategic-ideas incubation pipeline — draft, develop, refine, and thesis-test ideas with agent-based market/competitive enrichment."
+docs_home: "{workspace_root}/Projects/Incubator"
+---
+
+# Incubator
+
+A Claude Code pipeline for strategic idea development: `/draft`, `/develop`, `/refine`, `/thesis-test`, plus enrichment agents (edtech-sme, educator-sme, tam-estimate, competitive-landscape, skeptic, artifact-critic, divergent-thinking, buildable-surface) and supporting skills (`cross-domain`, `jpd-push`). Public repo: a template other design/product leaders fork and configure for their own domain, not just this operator's pipeline. Also the shared source for project-scoped skills consumed elsewhere (Strategy) via symlink.
+
+## Setup
+
+Clone the repo. `.claude/` ships tracked and committed — review its contents (see Security below) before opening the directory in Claude Code. Copy the instance config sample and fill in your own values:
+
+```
+cp .claude/instance.sample.md .claude/instance.md
+cp jira-config.sample.md jira-config.md
+cp persona.sample.md persona.md
+```
+
+See `.claude/instance.sample.md` for the full configuration contract (role, strategic-context paths, metrics paths, research-database label) with placeholder values.
+
+## Configuration
+
+Skills read instance-specific values from `.claude/instance.md`'s Configuration section by key name, not hardcoded — `role`, `strategic_context.*`, `metrics.*`, `incubator.research_db_label`, `incubator.learning_outcome_break_condition`. Product-specific org taxonomy lives in `.claude/skills/cross-domain/org-structural-reference.md` (copy from the sibling `.sample.md`). Jira connection details live in `jira-config.md`. All gitignored — every fork fills in its own.
+
+## Build / Test
+
+No build step (skills are markdown; the one script is stdlib-first Python). Local checks before pushing:
+
+```bash
+uvx ruff@latest check .     # scripts/research-db.py
+shellcheck **/*.sh          # if any shell scripts are added
+pre-commit run --all-files  # gitleaks-staged + the standard hook set
+```
+
+## CI
+
+`.github/workflows/ci.yml`, required via the "Protect main" ruleset: `ruff` (Python lint), `shellcheck` (`ludeeus/action-shellcheck`, no-op today — no `.sh` files yet, kept for when scripts are added), and `gitleaks` (full outgoing PR-range scan via dotty's shared `setup-gitleaks` composite action, base rules only + `--redact` — public repo, the operator's PII ruleset never reaches CI). All three required to merge.
+
+## Conventions
+
+- Skills are self-contained `SKILL.md` files under `.claude/skills/{name}/`, agents under `.claude/agents/{name}.md` — no shared runtime beyond the Configuration keys above.
+- Instance-specific values are always config keys, never hardcoded — a skill that hardcodes a path/URL breaks for every other fork.
+- `reference/` holds section-scoped reference docs (stage model, schemas, workflow, voice standards) that skills load on demand — indexed by `incubator-reference.md`.
+- Commits: gitleaks-staged/-pre-push/-commit-msg (dotty's exported hooks) gate every commit and push locally; CI re-proves the outgoing PR range independently.
+- This repo is a shared-skill source for other projects: Strategy consumes 8 of these skills via symlink at project scope (interim — the durable resolution is a published plugin, tracked on LEX-702). A skill/agent rename or removal here breaks that consumer; check before renaming.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `.claude/instance.sample.md` | Configuration contract template — copy to `.claude/instance.md` and fill in your instance's values |
+| `.claude/skills/` | The pipeline skills: `draft`, `develop`, `refine`, `refine-seed`, `revert-to-seed`, `thesis-test`, `jpd-push`, `cross-domain`, `buildable-surface`, `develop-synthesis`, `competitive-landscape`, `artifact-critic`, `edtech-sme`, `educator-sme` |
+| `.claude/agents/` | Enrichment agent personas invoked by the pipeline skills |
+| `incubator-reference.md` | Thin index into `reference/` — read this first, not the individual reference files, unless a skill points at one directly |
+| `reference/` | Section-scoped reference docs (stage model, schemas, workflow, voice/output standards) |
+| `jira-config.sample.md`, `persona.sample.md` | Per-fork config templates — copy to the non-`.sample` name and fill in |
