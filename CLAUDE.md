@@ -45,7 +45,7 @@ pre-commit run --all-files  # gitleaks-staged + the standard hook set
 - Instance-specific values are always config keys, never hardcoded — a skill that hardcodes a path/URL breaks for every other fork.
 - `reference/` holds section-scoped reference docs (stage model, schemas, workflow, voice standards) that skills load on demand — indexed by `incubator-reference.md`.
 - Commits: gitleaks-staged/-pre-push/-commit-msg (dotty's exported hooks) gate every commit and push locally; CI re-proves the outgoing PR range independently.
-- This repo is a shared-skill source for other projects: Strategy consumes 8 of these skills via symlink at project scope (interim — the durable resolution is a published plugin, tracked on LEX-702). A skill/agent rename or removal here breaks that consumer; check before renaming.
+- This repo is a shared-skill source for other projects: a consumer project may symlink individual skills/agents in at project scope (interim — the durable resolution is a published plugin from this repo). A skill/agent rename or removal here can break a consumer; check before renaming.
 
 ## Key Files
 
