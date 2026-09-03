@@ -1,6 +1,10 @@
 # gitleaks config for Incubator (public strategic-ideas pipeline repo).
-# Operator-specific PII rules loaded from .gitleaks-operator-rules.toml
-# (gitignored symlink -> ~/bin/dotty-private/gitleaks-operator-rules.toml).
+# Operator-specific PII rules loaded from .gitleaks-operator-rules.toml — the
+# token stays relative (an absolute path in a repo config isn't portable
+# across machines with different homes). dotty's hooks (rev >= v2026.09.03)
+# resolve this relative extend to the fixed installed path
+# (~/.config/gitleaks/operator-rules.toml) at hook-run time — no gitignored
+# symlink needed in this checkout.
 
 title = "Incubator gitleaks config"
 
@@ -10,8 +14,6 @@ path = ".gitleaks-operator-rules.toml"
 [allowlist]
 paths = [
   '''\.gitleaks\.toml$''',
-  '''CLAUDE\.md$''',
-  '''CLAUDE\.sample\.md$''',
-  '''.claude/rules/''',
+  '''instance\.sample\.md$''',
   '''LICENSE$''',
 ]

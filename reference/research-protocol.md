@@ -4,7 +4,7 @@
 
 When an idea needs more context than what's available:
 
-**Strategy doc queries:** Targeted Grep on the product strategy and design strategy documents (paths configured in CLAUDE.md under Configuration > External References). Never load full files into context. When citing strategy docs in Research Summary bullets, link to the external URL (also in CLAUDE.md Configuration) so references are navigable outside the Incubator.
+**Strategy doc queries:** Targeted Grep on the product strategy and design strategy documents (paths configured in .claude/instance.md under Configuration > External References). Never load full files into context. When citing strategy docs in Research Summary bullets, link to the external URL (also in .claude/instance.md Configuration) so references are navigable outside the Incubator.
 
 **Market intelligence:** Web search for competitors, TAM, technology trends. Synthesize with sources.
 

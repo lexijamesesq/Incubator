@@ -16,10 +16,10 @@ Eval/
 Knowledge/
 
 # === Private Configuration ===
-CLAUDE.md
-claude/settings.local.json
+.claude/instance.md
+.claude/settings.local.json
 jira-config.md
-claude/skills/cross-domain/org-structural-reference.md
+.claude/skills/cross-domain/org-structural-reference.md
 scripts/research-db-config.json
 
 # === Real files (samples ship instead) ===
@@ -35,9 +35,6 @@ Templates/review-templates.md
 # === Distribution staging area ===
 distribution/
 
-# === Local symlink (consumers rename claude/ to .claude/) ===
-.claude
-
 # === Stray workspace artifacts ===
 snowflake permissions.csv
 
@@ -45,6 +42,4 @@ snowflake permissions.csv
 .DS_Store
 **/.DS_Store
 
-# operator PII detection rules (gitignored symlink -> dotty-private)
-.gitleaks-operator-rules.toml
 incubator-approach.md

@@ -33,7 +33,7 @@ Squirrels struggle to optimize cache placement because environmental data is dis
 
 # Strategic Anchors
 
-Align this work with the relevant themes from your product strategy, design strategy, or OKRs (links configured in CLAUDE.md under Configuration > External References) to connect it to the larger outcomes you're driving toward. Explicitly mapping to these strategic themes helps everyone understand how this initiative aligns with our goals and why it is important. *Note: This can alternatively be a customer commit or sales enablement.*
+Align this work with the relevant themes from your product strategy, design strategy, or OKRs (links configured in .claude/instance.md under Configuration > External References) to connect it to the larger outcomes you're driving toward. Explicitly mapping to these strategic themes helps everyone understand how this initiative aligns with our goals and why it is important. *Note: This can alternatively be a customer commit or sales enablement.*
 
 * How does this advance our product goals?
 * How does this advance our design goals?
