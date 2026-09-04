@@ -39,4 +39,4 @@ jobs:
         working-directory: Incubator
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash ../work-lifecycle/.github/scripts/tag-plugin-release.sh . incubator
+        run: bash ../work-lifecycle/.github/scripts/tag-plugin-release.sh plugins/incubator incubator
