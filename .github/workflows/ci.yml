@@ -83,3 +83,22 @@ jobs:
             exit 1
           fi
           exit "$rc"
+
+  release-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: Incubator
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Checkout work-lifecycle (pinned, for the release scripts)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: lexijamesesq/work-lifecycle
+          ref: da3609c4bd67f830eb4f9a278c48f3010c9683a4 # main, 2026-09-04
+          path: work-lifecycle
+      - name: Check plugin version discipline
+        working-directory: Incubator
+        run: bash ../work-lifecycle/.github/scripts/check-plugin-version.sh . incubator
