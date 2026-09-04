@@ -101,4 +101,4 @@ jobs:
           path: work-lifecycle
       - name: Check plugin version discipline
         working-directory: Incubator
-        run: bash ../work-lifecycle/.github/scripts/check-plugin-version.sh . incubator
+        run: bash ../work-lifecycle/.github/scripts/check-plugin-version.sh plugins/incubator incubator
