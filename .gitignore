@@ -19,7 +19,7 @@ Knowledge/
 .claude/instance.md
 .claude/settings.local.json
 jira-config.md
-.claude/skills/cross-domain/org-structural-reference.md
+plugins/incubator/skills/cross-domain/org-structural-reference.md
 scripts/research-db-config.json
 
 # === Real files (samples ship instead) ===

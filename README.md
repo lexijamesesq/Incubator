@@ -32,7 +32,7 @@ cp persona.sample.md persona.md
 |-------|----------|-------------|
 | `metrics.nps_product_a`, `metrics.nps_product_b` | .claude/instance.md > Configuration | Paths to NPS analysis directories for your products |
 | `jira-config.md` | Project root | Copy from `jira-config.sample.md`, fill in your Atlassian cloud ID, project key, field IDs, and option IDs for JPD integration |
-| `.claude/skills/cross-domain/org-structural-reference.md` | Skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
+| `plugins/incubator/skills/cross-domain/org-structural-reference.md` | Plugin skills directory | Copy from `org-taxonomy.sample.md`, fill in your org's product brands, domains, and squads for cross-domain discovery |
 | `scripts/research-db-config.json` | Scripts directory | Copy from `research-db-config.sample.json`, fill in your database connection details for the research database integration (see below) |
 | `incubator.learning_outcome_break_condition` | .claude/instance.md > Configuration | Your product-anchored break condition, tested against every thesis in `/thesis-test` — see `.claude/instance.sample.md` for the shape |
 
@@ -205,7 +205,7 @@ Human decision authority is preserved at every meaningful gate. Seeds develop au
 
 The system ships with domain knowledge tuned for education technology and assessment products. To adapt it:
 
-- **Different product domain:** Update `persona.md` with your voice, update the agent personas in `.claude/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `.claude/skills/cross-domain/`.
+- **Different product domain:** Update `persona.md` with your voice, update the agent personas in `plugins/incubator/agents/` (especially `edtech-sme.md`, `educator-sme.md`, `tam-estimate.md`) with your market's domain knowledge, and update the organizational taxonomy in `plugins/incubator/skills/cross-domain/`.
 - **Different output formats:** Replace or modify the templates in `Templates/` and write your own `incubator-approach.md` methodology.
 - **Without JPD integration:** Skip `jira-config.md` setup. The `/jpd-push` and `/cross-domain` skills are self-contained and can be ignored.
 - **Without the research database:** Skip `scripts/research-db-config.json` setup. Skills fall back to web searches and idea-scoped research artifacts. The database is additive.

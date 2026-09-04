@@ -63,4 +63,4 @@ project = YOUR_PROJECT_KEY AND status = "Status 3" ORDER BY updated DESC
 
 ## Organizational Taxonomy
 
-See `.claude/skills/cross-domain/org-taxonomy.sample.md` for the expected format of the organizational taxonomy used by /cross-domain.
+See `plugins/incubator/skills/cross-domain/org-taxonomy.sample.md` for the expected format of the organizational taxonomy used by /cross-domain.

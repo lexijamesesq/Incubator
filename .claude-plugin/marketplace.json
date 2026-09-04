@@ -1,0 +1,15 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "incubator",
+  "owner": { "name": "Lexi James", "url": "https://github.com/lexijamesesq" },
+  "metadata": { "description": "Operator-owned marketplace for the Incubator pipeline's shared strategy-critique skills." },
+  "plugins": [
+    {
+      "name": "incubator",
+      "source": "./plugins/incubator",
+      "description": "Cross-project strategy-critique skills from the Incubator pipeline: adversarial critics, SME lenses, and estimation tools, shared with Strategy-rooted sessions.",
+      "license": "MIT",
+      "repository": "https://github.com/lexijamesesq/Incubator"
+    }
+  ]
+}
