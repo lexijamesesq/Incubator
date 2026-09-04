@@ -23,7 +23,7 @@ See `.claude/instance.sample.md` for the full configuration contract (role, stra
 
 ## Configuration
 
-Skills read instance-specific values from `.claude/instance.md`'s Configuration section by key name, not hardcoded — `role`, `strategic_context.*`, `metrics.*`, `incubator.research_db_label`, `incubator.learning_outcome_break_condition`. Product-specific org taxonomy lives in `.claude/skills/cross-domain/org-structural-reference.md` (copy from the sibling `.sample.md`). Jira connection details live in `jira-config.md`. All gitignored — every fork fills in its own.
+Skills read instance-specific values from `.claude/instance.md`'s Configuration section by key name, not hardcoded — `role`, `strategic_context.*`, `metrics.*`, `incubator.research_db_label`, `incubator.learning_outcome_break_condition`. Product-specific org taxonomy lives in `plugins/incubator/skills/cross-domain/org-structural-reference.md` (copy from the sibling `.sample.md`). Jira connection details live in `jira-config.md`. All gitignored — every fork fills in its own.
 
 ## Build / Test
 

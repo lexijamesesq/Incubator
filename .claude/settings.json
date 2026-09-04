@@ -1,0 +1,28 @@
+{
+  "enabledPlugins": {
+    "work-lifecycle@work-lifecycle": true,
+    "estate-hooks@work-lifecycle": true,
+    "wiki@wiki": true,
+    "incubator@incubator": true
+  },
+  "extraKnownMarketplaces": {
+    "work-lifecycle": {
+      "source": {
+        "source": "github",
+        "repo": "lexijamesesq/work-lifecycle"
+      }
+    },
+    "wiki": {
+      "source": {
+        "source": "github",
+        "repo": "lexijamesesq/wiki"
+      }
+    },
+    "incubator": {
+      "source": {
+        "source": "github",
+        "repo": "lexijamesesq/Incubator"
+      }
+    }
+  }
+}
