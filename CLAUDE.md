@@ -7,7 +7,7 @@ docs_home: "{workspace_root}/Projects/Incubator"
 
 # Incubator
 
-A Claude Code pipeline for strategic idea development: `/draft`, `/develop`, `/refine`, `/thesis-test`, plus enrichment agents (edtech-sme, educator-sme, tam-estimate, competitive-landscape, skeptic, artifact-critic, divergent-thinking, buildable-surface) and supporting skills (`cross-domain`, `jpd-push`). Public repo: a template other design/product leaders fork and configure for their own domain, not just this operator's pipeline. Also the shared source for project-scoped skills consumed elsewhere (Strategy) via symlink.
+A Claude Code pipeline for strategic idea development: `/draft`, `/develop`, `/refine`, `/thesis-test`, plus enrichment agents (edtech-sme, educator-sme, tam-estimate, competitive-landscape, skeptic, artifact-critic, divergent-thinking, buildable-surface) and supporting skills (`cross-domain`, `jpd-push`). Public repo: a template other design/product leaders fork and configure for their own domain, not just this operator's pipeline. Also the source for the confirmed-shared skill/agent subset (8 skills, 6 agents) published as the `incubator` plugin and consumed elsewhere (Strategy, professional profile only) at user scope — not a symlink.
 
 ## Setup
 
