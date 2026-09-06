@@ -25,11 +25,11 @@ Three things a caller can ask for. The translation layer below maps a natural-la
 
 `playbooks/write-gate.md` is cross-cutting — see § Loading below for which parts apply to which pattern.
 
-**Discriminator test (verbatim, LEX-506):** the `query` pattern's internal split between a simple lookup and a relationship question is decided by this exact test:
+**Discriminator test (verbatim):** the `query` pattern's internal split between a simple lookup and a relationship question is decided by this exact test:
 
 > Would a correct answer contain any sentence whose truth rests on a relationship between rows, rather than on the content of one row? Yes → analyze. No → query.
 
-In this skill's collapsed command-pattern model (LEX-507), "analyze" is not a separate top-level pattern — "Yes" routes to the relationship-question branch inside `playbooks/query.md`; "No" routes to that same file's simple-lookup branch. See `playbooks/query.md` for the full routing logic built on this test.
+In this skill's collapsed command-pattern model, "analyze" is not a separate top-level pattern — "Yes" routes to the relationship-question branch inside `playbooks/query.md`; "No" routes to that same file's simple-lookup branch. See `playbooks/query.md` for the full routing logic built on this test.
 
 ## Translation Layer
 

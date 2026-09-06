@@ -4,11 +4,11 @@ Read-only. Answers a question against the database for the configured domain. Ne
 
 ## The Discriminator
 
-Apply this test verbatim, from LEX-506:
+Apply this test verbatim:
 
 > Would a correct answer contain any sentence whose truth rests on a relationship between rows, rather than on the content of one row? Yes → analyze. No → query.
 
-In this skill's collapsed command-pattern model (LEX-507), "analyze" is not a separate top-level command pattern — it's the relationship-question branch below, handled inside this same `query.md` playbook. "Yes" routes there; "No" routes to the simple-lookup branch.
+In this skill's collapsed command-pattern model, "analyze" is not a separate top-level command pattern — it's the relationship-question branch below, handled inside this same `query.md` playbook. "Yes" routes there; "No" routes to the simple-lookup branch.
 
 **Simple lookup** (the "No" branch) — the question is about ONE named competitor, answerable in a single round-trip. Route to `lookup-competitor` (find/confirm the competitor) and/or `query-competitor` (the deep-dive). One command, maybe two if you need the ID first — never a third.
 

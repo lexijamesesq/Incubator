@@ -321,7 +321,7 @@ def _validate_finding(f, idx=None):
     """Defense-in-depth validation for a single finding dict.
     Returns list of error strings (empty list = valid).
     Catches: missing fields, empty capabilities, query-string claims, stub claims,
-    and missing source URL+description (the four educator-sme/INC-038 anti-patterns).
+    and missing source URL+description (four anti-patterns observed in the educator-sme research).
     """
     errors = []
     prefix = f"finding[{idx}]: " if idx is not None else ""

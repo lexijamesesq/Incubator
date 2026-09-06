@@ -16,7 +16,7 @@ carefully if you're copying this shape into a fourth repo.** Every other
 repo publishing a plugin this way (`wiki`, `work-lifecycle`, `dotty-private`)
 keeps the plugin manifest at its own repo root, so `.` is the correct
 `plugin_dir` there. This repo's plugin content lives at
-`plugins/incubator/` (LEX-702 moved it there from `.claude/{skills,agents}`
+`plugins/incubator/` (moved there from `.claude/{skills,agents}`
 at the repo root). The first version of this repo's release-gate PR copied
 wiki's workflow files verbatim, including the `.` argument — `release-check`
 passed anyway on that PR because `check-plugin-version.sh` short-circuits
