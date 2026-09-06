@@ -4,7 +4,7 @@
 
 /README.md
 /LICENSE
-/Ideas/
-/Examples/
-/reference/
+/Ideas/**/*.md
+/Examples/**/*.md
+/reference/**/*.md
 /incubator-reference.md
