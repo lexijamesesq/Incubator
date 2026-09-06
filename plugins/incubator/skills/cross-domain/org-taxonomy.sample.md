@@ -14,7 +14,7 @@ Copy this file to `org-structural-reference.md` in the same directory and fill i
 List your organization's product brands. Mark your own brand for exclusion in cross-domain queries.
 
 - **Oakwood** — Route planning and navigation platform. Flagship product for territory management.
-- **Acorn** — Foraging and cache management products. **YOUR BRAND — exclude in Phase 1.5 Step A.**
+- **Acorn** — Foraging and cache management products. **YOUR_BRAND — exclude in Phase 1.5 Step A.**
 - **Burrow** — Storage infrastructure, inventory tracking, seasonal logistics.
 - **Canopy** — Shared infrastructure: identity, APIs, data sync, developer tools. Cross-brand services.
 
